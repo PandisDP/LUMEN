@@ -3,8 +3,8 @@
 Formulación del problema «aterrizar con éxito con el mínimo de recursos» para LUMEN 3D.
 Documento de trabajo para revisar con el asesor antes de implementar el optimizador.
 
-Estado: **propuesta v0.1** (14 de noviembre de 2026). Las secciones marcadas con ❓ son decisiones
-abiertas.
+Estado: **propuesta v0.2** (14 de noviembre de 2026). Incorpora las respuestas del equipo a la
+primera ronda de preguntas (§ 11). Las marcas ❓ señalan lo que sigue abierto.
 
 ---
 
@@ -26,18 +26,20 @@ el paso siguiente: que el sistema **busque** el escenario en lugar de que el usu
 
 ## 2. Datos del problema (fijos, no se deciden)
 
-| Símbolo                | Dato                                                                           | Fuente en LUMEN                                                                                                              |
-| ---------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `T = (lat_T, lon_T)`   | Objetivo con hielo                                                             | PSR del catálogo: Shackleton floor, Haworth, Cabeus (`src/config/sites.ts`); mapas de sombra permanente `public/data/illum/` |
-| `R`                    | Radio de búsqueda del punto de aterrizaje alrededor de `T`                     | Parámetro (500 m – 5 km); limitado por el tile LOLA de 20 m (±10 km)                                                         |
-| DEM, iluminación anual | Topografía 20 m y 480 m, sombra permanente                                     | `public/data/terrain`, `public/data/dem`, `public/data/illum`; `src/astro/horizonFromDem.ts`, `illumination.ts`              |
-| Efemérides             | Posición de Sol y Tierra en el marco lunar, distancia Tierra‑Luna              | JPL Horizons DE441 2026–2030 (`src/astro/ephemTable.ts`, `bodyFixedEphemeris`)                                               |
-| `H`                    | Límites de hardware: pendiente máx., noche máx., DTE mín., pendiente del rover | `src/astro/hardware.ts` (`HardwareLimits`, `DEFAULT_LIMITS`)                                                                 |
-| `E`                    | Perfil energético: tipo de panel, potencia pico, batería, consumos             | `src/config/energyProfiles.ts`, `src/astro/energy.ts`                                                                        |
-| `D`                    | Duración de la misión en superficie (días)                                     | `MISSION_DAYS` en `useMissionStore.ts` (1–60, defecto 14)                                                                    |
-| `N_luz`                | Días de **luz continua** requeridos desde el aterrizaje                        | Nuevo parámetro; defecto **15**                                                                                              |
-| `C = {c_i}`            | Clases de trayectoria Tierra → Luna                                            | Nueva tabla (§ 2.1)                                                                                                          |
-| `θ_enlace`             | Margen mínimo de la Tierra sobre el relieve para el enlace DTE                 | `LINK_MARGIN` (0–10°, defecto 3°)                                                                                            |
+| Símbolo                | Dato                                                                                                    | Fuente en LUMEN                                                                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `T = (lat_T, lon_T)`   | Objetivo con hielo: un lugar **nuevo**, región de sombra permanente o punto con características propias | PSR del catálogo (Shackleton floor, Haworth, Cabeus) **o coordenadas introducidas** (`customSiteInfo`); si cae en una PSR, la celda PSR más cercana (`computeIceAccess`) |
+| `R`                    | Radio de búsqueda del punto de aterrizaje alrededor de `T`                                              | Parámetro (500 m – 5 km); limitado por el tile LOLA de 20 m (±10 km)                                                                                                     |
+| DEM, iluminación anual | Topografía 20 m y 480 m, sombra permanente                                                              | `public/data/terrain`, `public/data/dem`, `public/data/illum`; `src/astro/horizonFromDem.ts`, `illumination.ts`                                                          |
+| Efemérides             | Posición de Sol y Tierra en el marco lunar, distancia Tierra‑Luna                                       | JPL Horizons DE441 2026–2030 (`src/astro/ephemTable.ts`, `bodyFixedEphemeris`)                                                                                           |
+| `H`                    | Límites de hardware: pendiente máx., noche máx., DTE mín., pendiente del rover                          | `src/astro/hardware.ts` (`HardwareLimits`, `DEFAULT_LIMITS`)                                                                                                             |
+| `E`                    | Perfil energético: tipo de panel, potencia pico, batería, consumos                                      | `src/config/energyProfiles.ts`, `src/astro/energy.ts`                                                                                                                    |
+| `D`                    | Duración de la misión en superficie (días)                                                              | `MISSION_DAYS` en `useMissionStore.ts` (1–60, defecto 14)                                                                                                                |
+| `N_luz`                | Días de **luz continua** requeridos desde el aterrizaje                                                 | Nuevo parámetro; defecto **15**                                                                                                                                          |
+| `C = {c_i}`            | Clases de trayectoria Tierra → Luna                                                                     | Nueva tabla (§ 2.1)                                                                                                                                                      |
+| `θ_enlace`             | Margen mínimo de la Tierra sobre el relieve para el enlace DTE                                          | `LINK_MARGIN` (0–10°, defecto 3°)                                                                                                                                        |
+| `W_L`                  | **Ventanas de lanzamiento del proveedor** (lista de intervalos)                                         | Nuevo dato de entrada; la misión depende de ellas                                                                                                                        |
+| `κ`                    | Coste de un día de espera en órbita (§ 2.2)                                                             | Nuevo parámetro                                                                                                                                                          |
 
 ### 2.1 Clases de trayectoria (modelo paramétrico)
 
@@ -57,6 +59,24 @@ Cada clase se declara con `{ id, tauDays: [min, max], dvBaseKms, windowRule }`. 
 varía entre ≈ 363 000 km (perigeo) y ≈ 405 000 km (apogeo). Llegar cerca del perigeo reduce la
 velocidad relativa en la inserción. Se modela con un factor `k(d_TL) ∈ [0,95, 1,05]` lineal entre
 ambos extremos, leyendo `d_TL` del DE441 (`norm(bodyFixedEphemeris(t).earth)`).
+
+### 2.2 Coste de esperar en órbita
+
+Esperar en órbita lunar hasta la fecha de aterrizaje consume recursos por dos vías:
+
+| Vía                                                                          | Magnitud de referencia                                                                                                  | Fuente                                                                    |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| **Mantenimiento de órbita** (los _mascons_ desestabilizan las órbitas bajas) | 10–50 m/s por año en órbitas «congeladas» de 100–200 km → ≈ 0,03–0,14 m/s por día; 35–65 m/s por año a 30 km de altitud | Estudios de órbitas congeladas y constelaciones lunares (ver referencias) |
+| **Evaporación de propelente criogénico** (_boil‑off_)                        | O₂ ≈ 1,2 % por mes, H₂ ≈ 4,3 % por mes (estimaciones NASA); con propelentes almacenables ≈ 0                            | Estudios de módulos de aterrizaje NASA/Langley                            |
+
+Modelo propuesto: `Δv_espera = κ_sk · L + β · L` donde `L = t_A − t_O` en días, `κ_sk` es el
+mantenimiento diario (defecto **0,1 m/s/día**, órbita de aparcamiento de 100 km) y `β` convierte el
+_boil‑off_ en Δv equivalente (0 para almacenables; para criogénicos, `β ≈ Δv_descenso · b/30` con
+`b` el % mensual). Referencias de misiones: Starship HLS prevé esperar hasta 100 días; un concepto
+de los 90 esperaba la ventana en una órbita polar de 200 km.
+
+❓ El valor exacto de `κ_sk` y `β` depende del vehículo. Hasta tener el dato, se usa el defecto y
+se muestra siempre la espera en días para que el equipo juzgue.
 
 ---
 
@@ -80,21 +100,17 @@ Un candidato es la tupla `x = (t_L, c, t_A, p)`.
 
 ## 4. Objetivos (vector a minimizar)
 
-|      | Objetivo                          | Expresión                              | Cómo se calcula                                                                                                                                                                       |
-| ---- | --------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `f₁` | Tiempo total hasta el aterrizaje  | `t_A − t_L` = viaje + espera en órbita | Aritmética sobre `τ(c)` y `t_A`; se reporta desglosado                                                                                                                                |
-| `f₂` | Distancia transitable al objetivo | `ruta(p → T)` en metros                | Dijkstra de 8 vecinos sobre el DEM de 20 m con límite de pendiente del rover (`computeIceAccess` en `src/astro/iceAccess.ts`). Si no hay ruta: distancia geodésica y marca «sin ruta» |
-| `f₃` | Recurso propulsivo                | `Δv_base(c) · k(d_TL(t_O))` en km/s    | Tabla de clases + distancia Tierra‑Luna del DE441                                                                                                                                     |
+|      | Objetivo                          | Expresión                                          | Cómo se calcula                                                                                                                                                                       |
+| ---- | --------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `f₁` | Tiempo total hasta el aterrizaje  | `t_A − t_L` = viaje + espera en órbita             | Aritmética sobre `τ(c)` y `t_A`; se reporta desglosado                                                                                                                                |
+| `f₂` | Distancia transitable al objetivo | `ruta(p → T)` en metros                            | Dijkstra de 8 vecinos sobre el DEM de 20 m con límite de pendiente del rover (`computeIceAccess` en `src/astro/iceAccess.ts`). Si no hay ruta: distancia geodésica y marca «sin ruta» |
+| `f₃` | Recurso propulsivo (Δv total)     | `Δv_base(c) · k(d_TL(t_O)) + Δv_espera(L)` en km/s | Tabla de clases + distancia Tierra‑Luna del DE441 + coste de espera (§ 2.2)                                                                                                           |
 
-❓ **Sobre `f₁`**: la formulación original dice «minimizar el tiempo para estar en órbita». Con la
-fecha de lanzamiento fijada, ese tiempo es `τ(c)` y solo toma tres valores. La variable que de
-verdad se decide es la espera en órbita `t_A − t_O`, que también consume recursos (propelente de
-mantenimiento, exposición térmica, operaciones). Se propone usar el **total** `t_A − t_L` como `f₁`
-y mostrar siempre ambos componentes. Alternativa: `f₁ = τ(c)` y la espera como restricción
-`t_A − t_O ≤ L_max`.
+**Decidido**: `f₁` es el **tiempo total** `t_A − t_L`, porque los recursos son limitados y la
+espera en órbita también los consume. Se muestra siempre desglosado en viaje `τ(c)` y espera `L`.
 
-❓ **Sobre `f₃`**: si el equipo ya tiene un presupuesto de Δv fijo por clase, `f₃` puede pasar a
-ser una restricción `Δv ≤ Δv_max` y quedar fuera del vector.
+**Decidido**: el recurso se mide en **Δv** (§ Anexo A). `f₃` incluye el Δv del viaje y el de la
+espera. ❓ Si el equipo cierra un presupuesto `Δv_max`, `f₃` pasa además a ser restricción.
 
 Los tres objetivos están en unidades distintas (días, metros, km/s). Para el punto recomendado
 (§ 6) se normalizan a `[0, 1]` dentro del conjunto viable: `f̂ᵢ = (fᵢ − min fᵢ) / (max fᵢ − min fᵢ)`.
@@ -106,16 +122,16 @@ Los tres objetivos están en unidades distintas (días, metros, km/s). Para el p
 Un candidato que viole cualquiera de estas se descarta antes de comparar objetivos. Cada una se
 evalúa con código que ya existe en LUMEN, salvo g5.
 
-| Id     | Restricción                     | Expresión                                                     | Cómo se evalúa                                                                                                                                                                                                                            |
-| ------ | ------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **g1** | Luz continua tras el aterrizaje | `luz_continua(p, t_A) ≥ N_luz`                                | `evaluateSite` → serie `sunFrac` → `findWindows(≥ 0,5)` → `stateAt(t_A)`: si `on`, `nextChangeMs − t_A ≥ N_luz · 24 h` (`src/astro/series.ts`, `windows.ts`)                                                                              |
-| **g2** | Pendiente segura en `p`         | `pendiente(p) < H.maxSlopeDeg` y ningún vecino 3×3 ≥ 15°      | `src/astro/slope.ts`; mismo criterio que `computeOptimize` en `optimize.ts`                                                                                                                                                               |
-| **g3** | Enlace directo con la Tierra    | `DTE%(p, [t_A, t_A + D]) ≥ H.minDtePct` con margen `θ_enlace` | `computeMetrics(...).dtePct` (`src/astro/metrics.ts`)                                                                                                                                                                                     |
-| **g4** | Energía                         | la batería no se agota en `[t_A, t_A + D]`                    | `simulateBattery(series, E).depletedAtMs === null` (`src/astro/energy.ts`)                                                                                                                                                                |
-| **g5** | Ventana de lanzamiento          | `t_L ∈ ventanas(c)`                                           | **Nuevo**: regla aproximada por clase. Directa: fase lunar en `t_O` tal que la Luna esté a ≤ 30° del nodo adecuado para inclinación polar; alargada y baja energía: siempre abierta. Se puede sustituir por una tabla externa de ventanas |
-| **g6** | Acceso al objetivo              | existe ruta `p → T` con pendiente ≤ `H.roverMaxSlopeDeg`      | `computeIceAccess(...).reachable`                                                                                                                                                                                                         |
-| **g7** | Cobertura de efemérides         | `t_A + D` dentro de 2026–2030                                 | `tableCovers` (`ephemTable.ts`); fuera, se evalúa con el modelo IAU y se marca «precisión reducida»                                                                                                                                       |
-| **g8** | Cobertura de terreno            | `p` dentro de `R` y del tile LOLA 20 m                        | `demCovers` (`src/astro/dem.ts`)                                                                                                                                                                                                          |
+| Id     | Restricción                                                                                                                                  | Expresión                                                     | Cómo se evalúa                                                                                                                                                                                                    |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **g1** | Luz continua tras el aterrizaje (**requisito de la misión**, no derivado de la batería: menos días de luz desaprovecharían la investigación) | `luz_continua(p, t_A) ≥ N_luz`                                | `evaluateSite` → serie `sunFrac` → `findWindows(≥ 0,5)` → `stateAt(t_A)`: si `on`, `nextChangeMs − t_A ≥ N_luz · 24 h` (`src/astro/series.ts`, `windows.ts`)                                                      |
+| **g2** | Pendiente segura en `p`                                                                                                                      | `pendiente(p) < H.maxSlopeDeg` y ningún vecino 3×3 ≥ 15°      | `src/astro/slope.ts`; mismo criterio que `computeOptimize` en `optimize.ts`                                                                                                                                       |
+| **g3** | Enlace directo con la Tierra                                                                                                                 | `DTE%(p, [t_A, t_A + D]) ≥ H.minDtePct` con margen `θ_enlace` | `computeMetrics(...).dtePct` (`src/astro/metrics.ts`)                                                                                                                                                             |
+| **g4** | Energía                                                                                                                                      | la batería no se agota en `[t_A, t_A + D]`                    | `simulateBattery(series, E).depletedAtMs === null` (`src/astro/energy.ts`)                                                                                                                                        |
+| **g5** | Ventana de lanzamiento                                                                                                                       | `t_L ∈ W_L`                                                   | **Decidido**: lista de intervalos del **proveedor de lanzamiento** (dato de entrada). Si no se ha cargado ninguna, se usa como respaldo una regla geométrica aproximada por clase y se marca «ventanas estimadas» |
+| **g6** | Acceso al objetivo                                                                                                                           | existe ruta `p → T` con pendiente ≤ `H.roverMaxSlopeDeg`      | `computeIceAccess(...).reachable`                                                                                                                                                                                 |
+| **g7** | Cobertura de efemérides                                                                                                                      | `t_A + D` dentro de 2026–2030                                 | `tableCovers` (`ephemTable.ts`); fuera, se evalúa con el modelo IAU y se marca «precisión reducida»                                                                                                               |
+| **g8** | Cobertura de terreno                                                                                                                         | `p` dentro de `R` y del tile LOLA 20 m                        | `demCovers` (`src/astro/dem.ts`)                                                                                                                                                                                  |
 
 Restricciones opcionales (parametrizables, apagadas por defecto):
 
@@ -203,21 +219,24 @@ por dominancia, no por una sola cifra.
 
 ## 9. Parámetros
 
-| Nombre                 | Tipo           | Defecto                                  | Mín        | Máx        | Unidad | Descripción                               |
-| ---------------------- | -------------- | ---------------------------------------- | ---------- | ---------- | ------ | ----------------------------------------- |
-| `target`               | id de sitio    | `shackleton-floor`                       | —          | —          | —      | PSR objetivo del catálogo                 |
-| `radiusM`              | número         | 2 000                                    | 500        | 5 000      | m      | Radio de búsqueda del punto de aterrizaje |
-| `launchDate`           | fecha          | hoy + 90 d                               | 2026‑01‑01 | 2030‑12‑31 | UTC    | Fecha deseada de lanzamiento              |
-| `launchSlackDays`      | entero         | 30                                       | 0          | 180        | d      | Holgura ± alrededor de `launchDate`       |
-| `classes`              | lista          | las 3 de § 2.1                           | 1          | —          | —      | Clases de trayectoria admitidas           |
-| `maxLoiterDays`        | entero         | 60                                       | 0          | 180        | d      | Espera máxima en órbita                   |
-| `minSunDays` (`N_luz`) | número         | 15                                       | 1          | 60         | d      | Luz continua mínima tras aterrizar        |
-| `missionDays` (`D`)    | entero         | 14                                       | 1          | 60         | d      | Duración en superficie                    |
-| `hardware`             | objeto         | `DEFAULT_LIMITS` (15°, 120 h, 30 %, 20°) | —          | —          | —      | Límites del vehículo                      |
-| `energy`               | id de perfil   | `lander`                                 | —          | —          | —      | Perfil energético                         |
-| `linkMarginDeg`        | número         | 3                                        | 0          | 10         | °      | Margen DTE sobre el relieve               |
-| `weights`              | `[w₁, w₂, w₃]` | `[0,4, 0,4, 0,2]`                        | 0          | 1          | —      | Pesos para el punto recomendado (suman 1) |
-| `mode`                 | enum           | `fast`                                   | —          | —          | —      | `fast` o `exact`                          |
+| Nombre                 | Tipo                       | Defecto                                  | Mín        | Máx        | Unidad | Descripción                               |
+| ---------------------- | -------------------------- | ---------------------------------------- | ---------- | ---------- | ------ | ----------------------------------------- |
+| `target`               | id de sitio o `{lat, lon}` | `shackleton-floor`                       | —          | —          | —      | PSR del catálogo o coordenadas nuevas     |
+| `launchWindows`        | lista de intervalos        | vacía (→ regla estimada)                 | —          | —          | UTC    | Ventanas del proveedor de lanzamiento     |
+| `loiterSkPerDay`       | número                     | 0,1                                      | 0          | 1          | m/s/d  | Mantenimiento de órbita por día de espera |
+| `boilOffPctPerMonth`   | número                     | 0 (almacenables)                         | 0          | 10         | %/mes  | Evaporación de propelente criogénico      |
+| `radiusM`              | número                     | 2 000                                    | 500        | 5 000      | m      | Radio de búsqueda del punto de aterrizaje |
+| `launchDate`           | fecha                      | hoy + 90 d                               | 2026‑01‑01 | 2030‑12‑31 | UTC    | Fecha deseada de lanzamiento              |
+| `launchSlackDays`      | entero                     | 30                                       | 0          | 180        | d      | Holgura ± alrededor de `launchDate`       |
+| `classes`              | lista                      | las 3 de § 2.1                           | 1          | —          | —      | Clases de trayectoria admitidas           |
+| `maxLoiterDays`        | entero                     | 60                                       | 0          | 180        | d      | Espera máxima en órbita                   |
+| `minSunDays` (`N_luz`) | número                     | 15                                       | 1          | 60         | d      | Luz continua mínima tras aterrizar        |
+| `missionDays` (`D`)    | entero                     | 14                                       | 1          | 60         | d      | Duración en superficie                    |
+| `hardware`             | objeto                     | `DEFAULT_LIMITS` (15°, 120 h, 30 %, 20°) | —          | —          | —      | Límites del vehículo                      |
+| `energy`               | id de perfil               | `lander`                                 | —          | —          | —      | Perfil energético                         |
+| `linkMarginDeg`        | número                     | 3                                        | 0          | 10         | °      | Margen DTE sobre el relieve               |
+| `weights`              | `[w₁, w₂, w₃]`             | `[0,4, 0,4, 0,2]`                        | 0          | 1          | —      | Pesos para el punto recomendado (suman 1) |
+| `mode`                 | enum                       | `fast`                                   | —          | —          | —      | `fast` o `exact`                          |
 
 ---
 
@@ -241,22 +260,28 @@ para cada `(t_L, t_O)`. La interfaz `evaluateMission` no cambia; solo la funció
 
 ---
 
-## 11. Preguntas abiertas para el asesor
+## 11. Decisiones tomadas y preguntas abiertas
 
-1. **`f₁`**: ¿tiempo total hasta aterrizar, o solo el viaje con la espera en órbita como
-   restricción? ¿Cuánto cuesta un día en órbita frente a un día de viaje?
-2. **`N_luz` = 15 días**: ¿es un requisito fijo de la misión o deriva del vehículo (batería `E` y
-   duración `D`)? Si deriva, g1 podría sustituirse por g4 con un margen.
-3. **Objetivo `T`**: ¿punto exacto de una detección previa o región PSR? ¿Qué distancia de rover es
-   aceptable (hoy `ICE_RADIUS_M` = 2 km)?
-4. **Recursos**: ¿qué pesa más, Δv, tiempo o distancia del rover? Define los pesos por defecto y
-   si `f₃` es objetivo o restricción.
-5. **Comunicaciones**: ¿solo enlace directo con la Tierra o también relé orbital? Con relé, g3
-   cambia de forma.
-6. **Clases de trayectoria**: ¿cuáles considera realistas para este vehículo? ¿Existe un
-   presupuesto de Δv ya cerrado?
-7. **Ventanas de lanzamiento**: ¿las da el proveedor de lanzamiento como fechas concretas? Si es
-   así, g5 pasa a ser una lista y no una regla.
+### Decidido (primera ronda, 14 de noviembre de 2026)
+
+| #   | Pregunta                                | Decisión                                                                                                                                              |
+| --- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | ¿`f₁` total o solo viaje?               | **Total**: la espera en órbita consume recursos. Coste de la espera según § 2.2 con valores de referencia bibliográficos hasta tener los del vehículo |
+| 2   | ¿`N_luz` fijo o derivado de la batería? | **Requisito fijo de la misión**: 15 días para completar la investigación. Quedarse con menos sería desaprovechar la misión                            |
+| 3   | ¿`T` punto o región?                    | **Lugar nuevo**: región PSR o punto con características variables. Se admite id del catálogo o coordenadas                                            |
+| 4   | ¿En qué se miden los recursos?          | **Δv**                                                                                                                                                |
+| 7   | ¿Ventanas del proveedor?                | **Sí**: la misión depende de ellas. Son dato de entrada; la regla geométrica es solo respaldo                                                         |
+
+### Sigue abierto ❓
+
+- **Pesos** `w` por defecto entre tiempo total, distancia al hielo y Δv. Mientras no se fijen,
+  `(0,4, 0,4, 0,2)` y la frontera completa a la vista.
+- **Presupuesto de Δv** cerrado del vehículo: si existe, `f₃` pasa también a restricción.
+- **Comunicaciones**: ¿solo enlace directo o también relé orbital? (Anexo A explica el reto del
+  enlace directo desde el polo sur.)
+- **Clases de trayectoria realistas** para este vehículo y tipo de propelente (almacenable o
+  criogénico), que fija `β` en § 2.2.
+- **Valores de `κ_sk` y `β`** del vehículo real.
 
 ---
 
@@ -273,3 +298,55 @@ para cada `(t_L, t_O)`. La interfaz `evaluateMission` no cambia; solo la funció
 
 Orden sugerido: primero `mission.ts` con tests y un CLI de prueba en `scripts/`, después el
 worker, por último la UI.
+
+---
+
+## Anexo A. Conceptos
+
+### Δv (delta‑v): la moneda de los recursos
+
+El Δv es el **cambio total de velocidad** que el vehículo debe producir con sus motores a lo largo
+de la misión. Se mide en km/s y es la forma estándar de contar el «combustible» porque no depende
+del motor: la ecuación del cohete lo convierte en masa de propelente,
+`m_prop = m_final · (e^{Δv / (I_sp · g₀)} − 1)`. Cada maniobra suma: inyección translunar desde
+órbita baja terrestre (≈ 3,1 km/s), inserción en órbita lunar (0,4–0,9 km/s según la clase de
+trayectoria), mantenimiento de la órbita mientras se espera, y descenso y aterrizaje
+(≈ 1,9–2,1 km/s desde 100 km). Cuanto menor sea el Δv total, más carga útil o más margen. Por eso
+«mínimo de recursos» se traduce en «mínimo Δv» y, con propelente criogénico, también en «mínimo
+tiempo», porque el propelente se evapora.
+
+### El enlace directo con la Tierra desde el polo sur
+
+Desde el polo sur la Tierra **nunca sube mucho**: oscila entre unos +7° y −7° sobre el horizonte
+por la libración de la Luna, así que la mitad del tiempo (unas dos semanas al mes) está oculta
+tras el limbo lunar. En la práctica el relieve recorta aún más: una cresta de 2° en la dirección
+de la Tierra puede eliminar días de enlace. Las dificultades concretas:
+
+1. **Elevación baja**: las antenas apuntan a 2–10° sobre el horizonte. Parte de la señal rebota en
+   el regolito y llega desfasada (**multitrayecto**), con desvanecimientos que pueden superar
+   20 dB. Por eso LUMEN exige un margen `θ_enlace` (3° por defecto) sobre el relieve, y no solo
+   línea de vista.
+2. **Interrupciones largas**: no son cortes de minutos sino de días o semanas. El vehículo debe
+   almacenar datos y sobrevivir sin comandos.
+3. **Estaciones en Tierra**: hace falta que una antena de la red de espacio profundo (Goldstone,
+   Madrid, Canberra) vea la Luna en ese momento. LUMEN ya lo calcula (`src/astro/dsn.ts`).
+4. **Alternativa**: un satélite relé en órbita lunar (como el que usan las misiones chinas al lado
+   oculto). Elimina g3 pero añade coste y dependencia de otro sistema.
+
+### Clases de trayectoria Tierra → Luna
+
+| Clase                              | Cómo funciona                                                                                                                                                      | Tiempo                  | Δv de inserción                               | Cuándo conviene                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- | --------------------------------------------- | -------------------------------------------------------------------------------- |
+| **Directa**                        | Un solo encendido de inyección y un viaje tipo Hohmann; inserción con un gran frenado                                                                              | 2–5 días (óptimo ≈ 4,5) | el mayor (≈ 0,8–0,9 km/s)                     | Carga sensible al tiempo, propelente criogénico, tripulación                     |
+| **Alargada (órbitas de fase)**     | La inyección o la inserción se reparten en varios encendidos menores en órbitas intermedias; reduce pérdidas por gravedad y **amplía las ventanas de lanzamiento** | 2–10 semanas            | algo menor (≈ 0,7 km/s)                       | Lanzadores pequeños, flexibilidad de fecha, vehículos con motores de bajo empuje |
+| **Baja energía (WSB / balística)** | Se sale más allá de la Luna hasta donde la gravedad del Sol dobla la trayectoria y la Luna «captura» al vehículo casi sin frenar                                   | 3–4 meses               | el menor (ahorra 100–150 m/s, ≈ 0,4–0,5 km/s) | Masa muy limitada, sin prisa, propelente almacenable                             |
+
+La elección de clase es el primer gran trade‑off tiempo ↔ Δv de la misión, y por eso es una
+variable de decisión y no un dato.
+
+### Referencias
+
+- Órbitas congeladas y mantenimiento: [Frozen orbit (Wikipedia)](https://en.wikipedia.org/wiki/Frozen_orbit); [Exploring the Design Space of Lunar GNSS in Frozen Orbit Conditions](https://arxiv.org/pdf/2010.08706); [Analysis on Delta‑Vs to Maintain Extremely Low Altitude on the Moon](https://www.researchgate.net/publication/335832756_Analysis_on_Delta-Vs_to_Maintain_Extremely_Low_Altitude_on_the_Moon_and_Its_Application_to_CubeSat_Mission).
+- Espera en órbita y _boil‑off_: [Starship HLS (Wikipedia)](https://en.wikipedia.org/wiki/Starship_HLS); [NASA NTRS 20050205845](https://ntrs.nasa.gov/api/citations/20050205845/downloads/20050205845.pdf); [NASA NTRS 20070016643](https://ntrs.nasa.gov/api/citations/20070016643/downloads/20070016643.pdf).
+- Enlace directo desde el polo sur: [Mitigating Fading in Cislunar Communications (JPL)](https://openpolar.no/Record/ftnasajpl:oai:trs.jpl.nasa.gov:2014%2F52271); [Coded Communications over Fading Channels, Lunar South Pole (JPL)](https://openpolar.no/Record/ftnasajpl:oai:trs.jpl.nasa.gov:2014%2F56086); [VIPER lunar operations (NASA)](https://science.nasa.gov/mission/viper/lunar-operations/); [IPN Progress Report 42‑243A](https://ipnpr.jpl.nasa.gov/progress_report/42-243/42-243A.pdf).
+- Clases de trayectoria: [A Comparison of Lunar Landing Trajectory Strategies (AGI)](https://www.agi.com/getmedia/b3f1c131-cfb3-4183-aba9-860fbcd89be6/A-Comparison-of-Lunar-landing-Trajectory-Strategies-Using-Numerical-Simulations.pdf?ext=.pdf); [ISSFD 2024 18‑1](https://issfd.org/ISSFD_2024/ISSFD2024_18-1.pdf); [Weak Stability Boundary transfer (glosario)](https://www.cislunarspace.cn/en/glossary/orbits/weak-stability-boundary-transfer-trajectory/).
