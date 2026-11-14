@@ -18,7 +18,7 @@ describe('IAU model vs JPL Horizons (DE441, MEAN_ME)', () => {
   it.each(fixtures.map((f) => [`${f.site} ${f.date} ${f.body}`, f] as const))(
     '%s agrees within 0.02°',
     (_, f) => {
-      const sky = skyAt(new Date(`${f.date}:00Z`), { lat: f.lat, lon: f.lon, heightM: f.heightM })
+      const sky = skyAt(new Date(`${f.date}Z`), { lat: f.lat, lon: f.lon, heightM: f.heightM })
       const body = sky[f.body as 'sun' | 'earth']
       expect(Math.abs(body.el - f.el)).toBeLessThan(0.02)
       expect(Math.abs(wrap180(body.az - f.az)) * Math.cos((f.el * Math.PI) / 180)).toBeLessThan(
@@ -47,7 +47,7 @@ describe('ephemeris with the published DE441 table vs JPL Horizons', () => {
   it.each(fixtures.map((f) => [`${f.site} ${f.date} ${f.body}`, f] as const))(
     '%s agrees within 0.001°',
     (_, f) => {
-      const sky = skyAt(new Date(`${f.date}:00Z`), { lat: f.lat, lon: f.lon, heightM: f.heightM })
+      const sky = skyAt(new Date(`${f.date}Z`), { lat: f.lat, lon: f.lon, heightM: f.heightM })
       const body = sky[f.body as 'sun' | 'earth']
       expect(Math.abs(body.el - f.el)).toBeLessThan(0.001)
       expect(Math.abs(wrap180(body.az - f.az)) * Math.cos((f.el * Math.PI) / 180)).toBeLessThan(

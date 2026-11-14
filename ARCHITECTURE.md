@@ -199,22 +199,22 @@ Las capas de visualización de QuickMap y Moon Trek tienen una escala de grises 
 
 ## 8. Tests
 
-| Qué                                  | Cómo                                                                                                                                                                                     |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Efemérides                           | Fixture de JPL Horizons, 360 posiciones (tolerancia 0,001° con la tabla DE441, 0,02° con el modelo IAU) y casos físicos (Sol en el polo, cara oculta)                                    |
-| Proyección, DEM, horizonte, ventanas | Unitarios con DEMs sintéticos (cráter, cúpula, rampa)                                                                                                                                    |
-| Métricas y barrido de fechas         | Series sintéticas y un caso real (sitio ecuatorial: 50 % de luz, 100 % de DTE)                                                                                                           |
-| Datos generados                      | Integridad de `public/data` (cobertura de sitios, tamaños, PSR frente a borde)                                                                                                           |
-| Store y URL                          | Validación de entradas y límites; ida y vuelta de escenarios, margen, perfil e idioma                                                                                                    |
-| Pendiente, dispersión, energía       | Planos inclinados de ángulo conocido, terreno plano, noche larga con agotamiento analítico                                                                                               |
-| Exportación                          | Filas = muestras, booleanos coherentes con el umbral, JSON columnar                                                                                                                      |
-| i18n                                 | Paridad de claves y parámetros ES/EN, detección de idioma, textos de sitios                                                                                                              |
-| UI                                   | Testing Library con cálculo real en el hilo principal                                                                                                                                    |
-| Paneles, recorrido y ayuda           | Paneles plegables y su persistencia, recorrido completo, teclado, `placeBubble`/`placePopover` dentro de la ventana, ayuda «?» en un portal fuera de contenedores con `overflow: hidden` |
-| DSN, temperatura, hardware           | Cobertura de las tres estaciones en 30 días, FSPL a la distancia media; equilibrio con Sol en el cénit, enfriamiento y suelo PSR; límites con margen del 20 % y URL hostil               |
-| Hielo y optimizador                  | DEM sintético con PSR al este: ruta recta, rodeo de un muro de 40°, PSR inalcanzable; el optimizador nunca propone pendientes ≥ 10°                                                      |
-| Paneles nuevos                       | Estaciones DSN en el panel, tarjeta térmica en una PSR (−233 °C), filtro de hardware con un sitio descartado y envío a Comparar                                                          |
-| Pantalla de inicio y exportación     | Splash con temporizadores falsos (espera al catálogo y al tiempo mínimo, se salta con clic); el menú Exportar solo ofrece descargas                                                      |
+| Qué                                  | Cómo                                                                                                                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Efemérides                           | Fixture de JPL Horizons, 480 posiciones (instantes fuera de la malla de 2 h) (tolerancia 0,001° con la tabla DE441, 0,02° con el modelo IAU) y casos físicos (Sol en el polo, cara oculta) |
+| Proyección, DEM, horizonte, ventanas | Unitarios con DEMs sintéticos (cráter, cúpula, rampa)                                                                                                                                      |
+| Métricas y barrido de fechas         | Series sintéticas y un caso real (sitio ecuatorial: 50 % de luz, 100 % de DTE)                                                                                                             |
+| Datos generados                      | Integridad de `public/data` (cobertura de sitios, tamaños, PSR frente a borde)                                                                                                             |
+| Store y URL                          | Validación de entradas y límites; ida y vuelta de escenarios, margen, perfil e idioma                                                                                                      |
+| Pendiente, dispersión, energía       | Planos inclinados de ángulo conocido, terreno plano, noche larga con agotamiento analítico                                                                                                 |
+| Exportación                          | Filas = muestras, booleanos coherentes con el umbral, JSON columnar                                                                                                                        |
+| i18n                                 | Paridad de claves y parámetros ES/EN, detección de idioma, textos de sitios                                                                                                                |
+| UI                                   | Testing Library con cálculo real en el hilo principal                                                                                                                                      |
+| Paneles, recorrido y ayuda           | Paneles plegables y su persistencia, recorrido completo, teclado, `placeBubble`/`placePopover` dentro de la ventana, ayuda «?» en un portal fuera de contenedores con `overflow: hidden`   |
+| DSN, temperatura, hardware           | Cobertura de las tres estaciones en 30 días, FSPL a la distancia media; equilibrio con Sol en el cénit, enfriamiento y suelo PSR; límites con margen del 20 % y URL hostil                 |
+| Hielo y optimizador                  | DEM sintético con PSR al este: ruta recta, rodeo de un muro de 40°, PSR inalcanzable; el optimizador nunca propone pendientes ≥ 10°                                                        |
+| Paneles nuevos                       | Estaciones DSN en el panel, tarjeta térmica en una PSR (−233 °C), filtro de hardware con un sitio descartado y envío a Comparar                                                            |
+| Pantalla de inicio y exportación     | Splash con temporizadores falsos (espera al catálogo y al tiempo mínimo, se salta con clic); el menú Exportar solo ofrece descargas                                                        |
 
 jsdom no implementa WebGL, así que `src/scene/` no se renderiza en los tests. Para comprobarlo visualmente se usan capturas con Chromium headless (Playwright) sobre la GPU real (`--use-angle=d3d11`); con SwiftShader la escena de superficie es demasiado lenta para capturarla.
 

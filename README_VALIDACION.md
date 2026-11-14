@@ -95,11 +95,11 @@ el usuario es tímida.
 
 ### Debilidades encontradas
 
-1. **La interpolación de la tabla no está validada.** Las 12 fechas de `validate-horizons.ts`
-   son `Date.UTC(…, 15, (m % 4) * 6)`, es decir horas 0, 6, 12 y 18 del día 15. Todas caen
-   exactamente sobre una muestra de la tabla de 2 h, así que los pesos de Lagrange se reducen a un
-   único punto. El «1,4″» del README mide la conversión de marco y la aberración, no el error entre
-   muestras.
+1. ~~**La interpolación de la tabla no está validada.**~~ **Corregido en la rama
+   `feature/audiencia-y-mision`**: las 12 fechas de `validate-horizons.ts` caían en horas 0, 6, 12
+   y 18, exactamente sobre muestras de la tabla de 2 h. Ahora se toman a las hh:37; con 20 sitios
+   (480 posiciones) la diferencia máxima sigue siendo 1,4″, así que la interpolación de Lagrange
+   queda validada.
 2. **Validación no independiente**: la tabla se construye desde Horizons y se contrasta con
    Horizons. No hay una segunda fuente (p. ej. SPICE) para las efemérides.
 3. **`illumValidation.test.ts` es circular**: solo comprueba números ya guardados en
@@ -181,7 +181,7 @@ Notas sobre la suite de tests:
 | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | README y GUIA: recorrido guiado de 13 pasos                 | `TOUR_STEPS` tiene 12 (`src/ui/tourSteps.ts`)                                                                                                              |
 | README: «elipse de aterrizaje»                              | Círculo de 17 puntos (`dispersionOffsets`)                                                                                                                 |
-| README: diferencia máxima 1,4″ con la tabla DE441           | Cierto solo en instantes que coinciden con muestras de la tabla (§ 4.1)                                                                                    |
+| README: diferencia máxima 1,4″ con la tabla DE441           | Era cierto solo sobre muestras de la tabla; revalidado fuera de la malla con el mismo resultado (§ 4.1)                                                    |
 | ARCHITECTURE § 3: `ephemeris.ts` = «modelo de rotación IAU» | Hoy es la tabla DE441 con el IAU como respaldo; DE441 solo se describe en § 6                                                                              |
 | README no menciona el **asistente IA**                      | Existe `src/assistant/` + `AssistantFab.tsx`; es un cliente simulado por palabras clave con backend opcional (`VITE_ASSISTANT_URL`) que no está en el repo |
 
