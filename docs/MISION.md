@@ -78,6 +78,33 @@ de los 90 esperaba la ventana en una órbita polar de 200 km.
 ❓ El valor exacto de `κ_sk` y `β` depende del vehículo. Hasta tener el dato, se usa el defecto y
 se muestra siempre la espera en días para que el equipo juzgue.
 
+### 2.3 Modos de comunicación
+
+**Decidido**: el sistema contempla **todas** las opciones de comunicación y las evalúa en
+combinación con las clases de trayectoria. El modo `m` es una variable de decisión (§ 3), no un
+dato. Cada modo define cómo se calcula la cobertura y qué coste añade:
+
+| Modo `m`                      | Cobertura `cov(m, p, t)`                                                                                           | Coste añadido                                                                                       | Ejemplos                                                             |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **DTE** (directo a la Tierra) | `DTE%(p, t)` de LUMEN: Tierra ≥ `θ_enlace` sobre el relieve y estación DSN visible                                 | Ninguno en Δv; multitrayecto y cortes de hasta 2 semanas (Anexo A)                                  | IM‑1, SLIM, Chandrayaan‑3 (con su orbitador como apoyo)              |
+| **Relé de terceros**          | `relay%(p, t)` de la órbita del relé: fracción del tiempo en que el relé está ≥ `θ_relé` sobre el horizonte de `p` | Ninguno en Δv; coste económico y **dependencia** externa (disponibilidad, tarifas, compatibilidad)  | Queqiao‑2 (CNSA), Lunar Pathfinder / Moonlight (ESA), LunaNet (NASA) |
+| **Relé propio**               | Igual que el anterior, con la órbita que se elija                                                                  | **Δv y masa**: el relé viaja con la misión y necesita su propia inserción; se suma `Δv_relé` a `f₃` | Chang'e‑4 + Queqiao, VIPER (previsto con relé comercial)             |
+| **Híbrido** (DTE + relé)      | Unión de ventanas: `max(DTE, relay)` en cada instante                                                              | El del relé elegido; a cambio, la cobertura más alta y redundancia                                  | Artemis (DTE + Gateway/LunaNet), misiones CLPS con relé de respaldo  |
+
+La cobertura del relé se modela de forma **paramétrica**, igual que las trayectorias: cada relé se
+declara con `{ id, orbitKind, coveragePolarPct, minElDeg, dvKms (solo propio), external: bool }`.
+Valores de referencia para un sitio polar sur:
+
+| Órbita del relé                                | Cobertura típica del polo sur             | Nota                        |
+| ---------------------------------------------- | ----------------------------------------- | --------------------------- |
+| Elíptica congelada 12 h, apolunio sobre el sur | 70–90 %                                   | Queqiao‑2, Lunar Pathfinder |
+| Halo L2 Tierra‑Luna                            | ≈ 100 % del lado oculto, polo sur parcial | Queqiao‑1                   |
+| NRHO 6,5 días (Gateway)                        | ≈ 85–90 % del polo sur                    | Artemis                     |
+| Constelación 3–4 satélites                     | ≈ 100 %                                   | Moonlight / LunaNet         |
+
+❓ Los porcentajes son de orden de magnitud. Cuando se conozca la órbita del relé candidato, la
+cobertura se puede calcular con las mismas rutinas de horizonte de LUMEN a partir de su efeméride.
+
 ---
 
 ## 3. Variables de decisión
@@ -86,6 +113,7 @@ se muestra siempre la espera en días para que el equipo juzgue.
 | ---------------- | ------------------------------------------------------------------------------ | ------------------------------------ |
 | `t_L`            | `[t_L^min, t_L^max]` = fecha deseada ± holgura (defecto ± 30 días), paso 1 día | Fecha de lanzamiento desde la Tierra |
 | `c`              | `C`                                                                            | Clase de trayectoria                 |
+| `m`              | `M` = {DTE, relé de terceros, relé propio, híbrido} (§ 2.3)                    | Modo de comunicación                 |
 | `t_A`            | `t_A ≥ t_O`, hasta `t_O + 60 días`, paso 1 día (refinable a 1 h)               | Fecha de aterrizaje                  |
 | `p = (lat, lon)` | `dist(p, T) ≤ R`, rejilla de 40 m                                              | Punto de aterrizaje                  |
 
@@ -94,17 +122,20 @@ Variables derivadas:
 - `t_O = t_L + τ(c)`: llegada a órbita lunar.
 - `t_A − t_O`: **espera en órbita** (loiter). Puede ser cero.
 
-Un candidato es la tupla `x = (t_L, c, t_A, p)`.
+Un candidato es la tupla `x = (t_L, c, m, t_A, p)`. Las combinaciones `(c, m)` son el núcleo de la
+comparación: por ejemplo «directa + DTE» frente a «baja energía + relé de terceros» representan dos
+filosofías de misión distintas, y el optimizador debe mostrarlas lado a lado.
 
 ---
 
 ## 4. Objetivos (vector a minimizar)
 
-|      | Objetivo                          | Expresión                                          | Cómo se calcula                                                                                                                                                                       |
-| ---- | --------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `f₁` | Tiempo total hasta el aterrizaje  | `t_A − t_L` = viaje + espera en órbita             | Aritmética sobre `τ(c)` y `t_A`; se reporta desglosado                                                                                                                                |
-| `f₂` | Distancia transitable al objetivo | `ruta(p → T)` en metros                            | Dijkstra de 8 vecinos sobre el DEM de 20 m con límite de pendiente del rover (`computeIceAccess` en `src/astro/iceAccess.ts`). Si no hay ruta: distancia geodésica y marca «sin ruta» |
-| `f₃` | Recurso propulsivo (Δv total)     | `Δv_base(c) · k(d_TL(t_O)) + Δv_espera(L)` en km/s | Tabla de clases + distancia Tierra‑Luna del DE441 + coste de espera (§ 2.2)                                                                                                           |
+|      | Objetivo                          | Expresión                                                           | Cómo se calcula                                                                                                                                                                       |
+| ---- | --------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `f₁` | Tiempo total hasta el aterrizaje  | `t_A − t_L` = viaje + espera en órbita                              | Aritmética sobre `τ(c)` y `t_A`; se reporta desglosado                                                                                                                                |
+| `f₂` | Distancia transitable al objetivo | `ruta(p → T)` en metros                                             | Dijkstra de 8 vecinos sobre el DEM de 20 m con límite de pendiente del rover (`computeIceAccess` en `src/astro/iceAccess.ts`). Si no hay ruta: distancia geodésica y marca «sin ruta» |
+| `f₃` | Recurso propulsivo (Δv total)     | `Δv_base(c) · k(d_TL(t_O)) + Δv_espera(L) + Δv_relé(m)` en km/s     | Tabla de clases + distancia Tierra‑Luna del DE441 + coste de espera (§ 2.2) + Δv del relé propio si `m` lo incluye (0 en los demás modos)                                             |
+| `f₄` | Dependencia externa (opcional)    | `0` si DTE o relé propio; `1` si relé de terceros; `0,5` si híbrido | Indicador ordinal; permite que el frente de Pareto separe «autónomo» de «dependiente». Se puede apagar y mostrar solo como atributo                                                   |
 
 **Decidido**: `f₁` es el **tiempo total** `t_A − t_L`, porque los recursos son limitados y la
 espera en órbita también los consume. Se muestra siempre desglosado en viaje `τ(c)` y espera `L`.
@@ -122,16 +153,16 @@ Los tres objetivos están en unidades distintas (días, metros, km/s). Para el p
 Un candidato que viole cualquiera de estas se descarta antes de comparar objetivos. Cada una se
 evalúa con código que ya existe en LUMEN, salvo g5.
 
-| Id     | Restricción                                                                                                                                  | Expresión                                                     | Cómo se evalúa                                                                                                                                                                                                    |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **g1** | Luz continua tras el aterrizaje (**requisito de la misión**, no derivado de la batería: menos días de luz desaprovecharían la investigación) | `luz_continua(p, t_A) ≥ N_luz`                                | `evaluateSite` → serie `sunFrac` → `findWindows(≥ 0,5)` → `stateAt(t_A)`: si `on`, `nextChangeMs − t_A ≥ N_luz · 24 h` (`src/astro/series.ts`, `windows.ts`)                                                      |
-| **g2** | Pendiente segura en `p`                                                                                                                      | `pendiente(p) < H.maxSlopeDeg` y ningún vecino 3×3 ≥ 15°      | `src/astro/slope.ts`; mismo criterio que `computeOptimize` en `optimize.ts`                                                                                                                                       |
-| **g3** | Enlace directo con la Tierra                                                                                                                 | `DTE%(p, [t_A, t_A + D]) ≥ H.minDtePct` con margen `θ_enlace` | `computeMetrics(...).dtePct` (`src/astro/metrics.ts`)                                                                                                                                                             |
-| **g4** | Energía                                                                                                                                      | la batería no se agota en `[t_A, t_A + D]`                    | `simulateBattery(series, E).depletedAtMs === null` (`src/astro/energy.ts`)                                                                                                                                        |
-| **g5** | Ventana de lanzamiento                                                                                                                       | `t_L ∈ W_L`                                                   | **Decidido**: lista de intervalos del **proveedor de lanzamiento** (dato de entrada). Si no se ha cargado ninguna, se usa como respaldo una regla geométrica aproximada por clase y se marca «ventanas estimadas» |
-| **g6** | Acceso al objetivo                                                                                                                           | existe ruta `p → T` con pendiente ≤ `H.roverMaxSlopeDeg`      | `computeIceAccess(...).reachable`                                                                                                                                                                                 |
-| **g7** | Cobertura de efemérides                                                                                                                      | `t_A + D` dentro de 2026–2030                                 | `tableCovers` (`ephemTable.ts`); fuera, se evalúa con el modelo IAU y se marca «precisión reducida»                                                                                                               |
-| **g8** | Cobertura de terreno                                                                                                                         | `p` dentro de `R` y del tile LOLA 20 m                        | `demCovers` (`src/astro/dem.ts`)                                                                                                                                                                                  |
+| Id     | Restricción                                                                                                                                  | Expresión                                                                  | Cómo se evalúa                                                                                                                                                                                                    |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **g1** | Luz continua tras el aterrizaje (**requisito de la misión**, no derivado de la batería: menos días de luz desaprovecharían la investigación) | `luz_continua(p, t_A) ≥ N_luz`                                             | `evaluateSite` → serie `sunFrac` → `findWindows(≥ 0,5)` → `stateAt(t_A)`: si `on`, `nextChangeMs − t_A ≥ N_luz · 24 h` (`src/astro/series.ts`, `windows.ts`)                                                      |
+| **g2** | Pendiente segura en `p`                                                                                                                      | `pendiente(p) < H.maxSlopeDeg` y ningún vecino 3×3 ≥ 15°                   | `src/astro/slope.ts`; mismo criterio que `computeOptimize` en `optimize.ts`                                                                                                                                       |
+| **g3** | Comunicación suficiente en el modo `m`                                                                                                       | `cov(m, p, [t_A, t_A + D]) ≥ H.minCovPct` y corte más largo ≤ `maxOutageH` | DTE: `computeMetrics(...).dtePct` y `longestNoDteH`; relé: `relay%` paramétrico (§ 2.3); híbrido: unión de ventanas con `findWindows` sobre `max(earthFrac, relayVisible)`                                        |
+| **g4** | Energía                                                                                                                                      | la batería no se agota en `[t_A, t_A + D]`                                 | `simulateBattery(series, E).depletedAtMs === null` (`src/astro/energy.ts`)                                                                                                                                        |
+| **g5** | Ventana de lanzamiento                                                                                                                       | `t_L ∈ W_L`                                                                | **Decidido**: lista de intervalos del **proveedor de lanzamiento** (dato de entrada). Si no se ha cargado ninguna, se usa como respaldo una regla geométrica aproximada por clase y se marca «ventanas estimadas» |
+| **g6** | Acceso al objetivo                                                                                                                           | existe ruta `p → T` con pendiente ≤ `H.roverMaxSlopeDeg`                   | `computeIceAccess(...).reachable`                                                                                                                                                                                 |
+| **g7** | Cobertura de efemérides                                                                                                                      | `t_A + D` dentro de 2026–2030                                              | `tableCovers` (`ephemTable.ts`); fuera, se evalúa con el modelo IAU y se marca «precisión reducida»                                                                                                               |
+| **g8** | Cobertura de terreno                                                                                                                         | `p` dentro de `R` y del tile LOLA 20 m                                     | `demCovers` (`src/astro/dem.ts`)                                                                                                                                                                                  |
 
 Restricciones opcionales (parametrizables, apagadas por defecto):
 
@@ -155,8 +186,20 @@ Restricciones opcionales (parametrizables, apagadas por defecto):
    qué relajar (igual que `violations[]` en PlanningAI).
 
 Representación visual propuesta: gráfico XY de `f₂` (distancia al hielo) frente a `f₁` (días hasta
-aterrizar), con el color por `f₃` (Δv) y el punto recomendado resaltado. Con tres objetivos, dos
-ejes y color bastan.
+aterrizar), con el color por `f₃` (Δv), la forma del marcador por combinación `(c, m)` y el punto
+recomendado resaltado.
+
+Además, una **matriz de combinaciones** trayectoria × comunicación con el mejor candidato de cada
+celda (o «inviable» y la restricción que lo descarta), para que el equipo vea de un vistazo qué
+filosofías de misión sobreviven:
+
+|                  | DTE | Relé de terceros | Relé propio | Híbrido |
+| ---------------- | --- | ---------------- | ----------- | ------- |
+| **Directa**      | …   | …                | …           | …       |
+| **Alargada**     | …   | …                | …           | …       |
+| **Baja energía** | …   | …                | …           | …       |
+
+Cada celda muestra `f₁ / f₂ / f₃` del mejor punto y un enlace para abrirlo en Comparar.
 
 ---
 
@@ -168,6 +211,7 @@ Tamaño con los defectos:
 | -------- | ---------------------------------------------------------------------------------------- |
 | `t_L`    | 61 (± 30 días, diario)                                                                   |
 | `c`      | 3                                                                                        |
+| `m`      | 4 (o menos si el equipo descarta alguno)                                                 |
 | `t_A`    | ≤ 60 por `(t_L, c)`                                                                      |
 | `p`      | rejilla de 40 m dentro de `R = 2 km` ≈ 7 800 puntos; tras g2 y g8, típicamente 500–3 000 |
 
@@ -177,7 +221,10 @@ Producto bruto: ~10⁷–10⁸ tuplas. Parece mucho, pero el problema es **separ
   llegó. Se precalcula una vez por `p` la serie solar/terrestre de todo el rango de `t_A` (como
   hace `sweepLandingDates`) y se obtiene `luz_continua(p, t)` y `DTE%(p, t)` para todos los `t`.
 - `f₂` y g6 dependen solo de `p`. Se calculan una vez por `p`.
-- `f₁`, `f₃` y g5 dependen solo de `(t_L, c, t_A)`. Son aritmética.
+- `f₁`, `f₃` y g5 dependen solo de `(t_L, c, m, t_A)`. Son aritmética.
+- `m` solo cambia g3 y los sumandos `Δv_relé` y `f₄`: la cobertura DTE se calcula una vez por
+  `(p, t_A)` y la del relé una vez por `t_A`; los cuatro modos se derivan de esas dos series sin
+  recalcular nada. Multiplicar por `|M| = 4` no multiplica el coste.
 
 Con eso, el cruce final es un bucle sobre `(t_L, c, t_A)` × `p` con operaciones O(1), que cabe en
 segundos dentro del worker. La **enumeración exhaustiva es viable**, así que no hacen falta
@@ -199,17 +246,17 @@ Modos propuestos (paralelos a PlanningAI):
 PlanningAI (`/Users/jl/Developer/GMiningAI/PlanningAI`) resuelve planes mineros con un problema
 congelado, un evaluador único y un ranking «factible primero». El mismo esqueleto sirve aquí:
 
-| PlanningAI                                                                     | Misión lunar                                                                                                                               |
-| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PlanningProblem` (dataclass congelada; `__post_init__` valida datos y rangos) | `MissionProblem { target, radiusM, launchRange, classes, hardware, energy, missionDays, minSunDays, weights }` con validación al construir |
-| `PROBLEM_PARAMETER_REGISTRY` (tipo, defecto, mín, máx, unidad, alias)          | Tabla de parámetros § 9, declarada en código como registro                                                                                 |
-| Acción por periodo: ley de corte                                               | Tupla `(t_L, c, t_A, p)`; si se usa búsqueda en árbol, secuencia lanzamiento → clase → aterrizaje → punto                                  |
-| `PlanEvaluator.evaluate` → `feasible`, `violations[]`                          | `evaluateMission(x)` → `{ feasible, violations: ('g1' … 'g8')[], objectives: {f1, f2, f3}, metrics }`                                      |
-| Objetivo único: VAN descontado                                                 | Vector `(f₁, f₂, f₃)` con dominancia de Pareto                                                                                             |
-| Ranking: factibles → mayor VAN → desempates                                    | Factibles → no dominados → punto recomendado por pesos                                                                                     |
-| Modos `fast / auto / search / exact / learned`                                 | `fast / exact` (§ 7); `search` futuro                                                                                                      |
-| `PlanResult` con `provenance` (hash de datos, parámetros, commit)              | `MissionPlan` con versión del DE441, tiles LOLA usados, parámetros y fecha de cálculo                                                      |
-| Servidor MCP (`Create_Mine_Plan`, `Get_Planning_Result`)                       | Job `planMission` en el worker de LUMEN; opcionalmente endpoint MCP si se expone fuera de la app                                           |
+| PlanningAI                                                                     | Misión lunar                                                                                                                                                                 |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PlanningProblem` (dataclass congelada; `__post_init__` valida datos y rangos) | `MissionProblem { target, radiusM, launchRange, launchWindows, classes, commModes, relays, hardware, energy, missionDays, minSunDays, weights }` con validación al construir |
+| `PROBLEM_PARAMETER_REGISTRY` (tipo, defecto, mín, máx, unidad, alias)          | Tabla de parámetros § 9, declarada en código como registro                                                                                                                   |
+| Acción por periodo: ley de corte                                               | Tupla `(t_L, c, t_A, p)`; si se usa búsqueda en árbol, secuencia lanzamiento → clase → aterrizaje → punto                                                                    |
+| `PlanEvaluator.evaluate` → `feasible`, `violations[]`                          | `evaluateMission(x)` → `{ feasible, violations: ('g1' … 'g8')[], objectives: {f1, f2, f3}, metrics }`                                                                        |
+| Objetivo único: VAN descontado                                                 | Vector `(f₁, f₂, f₃)` con dominancia de Pareto                                                                                                                               |
+| Ranking: factibles → mayor VAN → desempates                                    | Factibles → no dominados → punto recomendado por pesos                                                                                                                       |
+| Modos `fast / auto / search / exact / learned`                                 | `fast / exact` (§ 7); `search` futuro                                                                                                                                        |
+| `PlanResult` con `provenance` (hash de datos, parámetros, commit)              | `MissionPlan` con versión del DE441, tiles LOLA usados, parámetros y fecha de cálculo                                                                                        |
+| Servidor MCP (`Create_Mine_Plan`, `Get_Planning_Result`)                       | Job `planMission` en el worker de LUMEN; opcionalmente endpoint MCP si se expone fuera de la app                                                                             |
 
 Diferencia clave: PlanningAI tiene un objetivo escalar y penalizaciones blandas para guiar el
 aprendizaje. Aquí los objetivos son tres y las restricciones son duras, así que la ordenación es
@@ -229,6 +276,10 @@ por dominancia, no por una sola cifra.
 | `launchDate`           | fecha                      | hoy + 90 d                               | 2026‑01‑01 | 2030‑12‑31 | UTC    | Fecha deseada de lanzamiento              |
 | `launchSlackDays`      | entero                     | 30                                       | 0          | 180        | d      | Holgura ± alrededor de `launchDate`       |
 | `classes`              | lista                      | las 3 de § 2.1                           | 1          | —          | —      | Clases de trayectoria admitidas           |
+| `commModes`            | lista                      | los 4 de § 2.3                           | 1          | —          | —      | Modos de comunicación a evaluar           |
+| `relays`               | lista                      | Queqiao‑2, Lunar Pathfinder (terceros)   | 0          | —          | —      | Relés disponibles con su cobertura y Δv   |
+| `minCovPct`            | número                     | 30 (= `minDtePct` actual)                | 0          | 100        | %      | Cobertura mínima de comunicación          |
+| `maxOutageH`           | número                     | 336 (14 días)                            | 1          | 720        | h      | Corte de comunicación más largo admisible |
 | `maxLoiterDays`        | entero                     | 60                                       | 0          | 180        | d      | Espera máxima en órbita                   |
 | `minSunDays` (`N_luz`) | número                     | 15                                       | 1          | 60         | d      | Luz continua mínima tras aterrizar        |
 | `missionDays` (`D`)    | entero                     | 14                                       | 1          | 60         | d      | Duración en superficie                    |
@@ -264,23 +315,25 @@ para cada `(t_L, t_O)`. La interfaz `evaluateMission` no cambia; solo la funció
 
 ### Decidido (primera ronda, 14 de noviembre de 2026)
 
-| #   | Pregunta                                | Decisión                                                                                                                                              |
-| --- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | ¿`f₁` total o solo viaje?               | **Total**: la espera en órbita consume recursos. Coste de la espera según § 2.2 con valores de referencia bibliográficos hasta tener los del vehículo |
-| 2   | ¿`N_luz` fijo o derivado de la batería? | **Requisito fijo de la misión**: 15 días para completar la investigación. Quedarse con menos sería desaprovechar la misión                            |
-| 3   | ¿`T` punto o región?                    | **Lugar nuevo**: región PSR o punto con características variables. Se admite id del catálogo o coordenadas                                            |
-| 4   | ¿En qué se miden los recursos?          | **Δv**                                                                                                                                                |
-| 7   | ¿Ventanas del proveedor?                | **Sí**: la misión depende de ellas. Son dato de entrada; la regla geométrica es solo respaldo                                                         |
+| #   | Pregunta                                | Decisión                                                                                                                                                    |
+| --- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | ¿`f₁` total o solo viaje?               | **Total**: la espera en órbita consume recursos. Coste de la espera según § 2.2 con valores de referencia bibliográficos hasta tener los del vehículo       |
+| 2   | ¿`N_luz` fijo o derivado de la batería? | **Requisito fijo de la misión**: 15 días para completar la investigación. Quedarse con menos sería desaprovechar la misión                                  |
+| 3   | ¿`T` punto o región?                    | **Lugar nuevo**: región PSR o punto con características variables. Se admite id del catálogo o coordenadas                                                  |
+| 4   | ¿En qué se miden los recursos?          | **Δv**                                                                                                                                                      |
+| 5   | ¿Enlace directo o relé?                 | **Todos los modos** (DTE, relé de terceros, relé propio, híbrido) como variable de decisión, evaluados en combinación con las clases de trayectoria (§ 2.3) |
+| 6   | ¿Qué clases de trayectoria?             | **Todas** las de § 2.1 se evalúan; el equipo restringe la lista cuando conozca el vehículo                                                                  |
+| 7   | ¿Ventanas del proveedor?                | **Sí**: la misión depende de ellas. Son dato de entrada; la regla geométrica es solo respaldo                                                               |
 
 ### Sigue abierto ❓
 
 - **Pesos** `w` por defecto entre tiempo total, distancia al hielo y Δv. Mientras no se fijen,
   `(0,4, 0,4, 0,2)` y la frontera completa a la vista.
 - **Presupuesto de Δv** cerrado del vehículo: si existe, `f₃` pasa también a restricción.
-- **Comunicaciones**: ¿solo enlace directo o también relé orbital? (Anexo A explica el reto del
-  enlace directo desde el polo sur.)
 - **Clases de trayectoria realistas** para este vehículo y tipo de propelente (almacenable o
   criogénico), que fija `β` en § 2.2.
+- **Relés concretos** a cargar en `relays`: cuáles estarán operativos en la fecha de la misión, su
+  órbita y, si son de terceros, condiciones de acceso.
 - **Valores de `κ_sk` y `β`** del vehículo real.
 
 ---
