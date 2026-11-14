@@ -53,6 +53,23 @@ Los tres paneles empiezan **minimizados**: solo se ve su cabecera con un resumen
 
 Cada panel y el HUD tienen un botón **«?»** con una explicación breve y un enlace al paso correspondiente del recorrido.
 
+### Modo por audiencia
+
+En la pantalla de bienvenida (**¿Quién eres?**) y en la barra superior (**Modo**) se elige cuánto detalle mostrar. Los cálculos son siempre los mismos; solo cambia qué se ve. La elección se recuerda y viaja en los enlaces compartidos como `?mode=`.
+
+| Qué se muestra                                                  | Público | Educador | Planificador |
+| --------------------------------------------------------------- | :-----: | :------: | :----------: |
+| Sol, Tierra, cuentas atrás, puntuación, línea temporal, batería |    ✓    |    ✓     |      ✓       |
+| Energía, luz y DTE del resumen de la ventana                    |    ✓    |    ✓     |      ✓       |
+| Resto del resumen (ambos, noche, sin DTE, elevación solar)      |         |    ✓     |      ✓       |
+| Temperatura estimada, acceso a hielo, pendientes del terreno    |         |    ✓     |      ✓       |
+| Pestañas Horizonte 360° y Fechas alternativas                   |         |    ✓     |      ✓       |
+| Control Ingeniería ↔ Ciencia, coordenadas personalizadas        |         |    ✓     |      ✓       |
+| Fila DSN (distancia, pérdida, estación), margen de enlace       |         |          |      ✓       |
+| Elipse de aterrizaje y «Sugerir mejor punto»                    |         |          |      ✓       |
+| Filtro de hardware, exportación CSV/JSON                        |         |          |      ✓       |
+| «¿Por qué?» abierto al entrar                                   |    ✓    |    ✓     |              |
+
 ## 4. Vista Órbita
 
 La Luna completa iluminada por el Sol real del instante, con los mosaicos LRO WAC de Moon Trek (NASA/JPL) sobre el globo y sobre el relieve LOLA del casquete polar, la Tierra con su fase (día/noche, nubes) y los sitios marcados:
@@ -200,7 +217,7 @@ Las columnas del CSV están descritas en el [README](../README.md#columnas-de-la
 ## 12. ¿Por qué?, Guía y ayuda «?»
 
 - **¿Por qué?**: explicaciones para público general de por qué el polo sur es difícil (Sol rasante, Tierra en el horizonte, sombras permanentes…), cada una con un botón que lleva al sitio que la ilustra. La tarjeta **Canadá en la Luna** resume los aportes de la Agencia Espacial Canadiense y su rover utilitario; al final se listan los cuatro recursos de la NASA y la CSA que usa la herramienta.
-- **Guía**: recorrido guiado de 13 pasos. Se navega con los botones o con ← →, y Esc lo cierra. El último paso enlaza a esta guía.
+- **Guía**: recorrido guiado de 12 pasos. Se navega con los botones o con ← →, y Esc lo cierra. El último paso enlaza a esta guía.
 - **«?»**: ayuda contextual de cada panel y del HUD. Se cierra con Esc o con un clic fuera.
 
 ## 13. Atajos y enlaces
