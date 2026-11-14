@@ -27,6 +27,17 @@ export const en: Record<keyof typeof es, string> = {
   'topbar.guide': 'Guide',
   'topbar.guideTitle': 'Guided tour of the interface',
   'topbar.tools': 'Tools',
+  'topbar.audience': 'Mode',
+
+  // Audience mode (what is shown, never what is computed)
+  'audience.planner': 'Planner',
+  'audience.educator': 'Educator',
+  'audience.public': 'Public',
+  'audience.planner.desc': 'Everything: DSN, thermal, landing ellipse, hardware filter and export.',
+  'audience.educator.desc':
+    'The physics of the place: Sun, Earth, horizon, illumination and ice, without the engineering detail.',
+  'audience.public.desc': 'The essentials: is there Sun? can you see Earth? and why that matters.',
+  'audience.who': 'Who are you?',
 
   // Collapsible panels
   'panel.left': 'Landing sites',

@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { useBattery, useInstant } from '../hooks/useScenario.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
+import { useShow } from './audience.ts'
 import {
   type BottomPanel as Tab,
   selectActiveScenario,
@@ -32,6 +34,16 @@ export function BottomPanel() {
   const battery = useBattery(result?.series)
   const hibernateBelowPct = useMissionStore((s) => s.energy.hibernateBelowPct)
   const t = useT()
+  const showHorizon = useShow('horizonTab')
+  const showDates = useShow('datesTab')
+  const tabs = TABS.filter(
+    ([id]) => (id !== 'horizon' || showHorizon) && (id !== 'dates' || showDates),
+  )
+  // Switching to an audience that hides the open tab falls back to the timeline.
+  const tabHidden = !tabs.some(([id]) => id === tab)
+  useEffect(() => {
+    if (tabHidden) setTab('timeline')
+  }, [tabHidden, setTab])
 
   return (
     <CollapsiblePanel
@@ -58,7 +70,7 @@ export function BottomPanel() {
     >
       <TimeControls />
       <div className="subtabs" role="tablist">
-        {TABS.map(([id, label]) => (
+        {tabs.map(([id, label]) => (
           <button
             key={id}
             type="button"

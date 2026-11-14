@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { SITE_SEEDS } from '../config/sites.ts'
 import { customSiteInfo } from '../data/catalog.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
+import { useUiStore } from '../store/useUiStore.ts'
 import { applyUrl, parseScenarioList, stateToSearch } from './useUrlSync.ts'
 
 const sites = SITE_SEEDS.map((s) => ({
@@ -47,6 +48,17 @@ describe('URL state', () => {
     expect(s.activeId).toBe(s.scenarios[1].id)
     expect(s.linkMarginDeg).toBe(5)
     expect(s.compareOpen).toBe(true)
+  })
+
+  it('round-trips the audience and ignores unknown modes', () => {
+    useUiStore.setState({ audience: 'educator' })
+    const search = stateToSearch()
+    expect(search).toContain('mode=educator')
+    useUiStore.setState({ audience: 'planner' })
+    applyUrl(search)
+    expect(useUiStore.getState().audience).toBe('educator')
+    applyUrl('?site=cabeus&mode=hacker')
+    expect(useUiStore.getState().audience).toBe('educator')
   })
 
   it('keeps the single-scenario format working', () => {

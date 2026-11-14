@@ -25,6 +25,18 @@ export const es = {
   'topbar.guide': 'Guía',
   'topbar.guideTitle': 'Recorrido guiado por la interfaz',
   'topbar.tools': 'Herramientas',
+  'topbar.audience': 'Modo',
+
+  // Audience mode (what is shown, never what is computed)
+  'audience.planner': 'Planificador',
+  'audience.educator': 'Educador',
+  'audience.public': 'Público',
+  'audience.planner.desc':
+    'Todos los datos: DSN, térmico, elipse de aterrizaje, filtro de hardware y exportación.',
+  'audience.educator.desc':
+    'La física del lugar: Sol, Tierra, horizonte, iluminación y hielo, sin los detalles de ingeniería.',
+  'audience.public.desc': 'Lo esencial: ¿hay Sol?, ¿se ve la Tierra?, y por qué eso importa.',
+  'audience.who': '¿Quién eres?',
 
   // Collapsible panels
   'panel.left': 'Sitios de alunizaje',

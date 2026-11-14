@@ -8,6 +8,7 @@ import { useUiStore } from '../store/useUiStore.ts'
 import { formatLatLon } from './format.ts'
 import { MoonLocator } from './MoonLocator.tsx'
 import { TopSites } from './TopSites.tsx'
+import { useShow } from './audience.ts'
 
 const ACCURACY_LABEL: Record<SiteInfo['accuracy'], MsgKey> = {
   lola: 'acc.lola',
@@ -157,6 +158,7 @@ export function SitePicker() {
   const setShowAll = useUiStore((s) => s.setShowAllSites)
   const site = findSite(sites, scenario.siteId)
   const curated = sites.filter((s) => !s.custom).length
+  const showCustom = useShow('customCoords')
 
   return (
     <div className="sites">
@@ -184,7 +186,7 @@ export function SitePicker() {
         <>
           <SiteList value={scenario.siteId} onChange={selectSite} />
           <ActiveSiteLinks site={site} />
-          <CustomSiteForm />
+          {showCustom && <CustomSiteForm />}
         </>
       )}
     </div>

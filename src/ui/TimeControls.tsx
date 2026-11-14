@@ -12,6 +12,7 @@ import {
   useMissionStore,
 } from '../store/useMissionStore.ts'
 import { formatDateTime, formatHours, fromInputValue, toInputValue } from './format.ts'
+import { useShow } from './audience.ts'
 
 /** Landing date, mission length, scrubber and playback. Shared by all scenarios. */
 export function TimeControls() {
@@ -24,6 +25,7 @@ export function TimeControls() {
   const { setStart, setOffset, setMissionDays, togglePlay, setSpeed, setLinkMargin } =
     useMissionStore.getState()
   const t = useT()
+  const showLinkMargin = useShow('linkMargin')
   const { instant, timeMs } = useInstant(scenario)
   // Re-renders once the DE441 table is installed on this thread.
   useAsync('ephem-table', installEphemerisTable)
@@ -54,17 +56,19 @@ export function TimeControls() {
             onChange={(e) => setMissionDays(Number(e.target.value))}
           />
         </label>
-        <label className="field field--narrow" title={t('link.title')}>
-          <span>{t('link.label')}</span>
-          <input
-            type="number"
-            min={LINK_MARGIN.min}
-            max={LINK_MARGIN.max}
-            step={0.5}
-            value={linkMarginDeg}
-            onChange={(e) => setLinkMargin(Number(e.target.value))}
-          />
-        </label>
+        {showLinkMargin && (
+          <label className="field field--narrow" title={t('link.title')}>
+            <span>{t('link.label')}</span>
+            <input
+              type="number"
+              min={LINK_MARGIN.min}
+              max={LINK_MARGIN.max}
+              step={0.5}
+              value={linkMarginDeg}
+              onChange={(e) => setLinkMargin(Number(e.target.value))}
+            />
+          </label>
+        )}
         <div className="time__buttons">
           <button
             type="button"

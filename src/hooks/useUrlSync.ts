@@ -11,7 +11,7 @@ import {
   selectActiveScenario,
   useMissionStore,
 } from '../store/useMissionStore.ts'
-import { useUiStore } from '../store/useUiStore.ts'
+import { isAudience, useUiStore } from '../store/useUiStore.ts'
 
 const urlDate = (ms: number) => new Date(ms).toISOString().slice(0, 16) + 'Z'
 
@@ -110,7 +110,7 @@ function topLevelParams(p: URLSearchParams): Partial<ScenarioParams> {
  *   &s=shackleton-rim@2027-03-01T00:00Z,shackleton-floor@2027-03-01T00:00Z~d30&a=0&cmp=1 (Compare;
  *     `~…` = settings of that scenario that differ from the top-level ones)
  *   &link=3 (DTE link margin, deg)
- *   &lang=en (UI language)
+ *   &lang=en (UI language) &mode=public (audience: planner | educator | public)
  *   &hw=15,120,30,20 (hardware limits: slope, night h, DTE %, rover slope) &sci=0.3 (science weight)
  *   &en=lander | en=custom:vertical-box,0,150,1500,150,45,25,100 (energy profile)
  */
@@ -135,6 +135,8 @@ export function applyUrl(search: string) {
   const ap = p.get('ap')
   if (ap !== null && ap !== '') s.setApproachAz(Number(ap))
   if (p.get('cmp') === '1') s.setCompareOpen(true)
+  const mode = p.get('mode')
+  if (isAudience(mode)) useUiStore.getState().setAudience(mode)
   // A shared link already says what to look at: skip the welcome and site choice.
   if (linked) useUiStore.getState().setStage('explore')
 }
@@ -181,6 +183,7 @@ export function stateToSearch(): string {
   if (sc.scienceWeight > 0) p.set('sci', String(sc.scienceWeight))
   p.set('en', encodeEnergy(sc))
   p.set('lang', getLang())
+  p.set('mode', useUiStore.getState().audience)
   return `?${p}`
 }
 
@@ -197,7 +200,9 @@ export function useUrlSync(ready: boolean) {
     }
     const offMission = useMissionStore.subscribe(write)
     const offLang = useLangStore.subscribe(write)
-    const offUi = useUiStore.subscribe((s, prev) => s.stage !== prev.stage && write())
+    const offUi = useUiStore.subscribe(
+      (s, prev) => (s.stage !== prev.stage || s.audience !== prev.audience) && write(),
+    )
     return () => {
       offMission()
       offLang()

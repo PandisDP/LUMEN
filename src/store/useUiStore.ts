@@ -13,6 +13,16 @@ export const PANEL_KEYS: Record<PanelId, string> = { left: '1', right: '2', bott
 const PANELS_KEY = 'lumen3d.panels'
 const TOUR_KEY = 'lumen3d.tourSeen'
 const STAGE_KEY = 'lumen3d.stage'
+const AUDIENCE_KEY = 'lumen3d.audience'
+
+/**
+ * Who is using the tool. It only changes what is shown (see ui/audience.ts), never what is
+ * computed: a planner sees every card and control, an educator the physics without the
+ * engineering detail, the public the essentials with the explanations up front.
+ */
+export type Audience = 'planner' | 'educator' | 'public'
+export const AUDIENCES: readonly Audience[] = ['planner', 'educator', 'public']
+export const DEFAULT_AUDIENCE: Audience = 'planner'
 
 /**
  * Where the user is in the guided flow: the welcome card, choosing a site (Top 3), or exploring
@@ -60,6 +70,13 @@ export function loadStage(): Stage {
   return v && STAGES.includes(v) ? v : 'welcome'
 }
 
+export const isAudience = (v: unknown): v is Audience => AUDIENCES.includes(v as Audience)
+
+export function loadAudience(): Audience {
+  const v = read(AUDIENCE_KEY)
+  return isAudience(v) ? v : DEFAULT_AUDIENCE
+}
+
 export interface UiState {
   panels: PanelsOpen
   /** Current tour step, or null when the tour is closed. */
@@ -74,6 +91,7 @@ export interface UiState {
   showAllSites: boolean
   /** Floating assistant expanded. */
   assistantOpen: boolean
+  audience: Audience
 
   setPanel: (id: PanelId, open: boolean) => void
   togglePanel: (id: PanelId) => void
@@ -86,6 +104,7 @@ export interface UiState {
   setStage: (stage: Stage) => void
   setShowAllSites: (show: boolean) => void
   setAssistantOpen: (open: boolean) => void
+  setAudience: (audience: Audience) => void
 }
 
 export const useUiStore = create<UiState>()((set, get) => ({
@@ -97,6 +116,7 @@ export const useUiStore = create<UiState>()((set, get) => ({
   stage: loadStage(),
   showAllSites: false,
   assistantOpen: false,
+  audience: loadAudience(),
 
   setPanel: (id, open) => {
     const panels = { ...get().panels, [id]: open }
@@ -133,4 +153,9 @@ export const useUiStore = create<UiState>()((set, get) => ({
   },
   setShowAllSites: (showAllSites) => set({ showAllSites }),
   setAssistantOpen: (assistantOpen) => set({ assistantOpen }),
+  setAudience: (audience) => {
+    if (!isAudience(audience)) return
+    write(AUDIENCE_KEY, audience)
+    set({ audience })
+  },
 }))

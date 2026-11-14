@@ -1,5 +1,5 @@
-import { LANGS, useLangStore, useT } from '../i18n/index.ts'
-import { useUiStore } from '../store/useUiStore.ts'
+import { LANGS, type MsgKey, useLangStore, useT } from '../i18n/index.ts'
+import { AUDIENCES, useUiStore } from '../store/useUiStore.ts'
 import { IconHelp } from './icons.tsx'
 import { MoreMenu } from './MoreMenu.tsx'
 import { StepBar } from './StepBar.tsx'
@@ -13,6 +13,32 @@ function LangToggle() {
       {LANGS.map((l) => (
         <button key={l} type="button" lang={l} aria-pressed={lang === l} onClick={() => setLang(l)}>
           {l.toUpperCase()}
+        </button>
+      ))}
+    </nav>
+  )
+}
+
+/** Planner / educator / public: how much detail the panels show (see ui/audience.ts). */
+export function AudienceToggle() {
+  const t = useT()
+  const audience = useUiStore((s) => s.audience)
+  const setAudience = useUiStore((s) => s.setAudience)
+  return (
+    <nav
+      className="segmented segmented--small"
+      aria-label={t('topbar.audience')}
+      data-tour="audience"
+    >
+      {AUDIENCES.map((a) => (
+        <button
+          key={a}
+          type="button"
+          aria-pressed={audience === a}
+          onClick={() => setAudience(a)}
+          title={t(`audience.${a}.desc` as MsgKey)}
+        >
+          {t(`audience.${a}` as MsgKey)}
         </button>
       ))}
     </nav>
@@ -56,6 +82,7 @@ export function TopBar() {
             <MoreMenu />
           </>
         )}
+        {exploring && <AudienceToggle />}
         <LangToggle />
       </div>
     </header>

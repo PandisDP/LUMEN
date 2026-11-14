@@ -17,6 +17,7 @@ import { scienceScore } from '../astro/iceAccess.ts'
 import { useIceAccess } from '../hooks/useScience.ts'
 import { LevelTag } from './LevelTag.tsx'
 import { type Level, dteLevel, energyLevel, nightLevel } from './levels.ts'
+import { useShow } from './audience.ts'
 
 type T = ReturnType<typeof useT>
 
@@ -105,6 +106,7 @@ function EarthCard({ i, detail }: { i: InstantState; detail?: SiteDetail }) {
   const t = useT()
   const ridge = obstruction(t, detail, i.sky.earth.az)
   const linkMarginDeg = useMissionStore((s) => s.linkMarginDeg)
+  const showDsn = useShow('dsn')
   const level: Level = i.earthUp ? 'good' : 'bad'
   return (
     <div className="card" data-level={level}>
@@ -137,7 +139,7 @@ function EarthCard({ i, detail }: { i: InstantState; detail?: SiteDetail }) {
         onKey="ev.earthset"
         offKey="ev.earthrise"
       />
-      <DsnRow i={i} />
+      {showDsn && <DsnRow i={i} />}
     </div>
   )
 }
@@ -191,7 +193,8 @@ function Stat({ label, value, level }: { label: string; value: string; level?: L
   )
 }
 
-export function WindowSummary({ m }: { m: ScenarioMetrics }) {
+/** The window figures; `compact` keeps the three everyone understands (energy, Sun, Earth). */
+export function WindowSummary({ m, compact = false }: { m: ScenarioMetrics; compact?: boolean }) {
   const t = useT()
   return (
     <dl className="stats">
@@ -202,17 +205,21 @@ export function WindowSummary({ m }: { m: ScenarioMetrics }) {
       />
       <Stat label={t('stats.sunlit')} value={formatPct(m.sunlitPct)} />
       <Stat label={t('stats.dte')} value={formatPct(m.dtePct)} level={dteLevel(m.dtePct)} />
-      <Stat label={t('stats.both')} value={formatPct(m.bothPct)} />
-      <Stat
-        label={t('stats.night')}
-        value={formatHours(m.longestDarkH)}
-        level={nightLevel(m.longestDarkH)}
-      />
-      <Stat label={t('stats.noDte')} value={formatHours(m.longestNoDteH)} />
-      <Stat
-        label={t('stats.sunEl')}
-        value={`${formatDeg(m.meanSunElLit, 1)} / ${formatDeg(m.maxSunEl, 1)}`}
-      />
+      {compact ? null : (
+        <>
+          <Stat label={t('stats.both')} value={formatPct(m.bothPct)} />
+          <Stat
+            label={t('stats.night')}
+            value={formatHours(m.longestDarkH)}
+            level={nightLevel(m.longestDarkH)}
+          />
+          <Stat label={t('stats.noDte')} value={formatHours(m.longestNoDteH)} />
+          <Stat
+            label={t('stats.sunEl')}
+            value={`${formatDeg(m.meanSunElLit, 1)} / ${formatDeg(m.maxSunEl, 1)}`}
+          />
+        </>
+      )}
     </dl>
   )
 }
@@ -244,6 +251,14 @@ export function MetricsPanel() {
   const thermal = useThermal(result?.series)
   const ice = useIceAccess(detail)
   const science = ice.data ? scienceScore(ice.data, ice.rover) : undefined
+  const show = {
+    thermal: useShow('thermal'),
+    scienceWeight: useShow('scienceWeight'),
+    windowDetail: useShow('windowDetail'),
+    ice: useShow('ice'),
+    terrain: useShow('terrain'),
+    dispersion: useShow('dispersion'),
+  }
 
   return (
     <CollapsiblePanel
@@ -267,12 +282,14 @@ export function MetricsPanel() {
       ) : (
         <p className="hint">{t('common.computing')}</p>
       )}
-      <ThermalCard
-        thermal={thermal}
-        startMs={scenario.startMs}
-        stepMs={result?.series.stepMs ?? 600_000}
-        timeMs={timeMs}
-      />
+      {show.thermal && (
+        <ThermalCard
+          thermal={thermal}
+          startMs={scenario.startMs}
+          stepMs={result?.series.stepMs ?? 600_000}
+          timeMs={timeMs}
+        />
+      )}
       {result && (
         <>
           <div className="score">
@@ -282,19 +299,21 @@ export function MetricsPanel() {
               <small>/100</small>
             </span>
           </div>
-          <ScienceWeight engineering={result.metrics.score} science={science} />
-          <WindowSummary m={result.metrics} />
+          {show.scienceWeight && (
+            <ScienceWeight engineering={result.metrics.score} science={science} />
+          )}
+          <WindowSummary m={result.metrics} compact={!show.windowDetail} />
         </>
       )}
-      <IceCard detail={detail} />
+      {show.ice && <IceCard detail={detail} />}
       <EnergyCard
         battery={battery}
         startMs={scenario.startMs}
         stepMs={result?.series.stepMs ?? 600_000}
         timeMs={timeMs}
       />
-      <TerrainCard detail={detail} />
-      <DispersionCard scenario={scenario} />
+      {show.terrain && <TerrainCard detail={detail} />}
+      {show.dispersion && <DispersionCard scenario={scenario} />}
     </CollapsiblePanel>
   )
 }
