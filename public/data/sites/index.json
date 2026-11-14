@@ -1,0 +1,227 @@
+[
+ {
+  "id": "shackleton-rim",
+  "lat": -89.44033,
+  "lon": -137.38793,
+  "heightM": 1958,
+  "accuracy": "lola",
+  "maskMaxDeg": -0.46,
+  "hasTerrain": true,
+  "slopeCenterDeg": 1.54,
+  "slopeP90Deg": 9.78,
+  "ice": {
+   "straightM": 1360,
+   "routeM": 1401,
+   "maxSlopeDeg": 15.7,
+   "reachable": true,
+   "insidePsr": false,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
+  "id": "connecting-ridge",
+  "lat": -89.0098,
+  "lon": -94.60359,
+  "heightM": 1553,
+  "accuracy": "lola",
+  "maskMaxDeg": 0.74,
+  "hasTerrain": true,
+  "slopeCenterDeg": 1.43,
+  "slopeP90Deg": 11.49,
+  "ice": {
+   "straightM": 560,
+   "routeM": 568,
+   "maxSlopeDeg": 10.9,
+   "reachable": true,
+   "insidePsr": false,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
+  "id": "de-gerlache-rim",
+  "lat": -88.66806,
+  "lon": -68.30659,
+  "heightM": 1813.5,
+  "accuracy": "lola",
+  "maskMaxDeg": -0.08,
+  "hasTerrain": true,
+  "slopeCenterDeg": 1.7,
+  "slopeP90Deg": 11.55,
+  "ice": {
+   "straightM": 995,
+   "routeM": 1079,
+   "maxSlopeDeg": 18.1,
+   "reachable": true,
+   "insidePsr": false,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
+  "id": "malapert-massif",
+  "lat": -85.98795,
+  "lon": 2.05767,
+  "heightM": 5173.5,
+  "accuracy": "lola",
+  "maskMaxDeg": -0.08,
+  "hasTerrain": true,
+  "slopeCenterDeg": 1.6,
+  "slopeP90Deg": 8.2,
+  "ice": {
+   "straightM": 660,
+   "routeM": 735,
+   "maxSlopeDeg": 18,
+   "reachable": true,
+   "insidePsr": false,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
+  "id": "mons-mouton",
+  "lat": -84.79009,
+  "lon": 29.1933,
+  "heightM": 5321,
+  "accuracy": "lola",
+  "maskMaxDeg": 4.05,
+  "hasTerrain": true,
+  "slopeCenterDeg": 2.89,
+  "slopeP90Deg": 4.99,
+  "ice": {
+   "straightM": 803,
+   "routeM": 868,
+   "maxSlopeDeg": 6.8,
+   "reachable": true,
+   "insidePsr": false,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
+  "id": "nobile-rim",
+  "lat": -85.42005,
+  "lon": 31.60021,
+  "heightM": 6416,
+  "accuracy": "lola",
+  "maskMaxDeg": 6.59,
+  "hasTerrain": true,
+  "slopeCenterDeg": 9.78,
+  "slopeP90Deg": 16.62,
+  "ice": {
+   "straightM": 888,
+   "routeM": 951,
+   "maxSlopeDeg": 10.3,
+   "reachable": true,
+   "insidePsr": false,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
+  "id": "haworth",
+  "lat": -87.44974,
+  "lon": -5.00664,
+  "heightM": -3315.5,
+  "accuracy": "lola",
+  "maskMaxDeg": 10.32,
+  "hasTerrain": true,
+  "slopeCenterDeg": 4.8,
+  "slopeP90Deg": 8.12,
+  "ice": {
+   "straightM": 0,
+   "routeM": 0,
+   "maxSlopeDeg": 4.8,
+   "reachable": true,
+   "insidePsr": true,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
+  "id": "shackleton-floor",
+  "lat": -89.66985,
+  "lon": 129.8129,
+  "heightM": -2788.5,
+  "accuracy": "lola",
+  "maskMaxDeg": 23.58,
+  "hasTerrain": true,
+  "slopeCenterDeg": 1.98,
+  "slopeP90Deg": 6.16,
+  "ice": {
+   "straightM": 0,
+   "routeM": 0,
+   "maxSlopeDeg": 2,
+   "reachable": true,
+   "insidePsr": true,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
+  "id": "cabeus",
+  "lat": -84.67492,
+  "lon": -48.72835,
+  "heightM": -3828,
+  "accuracy": "lola",
+  "maskMaxDeg": 11.49,
+  "hasTerrain": true,
+  "slopeCenterDeg": 2.54,
+  "slopeP90Deg": 3.21,
+  "ice": {
+   "straightM": 0,
+   "routeM": 0,
+   "maxSlopeDeg": 2.5,
+   "reachable": true,
+   "insidePsr": true,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
+  "id": "chandrayaan-3",
+  "lat": -69.3733,
+  "lon": 32.3191,
+  "heightM": 0,
+  "accuracy": "spherical",
+  "maskMaxDeg": -0.09,
+  "hasTerrain": false
+ },
+ {
+  "id": "change-4",
+  "lat": -45.4446,
+  "lon": 177.5991,
+  "heightM": 0,
+  "accuracy": "spherical",
+  "maskMaxDeg": -0.09,
+  "hasTerrain": false
+ },
+ {
+  "id": "slim",
+  "lat": -13.316,
+  "lon": 25.251,
+  "heightM": 0,
+  "accuracy": "spherical",
+  "maskMaxDeg": -0.09,
+  "hasTerrain": false
+ },
+ {
+  "id": "apollo-11",
+  "lat": 0.6741,
+  "lon": 23.473,
+  "heightM": 0,
+  "accuracy": "spherical",
+  "maskMaxDeg": -0.09,
+  "hasTerrain": false
+ },
+ {
+  "id": "apollo-15",
+  "lat": 26.1322,
+  "lon": 3.6339,
+  "heightM": 0,
+  "accuracy": "spherical",
+  "maskMaxDeg": -0.09,
+  "hasTerrain": false
+ },
+ {
+  "id": "apollo-17",
+  "lat": 20.1908,
+  "lon": 30.7717,
+  "heightM": 0,
+  "accuracy": "spherical",
+  "maskMaxDeg": -0.09,
+  "hasTerrain": false
+ }
+]

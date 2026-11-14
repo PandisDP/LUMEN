@@ -1,0 +1,58 @@
+{
+  "name": "lumen-3d",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "node scripts/vitest.mjs run",
+    "test:watch": "node scripts/vitest.mjs",
+    "test:coverage": "node scripts/vitest.mjs run --coverage",
+    "data": "node scripts/data/build-data.ts",
+    "validate": "node scripts/data/validate-horizons.ts",
+    "validate:illum": "node scripts/data/validate-illum.ts",
+    "data:ephem": "node scripts/data/build-ephem.ts",
+    "data:derived": "node scripts/data/build-derived.ts",
+    "data:imagery": "node scripts/data/build-imagery.ts"
+  },
+  "dependencies": {
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.2",
+    "astronomy-engine": "2.1.19",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "0.187.0",
+    "zustand": "5.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "0.187.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint": "10.14.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "globals": "17.14.0",
+    "jsdom": "29.1.1",
+    "prettier": "3.10.0",
+    "typescript": "~6.0.0",
+    "typescript-eslint": "8.72.2",
+    "vite": "^8.3.6",
+    "vitest": "5.1.0"
+  }
+}

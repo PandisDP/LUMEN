@@ -1,0 +1,86 @@
+{
+  "sunReference": "LROC QuickMap WMS luna_polar_illumination_pct (Speyerer & Robinson 2013)",
+  "earthReference": "Moon Trek AVGVISIB_85S_060M_201608_EARTH_SP (LOLA, Mazarico et al.)",
+  "sun": [
+    {
+      "site": "shackleton-rim",
+      "cells": 41616,
+      "spearman": 0.937,
+      "psrCellsOurs": 716,
+      "psrCellsRef": 497,
+      "psrIou": 0.567
+    },
+    {
+      "site": "connecting-ridge",
+      "cells": 41616,
+      "spearman": 0.967,
+      "psrCellsOurs": 979,
+      "psrCellsRef": 839,
+      "psrIou": 0.559
+    },
+    {
+      "site": "de-gerlache-rim",
+      "cells": 41616,
+      "spearman": 0.962,
+      "psrCellsOurs": 743,
+      "psrCellsRef": 1188,
+      "psrIou": 0.435
+    },
+    {
+      "site": "shackleton-floor",
+      "cells": 41616,
+      "spearman": 0.982,
+      "psrCellsOurs": 23504,
+      "psrCellsRef": 23497,
+      "psrIou": 0.979
+    }
+  ],
+  "earth": [
+    {
+      "site": "shackleton-rim",
+      "oursPct": 51.1,
+      "refGrey": 185
+    },
+    {
+      "site": "connecting-ridge",
+      "oursPct": 53.9,
+      "refGrey": 206
+    },
+    {
+      "site": "de-gerlache-rim",
+      "oursPct": 54.9,
+      "refGrey": 213
+    },
+    {
+      "site": "malapert-massif",
+      "oursPct": 79.8,
+      "refGrey": 255
+    },
+    {
+      "site": "mons-mouton",
+      "oursPct": 80.5,
+      "refGrey": 255
+    },
+    {
+      "site": "nobile-rim",
+      "oursPct": 71.3,
+      "refGrey": 237
+    },
+    {
+      "site": "haworth",
+      "oursPct": 0,
+      "refGrey": 19
+    },
+    {
+      "site": "shackleton-floor",
+      "oursPct": 0,
+      "refGrey": 0
+    },
+    {
+      "site": "cabeus",
+      "oursPct": 15.5,
+      "refGrey": 65
+    }
+  ],
+  "earthSpearman": 0.992
+}
