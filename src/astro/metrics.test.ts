@@ -48,6 +48,14 @@ describe('sweepLandingDates', () => {
     expect(c[5].energyPct).toBe(0)
     expect(c[5].longestDarkH).toBe(48)
   })
+
+  it('reports the max and mean-lit Sun elevation of each window', () => {
+    const c = sweepLandingDates(fakeSeries(24 * 10, 24 * 3), 2, 24)
+    expect(c[0].maxSunEl).toBe(1)
+    expect(c[0].meanSunElLit).toBe(1)
+    expect(c[5].maxSunEl).toBe(-1)
+    expect(c[5].meanSunElLit).toBeNaN()
+  })
 })
 
 describe('computeScenario (real ephemeris, ideal horizon)', () => {

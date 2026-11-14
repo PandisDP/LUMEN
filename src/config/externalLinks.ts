@@ -13,6 +13,47 @@ export const QUICKMAP_URL = 'https://quickmap.lroc.im-ldi.com/'
 export const MOON_TREK_URL = 'https://trek.nasa.gov/moon/'
 export const CSA_MOON_URL = 'https://www.asc-csa.gc.ca/eng/astronomy/moon-exploration/'
 export const HORIZONS_URL = 'https://ssd.jpl.nasa.gov/horizons/'
+const HORIZONS_API = 'https://ssd.jpl.nasa.gov/api/horizons.api'
+
+export type HorizonsBody = 'sun' | 'earth'
+const HORIZONS_COMMAND: Record<HorizonsBody, string> = { sun: '10', earth: '399' }
+
+const horizonsTime = (ms: number) => new Date(ms).toISOString().slice(0, 16).replace('T', ' ')
+
+/**
+ * JPL Horizons query, pre-filled for the site and the mission window: apparent azimuth and
+ * elevation (quantity 4) of the Sun or the Earth seen from the surface point, hourly, as plain
+ * text. The web app has no deep-link format, so this calls the public API directly: the same
+ * numbers LUMEN uses, straight from the source (see `npm run validate`).
+ */
+export function horizonsUrl(
+  body: HorizonsBody,
+  lat: number,
+  lon: number,
+  heightM: number,
+  startMs: number,
+  days: number,
+): string {
+  const eLon = ((lon % 360) + 360) % 360
+  const q = new URLSearchParams({ format: 'text' })
+  const params: Record<string, string> = {
+    COMMAND: HORIZONS_COMMAND[body],
+    OBJ_DATA: 'NO',
+    MAKE_EPHEM: 'YES',
+    EPHEM_TYPE: 'OBSERVER',
+    CENTER: 'coord@301',
+    COORD_TYPE: 'GEODETIC',
+    SITE_COORD: `${eLon.toFixed(4)},${lat.toFixed(4)},${(heightM / 1000).toFixed(3)}`,
+    START_TIME: horizonsTime(startMs),
+    STOP_TIME: horizonsTime(startMs + days * 86_400_000),
+    STEP_SIZE: '1 h',
+    QUANTITIES: '4',
+    APPARENT: 'AIRLESS',
+    CSV_FORMAT: 'YES',
+  }
+  for (const [k, v] of Object.entries(params)) q.set(k, `'${v}'`)
+  return `${HORIZONS_API}?${q}`
+}
 
 /** Equirectangular projection id of QuickMap (from its share links). */
 const QUICKMAP_PROJ = 10

@@ -11,6 +11,8 @@ import { CollapsiblePanel } from './CollapsiblePanel.tsx'
 import { DateSweep } from './DateSweep.tsx'
 import { formatDateTime, formatHours } from './format.ts'
 import { HorizonChart } from './HorizonChart.tsx'
+import { PolarMap } from './PolarMap.tsx'
+import { SeasonChart } from './SeasonChart.tsx'
 import { IconClock } from './icons.tsx'
 import { TimeControls } from './TimeControls.tsx'
 import { Timeline } from './Timeline.tsx'
@@ -19,6 +21,8 @@ const TABS: [Tab, MsgKey][] = [
   ['timeline', 'bottom.timeline'],
   ['horizon', 'bottom.horizon'],
   ['dates', 'bottom.dates'],
+  ['seasons', 'bottom.seasons'],
+  ['map', 'bottom.map'],
 ]
 
 export function BottomPanel() {
@@ -36,9 +40,13 @@ export function BottomPanel() {
   const t = useT()
   const showHorizon = useShow('horizonTab')
   const showDates = useShow('datesTab')
-  const tabs = TABS.filter(
-    ([id]) => (id !== 'horizon' || showHorizon) && (id !== 'dates' || showDates),
-  )
+  const showSeasons = useShow('seasonsTab')
+  const hidden: Partial<Record<Tab, boolean>> = {
+    horizon: !showHorizon,
+    dates: !showDates,
+    seasons: !showSeasons,
+  }
+  const tabs = TABS.filter(([id]) => !hidden[id])
   // Switching to an audience that hides the open tab falls back to the timeline.
   const tabHidden = !tabs.some(([id]) => id === tab)
   useEffect(() => {
@@ -108,6 +116,8 @@ export function BottomPanel() {
             <p className="hint">{t('bottom.loadingHorizon')}</p>
           ))}
         {tab === 'dates' && <DateSweep />}
+        {tab === 'seasons' && <SeasonChart />}
+        {tab === 'map' && <PolarMap />}
       </div>
     </CollapsiblePanel>
   )

@@ -78,19 +78,21 @@ describe('panels follow the audience', () => {
     expect(await screen.findByText('Noche más larga', {}, { timeout: 5000 })).toBeInTheDocument()
   })
 
-  it('the public only has the timeline tab, and an open hidden tab falls back to it', () => {
+  it('the public only has the timeline and map tabs, and an open hidden tab falls back', () => {
     useMissionStore.getState().setBottomPanel('dates')
     useUiStore.setState({ audience: 'public' })
     render(<BottomPanel />)
-    expect(screen.getAllByRole('tab')).toHaveLength(1)
-    expect(screen.getByRole('tab', { name: 'Línea temporal' })).toBeInTheDocument()
+    expect(screen.getAllByRole('tab').map((el) => el.textContent)).toEqual([
+      'Línea temporal',
+      'Mapa polar',
+    ])
     expect(useMissionStore.getState().bottomPanel).toBe('timeline')
   })
 
-  it('educators keep the horizon and dates tabs', () => {
+  it('educators keep the horizon, dates and seasons tabs', () => {
     useUiStore.setState({ audience: 'educator' })
     render(<BottomPanel />)
-    expect(screen.getAllByRole('tab')).toHaveLength(3)
+    expect(screen.getAllByRole('tab')).toHaveLength(5)
   })
 
   it('hides the hardware filter from the public menu', () => {

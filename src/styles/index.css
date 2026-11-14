@@ -2458,3 +2458,166 @@ body.picking .stage canvas {
 .sites__links-row .btn {
   text-decoration: none;
 }
+
+/* ---------- Seasons (month-by-month 2026–2030) ---------- */
+.season {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 4px;
+}
+
+.season__chart {
+  flex: 1;
+  display: flex;
+  min-height: 90px;
+}
+
+.season__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 90px;
+  cursor: pointer;
+}
+
+.season__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.season__legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 4px;
+  vertical-align: -1px;
+  border-radius: 2px;
+}
+
+.season__text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.season__text .linklike {
+  font-size: inherit;
+  color: var(--text);
+}
+
+/* ---------- Polar map (bottom panel tab) ---------- */
+.polar-map {
+  display: grid;
+  grid-template-columns: 1fr 230px;
+  gap: 12px;
+  min-height: 0;
+  min-width: 0;
+}
+
+.polar-map__stage {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+}
+
+.polar-map__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  cursor: crosshair;
+}
+
+.polar-map__tip {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 12px));
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 8px;
+  background: rgb(9 15 30 / 0.92);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: var(--shadow-1);
+}
+
+.polar-map__side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow: auto;
+  font-size: 12px;
+  scrollbar-width: thin;
+}
+
+.polar-map__side .toggle {
+  align-self: flex-start;
+}
+
+.polar-map__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+}
+
+.polar-map__legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.polar-map__swatch {
+  flex: none;
+  width: 22px;
+  height: 11px;
+  border-radius: 2px;
+  border: 1px solid rgb(0 0 0 / 0.5);
+}
+
+.polar-map__ramp {
+  background: linear-gradient(90deg, #3a3a3a, #ffd23f);
+}
+
+.polar-map__swatch--shade {
+  background: linear-gradient(135deg, #c8c8cc, #4a4a52);
+}
+
+.polar-map__dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin: 0 7px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 1px solid #000;
+}
+
+.polar-map__dot--active {
+  background: var(--sun);
+  box-shadow: 0 0 0 4px rgb(255 201 77 / 0.3);
+}
+
+@media (max-width: 820px) {
+  .polar-map {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+
+  .polar-map__legend {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -39,7 +39,7 @@ export type ScenarioPatch = Partial<Omit<Scenario, 'id'>>
 export type View = 'macro' | 'micro' | 'landing'
 /** After touchdown: through the lander's eye, or orbiting around the craft. */
 export type LanderCam = 'eye' | 'orbit'
-export type BottomPanel = 'timeline' | 'horizon' | 'dates'
+export type BottomPanel = 'timeline' | 'horizon' | 'dates' | 'seasons' | 'map'
 
 export const MAX_SCENARIOS = 4
 export const SCENARIO_COLORS = ['#ffc94d', '#4da6ff', '#ff6b9a', '#7ee081'] as const

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { boxAround, moonTrekUrl, quickmapUrl } from './externalLinks.ts'
+import { boxAround, horizonsUrl, moonTrekUrl, quickmapUrl } from './externalLinks.ts'
 
 describe('external map links', () => {
   it('builds a QuickMap link centred on the point, in projected metres', () => {
@@ -33,5 +33,20 @@ describe('external map links', () => {
     expect(atPole.minLon).toBe(-180)
     expect(atPole.maxLon).toBe(180)
     expect(atPole.minLat).toBe(-90)
+  })
+})
+
+describe('Horizons deep link', () => {
+  it('pre-fills the site, the body and the mission window', () => {
+    const start = Date.UTC(2027, 2, 1, 12)
+    const url = new URL(horizonsUrl('earth', -89.45, -137.31, 1800, start, 14))
+    expect(url.searchParams.get('COMMAND')).toBe("'399'")
+    expect(url.searchParams.get('CENTER')).toBe("'coord@301'")
+    // East longitude 0-360, planetodetic lat, altitude in km.
+    expect(url.searchParams.get('SITE_COORD')).toBe("'222.6900,-89.4500,1.800'")
+    expect(url.searchParams.get('START_TIME')).toBe("'2027-03-01 12:00'")
+    expect(url.searchParams.get('STOP_TIME')).toBe("'2027-03-15 12:00'")
+    expect(url.searchParams.get('QUANTITIES')).toBe("'4'")
+    expect(horizonsUrl('sun', 0, 0, 0, start, 1)).toContain('COMMAND=%2710%27')
   })
 })

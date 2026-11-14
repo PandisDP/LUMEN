@@ -63,7 +63,8 @@ En la pantalla de bienvenida (**¿Quién eres?**) y en la barra superior (**Modo
 | Energía, luz y DTE del resumen de la ventana                    |    ✓    |    ✓     |      ✓       |
 | Resto del resumen (ambos, noche, sin DTE, elevación solar)      |         |    ✓     |      ✓       |
 | Temperatura estimada, acceso a hielo, pendientes del terreno    |         |    ✓     |      ✓       |
-| Pestañas Horizonte 360° y Fechas alternativas                   |         |    ✓     |      ✓       |
+| Pestañas Horizonte 360°, Fechas alternativas y Estaciones       |         |    ✓     |      ✓       |
+| Pestaña Mapa polar                                              |    ✓    |    ✓     |      ✓       |
 | Control Ingeniería ↔ Ciencia, coordenadas personalizadas        |         |    ✓     |      ✓       |
 | Fila DSN (distancia, pérdida, estación), margen de enlace       |         |          |      ✓       |
 | Elipse de aterrizaje y «Sugerir mejor punto»                    |         |          |      ✓       |
@@ -173,6 +174,8 @@ Los valores con nivel llevan icono ✓ / ! / ✕ además del color.
 - **Línea temporal**: franjas de Sol, enlace DTE, ambos y batería a lo largo de la misión, con patrones y etiquetas (no solo color); debajo, la altura de cada astro sobre el horizonte local. Clic para saltar a ese momento.
 - **Horizonte 360°**: perfil del relieve alrededor del sitio con las trayectorias del Sol y la Tierra y la línea del margen de enlace. **Si fuera la Tierra** dibuja el Sol elevado por la refracción atmosférica (guiones naranjas) y tiñe el cielo mientras el Sol está a menos de 18° bajo el horizonte (crepúsculo): en la Luna, en cambio, la oscuridad llega en cuanto el disco se oculta.
 - **Fechas alternativas**: puntuación de cada día de alunizaje durante los próximos 12 meses, con los mejores días destacados.
+- **Estaciones**: mes a mes de 2026 a 2030, la energía media (barras), el enlace DTE (línea azul) y la elevación solar máxima (línea blanca). Muestra el mejor y el peor mes y por qué: la declinación del Sol oscila ±1,54° a lo largo del año y en el polo eso decide si asoma sobre las crestas. Clic en un mes para aterrizar en su primer día con Sol.
+- **Mapa polar**: el casquete de 80°S a 90°S visto desde arriba (polo en el centro, la Tierra hacia arriba), con el relieve LOLA sombreado, los parches de iluminación anual de los sitios curados (azul = sombra permanente, amarillo = bien iluminado) y los sitios como puntos. Clic en un punto para seleccionarlo; al pasar el ratón se leen latitud y longitud.
 
 ## 10. Comparar escenarios
 

@@ -1,5 +1,10 @@
 import { type FormEvent, useState } from 'react'
-import { moonTrekUrl, quickmapUrl } from '../config/externalLinks.ts'
+import {
+  type HorizonsBody,
+  horizonsUrl,
+  moonTrekUrl,
+  quickmapUrl,
+} from '../config/externalLinks.ts'
 import { type SiteInfo, customSiteInfo } from '../data/catalog.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { useSiteText } from '../i18n/sites.ts'
@@ -16,14 +21,38 @@ const ACCURACY_LABEL: Record<SiteInfo['accuracy'], MsgKey> = {
   spherical: 'acc.spherical',
 }
 
-/** Opens the active site (curated, relocated or custom) in the two NASA/ASU map portals. */
+/**
+ * Opens the active site (curated, relocated or custom) in the two NASA/ASU map portals, and the
+ * mission window in JPL Horizons (Sun and Earth as seen from the site, hourly).
+ */
 function ActiveSiteLinks({ site }: { site: SiteInfo | undefined }) {
   const t = useT()
+  const scenario = useMissionStore(selectActiveScenario)
   if (!site) return null
+  const horizons = (body: HorizonsBody) =>
+    horizonsUrl(body, site.lat, site.lon, site.heightM, scenario.startMs, scenario.missionDays)
   return (
-    <div className="sites__links">
+    <div className="sites__links" data-tour="links">
       <p className="panel__label">{t('links.title')}</p>
       <div className="sites__links-row">
+        <a
+          className="btn"
+          href={horizons('sun')}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={t('links.horizonsTitle')}
+        >
+          Horizons ☀ ↗
+        </a>
+        <a
+          className="btn"
+          href={horizons('earth')}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={t('links.horizonsTitle')}
+        >
+          Horizons ⊕ ↗
+        </a>
         <a
           className="btn"
           href={quickmapUrl(site.lat, site.lon)}
@@ -185,10 +214,10 @@ export function SitePicker() {
       {showAll && (
         <>
           <SiteList value={scenario.siteId} onChange={selectSite} />
-          <ActiveSiteLinks site={site} />
           {showCustom && <CustomSiteForm />}
         </>
       )}
+      <ActiveSiteLinks site={site} />
     </div>
   )
 }

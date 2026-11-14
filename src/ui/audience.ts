@@ -16,6 +16,7 @@ export type Feature =
   | 'export' // CSV / JSON export
   | 'horizonTab' // 360° horizon chart tab
   | 'datesTab' // alternative dates tab
+  | 'seasonsTab' // Sun elevation and Earth visibility by month, 2026–2030
   | 'linkMargin' // DTE link margin control
   | 'customCoords' // custom coordinates form
   | 'explainAuto' // open "Why?" automatically on entering the exploration
@@ -32,6 +33,7 @@ export const FEATURES: readonly Feature[] = [
   'export',
   'horizonTab',
   'datesTab',
+  'seasonsTab',
   'linkMargin',
   'customCoords',
   'explainAuto',
