@@ -152,11 +152,13 @@ El módulo es un lander tipo CLPS (~4 m de alto) con aislamiento dorado, paneles
 
 Si desde el sitio hay ruta transitable hasta una zona de sombra permanente (tarjeta **Acceso a hielo**), el rover la recorre en la escena:
 
-- **Qué se ve**: un rover de seis ruedas que sale del módulo y sigue la ruta punteada, apoyado en la pendiente real. La luz y la sombra son las de la hora de misión, que **avanza con el rover**; al entrar en sombra enciende los faros.
+- **Qué se ve**: el rover baja por las rampas del módulo y sigue la ruta punteada. Son dos vehículos detallados: un micro-rover de cuatro ruedas y un utilitario de seis con suspensión articulada, panel que se orienta al Sol, antena que apunta a la Tierra cuando hay enlace y un taladro que baja al llegar al hielo. Deja huellas y levanta polvo, y alrededor hay rocas y cráteres pequeños. La luz y la sombra son las de la hora de misión, que **avanza con el rover**; al entrar en sombra enciende los faros.
 - **Telemetría**: distancia recorrida y restante, pendiente, velocidad, **batería**, potencia solar y consumo, temperatura, si está al Sol, en sombra o en **sombra permanente**, y si tiene **enlace con la Tierra**. Debajo, el perfil de altura de la ruta con el tramo en sombra permanente en azul.
 - **Resumen**: si llega, en cuánto tiempo, la batería mínima, las horas en sombra y el porcentaje de tiempo con enlace. Si la batería cae bajo el umbral de hibernación, el rover se detiene a recargar; si no puede, no llega.
 - **Controles**: reproducir, reiniciar, velocidad (de 2 min a 1 h de misión por segundo), **Rover** (micro-rover de 40 kg o utilitario de 350 kg, con su perfil energético) y **Cámara** (seguimiento, mástil o cenital). Arrastra para girar alrededor del rover.
 - La tarjeta **Acceso a hielo** del panel derecho resume el resultado y enlaza con **Ver el recorrido**, que abre esta vista sin pasar por el descenso. El enlace compartible lleva `rover=1`.
+
+El detalle del suelo por debajo de la resolución de LOLA (rocas, cráteres de metros, ondulación) es **ilustrativo**: no entra en las pendientes, la ruta ni la energía. La cámara ajusta la exposición como lo haría una real, porque con el Sol rasante el suelo queda casi sin luz directa.
 
 El modelo es una estimación: velocidad reducida por la pendiente, potencia de tracción por peso y rodadura, horizonte calculado cada ~200 m de ruta. No simula hundimiento ni patinaje.
 

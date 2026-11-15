@@ -1,21 +1,15 @@
 import { OrbitControls } from '@react-three/drei'
 import { useThree } from '@react-three/fiber'
 import { useEffect, useMemo } from 'react'
-import {
-  DoubleSide,
-  MeshStandardMaterial,
-  type PerspectiveCamera,
-  Quaternion,
-  Vector2,
-  Vector3,
-} from 'three'
+import { type PerspectiveCamera, Quaternion, Vector3 } from 'three'
 import { DEG } from '../../astro/constants.ts'
 import { groundSampler } from '../../astro/descent.ts'
 import type { DemGrid } from '../../astro/dem.ts'
 import type { InstantState } from '../../astro/instant.ts'
 import type { SiteDetail } from '../../data/catalog.ts'
 import { useMissionStore } from '../../store/useMissionStore.ts'
-import { canvasTexture, mulberry32 } from '../canvasTexture.ts'
+import { type CraftMaterials, useCraftMaterials } from './craftMaterials.ts'
+import { Rod } from './CraftParts.tsx'
 
 /** Lander size, m: a small CLPS-class craft (~4 m tall, ~4.4 m across the footpads). */
 const LEG_SPREAD = 2.2
@@ -26,144 +20,7 @@ const DECK_Y = BODY_BOTTOM + BODY_H
 /** Distance from the axis to the centre of each flat face of the octagonal body. */
 const BODY_INRADIUS = BODY_R * Math.cos(Math.PI / 8)
 
-/** Crinkled multi-layer insulation: a height field of random creases turned into a normal map. */
-function foilNormalTexture() {
-  const S = 256
-  const rand = mulberry32(7)
-  const height = new Float32Array(S * S)
-  for (let k = 0; k < 90; k++) {
-    // A crease: a soft ridge along a random line.
-    const a = rand() * Math.PI
-    const nx = Math.cos(a)
-    const ny = Math.sin(a)
-    const c = rand() * S * 1.4 - S * 0.2
-    const w = 1.5 + rand() * 5
-    const amp = (rand() - 0.5) * 2
-    for (let y = 0; y < S; y++)
-      for (let x = 0; x < S; x++) {
-        const d = Math.abs(x * nx + y * ny - c)
-        if (d < w * 3) height[y * S + x] += amp * Math.max(0, 1 - d / (w * 3))
-      }
-  }
-  return canvasTexture(
-    S,
-    (ctx) => {
-      const img = ctx.createImageData(S, S)
-      const h = (x: number, y: number) => height[((y + S) % S) * S + ((x + S) % S)]
-      for (let y = 0; y < S; y++)
-        for (let x = 0; x < S; x++) {
-          const gx = (h(x - 1, y) - h(x + 1, y)) * 1.6
-          const gy = (h(x, y + 1) - h(x, y - 1)) * 1.6
-          const len = Math.hypot(gx, gy, 1)
-          const i = (y * S + x) * 4
-          img.data[i] = (gx / len) * 127.5 + 127.5
-          img.data[i + 1] = (gy / len) * 127.5 + 127.5
-          img.data[i + 2] = (1 / len) * 127.5 + 127.5
-          img.data[i + 3] = 255
-        }
-      ctx.putImageData(img, 0, 0)
-    },
-    { srgb: false, repeat: true },
-  )
-}
-
-/** Solar array: dark blue cells separated by thin silver bus lines. */
-function cellsTexture() {
-  return canvasTexture(
-    256,
-    (ctx, s) => {
-      const g = ctx.createLinearGradient(0, 0, s, s)
-      g.addColorStop(0, '#22345e')
-      g.addColorStop(1, '#121d38')
-      ctx.fillStyle = g
-      ctx.fillRect(0, 0, s, s)
-      const n = 8
-      const cell = s / n
-      ctx.strokeStyle = 'rgba(200,210,230,0.55)'
-      ctx.lineWidth = 2
-      for (let i = 0; i <= n; i++) {
-        ctx.beginPath()
-        ctx.moveTo(i * cell, 0)
-        ctx.lineTo(i * cell, s)
-        ctx.moveTo(0, i * cell)
-        ctx.lineTo(s, i * cell)
-        ctx.stroke()
-      }
-      // Fine fingers inside each cell.
-      ctx.strokeStyle = 'rgba(160,175,205,0.18)'
-      ctx.lineWidth = 1
-      for (let y = 0; y < s; y += cell / 6) {
-        ctx.beginPath()
-        ctx.moveTo(0, y)
-        ctx.lineTo(s, y)
-        ctx.stroke()
-      }
-    },
-    { repeat: true },
-  )
-}
-
-/** Materials of the craft, built once per mount and disposed with it. */
-function useLanderMaterials() {
-  const m = useMemo(() => {
-    const foilNormal = foilNormalTexture()
-    const cells = cellsTexture()
-    const foil = new MeshStandardMaterial({
-      color: '#d4a733',
-      metalness: 0.85,
-      roughness: 0.32,
-      normalMap: foilNormal,
-      normalScale: new Vector2(0.6, 0.6),
-    })
-    const silverFoil = new MeshStandardMaterial({
-      color: '#c9cdd3',
-      metalness: 0.8,
-      roughness: 0.3,
-      normalMap: foilNormal,
-      normalScale: new Vector2(0.5, 0.5),
-    })
-    const panel = new MeshStandardMaterial({
-      color: '#ffffff',
-      map: cells,
-      metalness: 0.35,
-      roughness: 0.28,
-    })
-    const panelBack = new MeshStandardMaterial({ color: '#d9d9d6', roughness: 0.7 })
-    const strut = new MeshStandardMaterial({ color: '#a7a9ad', metalness: 0.75, roughness: 0.4 })
-    const dark = new MeshStandardMaterial({ color: '#2b2d31', metalness: 0.6, roughness: 0.5 })
-    const white = new MeshStandardMaterial({ color: '#ececea', roughness: 0.55 })
-    const bell = new MeshStandardMaterial({
-      color: '#5d5a57',
-      metalness: 0.9,
-      roughness: 0.35,
-      side: DoubleSide,
-    })
-    const dish = new MeshStandardMaterial({ color: '#f0f0ee', roughness: 0.5, side: DoubleSide })
-    return {
-      foil,
-      silverFoil,
-      panel,
-      panelBack,
-      strut,
-      dark,
-      white,
-      bell,
-      dish,
-      textures: [foilNormal, cells],
-    }
-  }, [])
-  useEffect(
-    () => () => {
-      const { textures, ...materials } = m
-      Object.values(materials).forEach((x) => x.dispose())
-      textures.forEach((x) => x?.dispose())
-    },
-    [m],
-  )
-  return m
-}
-
-type Materials = ReturnType<typeof useLanderMaterials>
+type Materials = CraftMaterials
 
 /** Tilt of the ground at the site, from the DEM ±10 m around it. */
 function useGroundPose(detail: SiteDetail, grids: DemGrid[]) {
@@ -178,31 +35,6 @@ function useGroundPose(detail: SiteDetail, grids: DemGrid[]) {
       tilt: new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), normal),
     }
   }, [detail, grids])
-}
-
-/** A cylinder between two points (struts, braces). */
-function Rod({
-  from,
-  to,
-  r,
-  material,
-}: {
-  from: Vector3
-  to: Vector3
-  r: number
-  material: MeshStandardMaterial
-}) {
-  const mid = from.clone().add(to).multiplyScalar(0.5)
-  const len = from.distanceTo(to)
-  const q = new Quaternion().setFromUnitVectors(
-    new Vector3(0, 1, 0),
-    to.clone().sub(from).normalize(),
-  )
-  return (
-    <mesh position={mid} quaternion={q} material={material} castShadow>
-      <cylinderGeometry args={[r, r, len, 10]} />
-    </mesh>
-  )
 }
 
 /** Landing leg: primary strut with a shock-absorber sleeve, two side braces and a footpad. */
@@ -262,7 +94,7 @@ function RcsPod({ angle, m }: { angle: number; m: Materials }) {
 export function Lander({ detail, grids }: { detail: SiteDetail; grids: DemGrid[] }) {
   const pose = useGroundPose(detail, grids)
   const panelAz = useMissionStore((s) => s.energy.panelAzDeg)
-  const m = useLanderMaterials()
+  const m = useCraftMaterials()
   return (
     <group position={[0, pose.y, 0]} quaternion={pose.tilt}>
       <group rotation={[0, -panelAz * DEG, 0]}>

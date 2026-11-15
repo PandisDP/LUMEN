@@ -1,11 +1,12 @@
-import { Html, Line, PerspectiveCamera } from '@react-three/drei'
-import { type ThreeEvent, useFrame } from '@react-three/fiber'
+import { Environment, Html, Line, PerspectiveCamera } from '@react-three/drei'
+import { type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import {
   BufferAttribute,
   BufferGeometry,
   type DirectionalLight,
   DoubleSide,
+  type HemisphereLight,
   type Object3D,
   Vector3,
 } from 'three'
@@ -16,6 +17,7 @@ import { maskAt } from '../../astro/horizon.ts'
 import type { InstantState } from '../../astro/instant.ts'
 import type { SiteSeries } from '../../astro/series.ts'
 import {
+  latLonToScene,
   buildFlatGeometry,
   buildHorizonRing,
   buildTerrainGeometry,
@@ -31,7 +33,10 @@ import { FOV, selectActiveScenario, useMissionStore } from '../../store/useMissi
 import { useDescentStore } from '../../store/useDescentStore.ts'
 import { useViewStore } from '../../store/useViewStore.ts'
 import { DescentControls } from './DescentControls.tsx'
+import { LanderRamp } from './LanderRamp.tsx'
+import { NearGround } from './NearGround.tsx'
 import { RoverRig } from './Rover.tsx'
+import { RoverTracks } from './RoverTracks.tsx'
 import { roverTelemetry } from './roverTelemetry.ts'
 import { useRoverTraverse } from '../../hooks/useRover.ts'
 import { useRoverStore } from '../../store/useRoverStore.ts'
@@ -297,8 +302,73 @@ function SkyPaths({ series, detail }: { series: SiteSeries; detail: SiteDetail }
  * box stays 1–60 km deep along the Sun direction, so ridges of the tile that shade the site are
  * still inside it.
  */
+/**
+ * Reflection environment for the metallic parts of the lander and the rover in close-ups: a
+ * black sky, the Sun as a small bright patch and the grey ground. Without it the gold foil and
+ * the solar cells have nothing to reflect and read as flat colour. Its strength follows the
+ * sunlight at the craft, so in permanent shadow there are no reflections of a Sun that is not
+ * there.
+ */
+function CraftEnvironment({
+  instant,
+  followRover,
+}: {
+  instant: InstantState
+  followRover: boolean
+}) {
+  const { az, el } = instant.sky.sun
+  const siteSun = instant.sunFrac
+  useFrame((state) => {
+    const tm = roverTelemetry
+    const f = followRover && tm.active && Number.isFinite(tm.sunFrac) ? tm.sunFrac : siteSun
+    const scene = state.scene
+    scene.environmentIntensity = 0.55 * f
+    // Auto-exposure, as a camera would: a grazing Sun leaves the ground dim, and in permanent
+    // shadow only the headlights light it. Eased so entering the shadow is not a jump.
+    const want = f > 0.05 ? closeUpExposure(el) : SHADOW_EXPOSURE
+    const gl = state.gl
+    gl.toneMappingExposure += (want - gl.toneMappingExposure) * 0.06
+  })
+  // Back to the scene's normal exposure when the close-up ends.
+  const glRef = useThree((s) => s.gl)
+  useEffect(() => {
+    const before = glRef.toneMappingExposure
+    return () => {
+      glRef.toneMappingExposure = before
+    }
+  }, [glRef])
+  const sun = skyPoint(az, Math.max(el, 1), 60, 0)
+  return (
+    // Re-rendered only when the Sun has moved a few degrees.
+    <Environment key={`${Math.round(az / 3)}:${Math.round(el)}`} resolution={64} frames={1}>
+      <color attach="background" args={['#000000']} />
+      <mesh position={sun}>
+        <sphereGeometry args={[7, 16, 12]} />
+        <meshBasicMaterial color={[30, 28, 25]} toneMapped={false} />
+      </mesh>
+      <mesh rotation-x={-Math.PI / 2} position={[0, -3, 0]}>
+        <circleGeometry args={[400, 32]} />
+        <meshBasicMaterial color="#5f5a53" />
+      </mesh>
+    </Environment>
+  )
+}
+
+/** Exposure of the close-up camera in permanent shadow (headlights only). */
+const SHADOW_EXPOSURE = 1.5
+/**
+ * Exposure for a Sun at `elDeg`: 1 from 12° up, rising to 2.5 for a Sun on the horizon, where
+ * level ground gets almost no direct light.
+ */
+const closeUpExposure = (elDeg: number) => {
+  const k = Math.min(1, Math.max(0, (12 - elDeg) / 12))
+  return 1 + 1.5 * k * k
+}
+
 const SHADOW_HALF_TILE = 10_500
 const SHADOW_HALF_LANDER = 150
+/** Around the rover: ~1.5 cm per shadow texel, so wheels, mast and rocks cast crisp shadows. */
+const SHADOW_HALF_ROVER = 30
 
 function SunLight({
   instant,
@@ -313,6 +383,7 @@ function SunLight({
   const lightRef = useRef<DirectionalLight>(null)
   const targetRef = useRef<Object3D>(null)
   const sunDir = useRef<[number, number, number]>([0, 1, 0])
+  const bounceRef = useRef<HemisphereLight>(null)
   useFrame(() => {
     const light = lightRef.current
     const target = targetRef.current
@@ -327,12 +398,15 @@ function SunLight({
     const d = sunDir.current
     light.position.set(cx + d[0], cy + d[1], cz + d[2])
     // The site-wide intensity is the Sun at the lander; under the rover use the Sun at the rover.
-    if (on && Number.isFinite(tm.sunFrac)) light.intensity = 3.2 * tm.sunFrac
+    if (on && Number.isFinite(tm.sunFrac)) {
+      light.intensity = 3.2 * tm.sunFrac
+      if (bounceRef.current) bounceRef.current.intensity = 0.4 * tm.sunFrac
+    }
   })
   useEffect(() => {
     if (lightRef.current && targetRef.current) lightRef.current.target = targetRef.current
   }, [])
-  const half = tight ? SHADOW_HALF_LANDER : SHADOW_HALF_TILE
+  const half = followRover ? SHADOW_HALF_ROVER : tight ? SHADOW_HALF_LANDER : SHADOW_HALF_TILE
   useEffect(() => {
     const light = lightRef.current
     if (!light) return
@@ -353,6 +427,10 @@ function SunLight({
   return (
     <>
       <ambientLight intensity={earthshine} color="#9fb7ff" />
+      {/* Close-ups: sunlit regolith bounces light up into the shadowed side of the craft. */}
+      {tight && (
+        <hemisphereLight ref={bounceRef} args={['#000000', '#b3aca2', 0.4 * instant.sunFrac]} />
+      )}
       <object3D ref={targetRef} position={[0, 0, 0]} />
       <directionalLight
         ref={lightRef}
@@ -366,8 +444,8 @@ function SunLight({
         shadow-camera-bottom={-half}
         shadow-camera-near={1_000}
         shadow-camera-far={60_000}
-        shadow-bias={tight ? -0.00005 : -0.0004}
-        shadow-normalBias={tight ? 0.05 : 6}
+        shadow-bias={followRover ? -0.00002 : tight ? -0.00005 : -0.0004}
+        shadow-normalBias={followRover ? 0.012 : tight ? 0.05 : 6}
       />
     </>
   )
@@ -414,6 +492,16 @@ export function MicroScene() {
   const roving = landing && landed && landerCam === 'rover'
   const traverse = useRoverTraverse(landing)
   const autoDeploy = useRoverStore((s) => s.autoDeploy)
+  // The rover path on the ground, in scene coordinates (for the close-range ground).
+  const roverRoute = useMemo(
+    () =>
+      detail && traverse.data
+        ? traverse.data.plan.points.map(
+            (p) => latLonToScene(detail.site, p.lat, p.lon, p.heightM) as [number, number, number],
+          )
+        : undefined,
+    [detail, traverse.data],
+  )
   // "Full mission": once down (and the route is known), hand over to the rover.
   useEffect(() => {
     if (!landing || !landed || autoDeploy === 'no' || !traverse.data) return
@@ -436,7 +524,15 @@ export function MicroScene() {
       {!landing || (landed && landerCam === 'eye') ? (
         <LookControls />
       ) : roving && detail && grids && traverse.data ? (
-        <RoverRig detail={detail} grids={grids} traverse={traverse.data} />
+        <RoverRig
+          detail={detail}
+          grids={grids}
+          traverse={traverse.data}
+          sunAzDeg={instant?.sky.sun.az}
+          sunElDeg={instant?.sky.sun.el}
+          earthAzDeg={instant?.sky.earth.az}
+          earthElDeg={instant?.sky.earth.el}
+        />
       ) : landed ? (
         instant && <LanderOrbit instant={instant} />
       ) : (
@@ -447,10 +543,30 @@ export function MicroScene() {
       {detail && instant && (
         <>
           <SunLight instant={instant} tight={orbit || roving} followRover={roving} />
+          {(orbit || roving) && <CraftEnvironment instant={instant} followRover={roving} />}
           <Ground detail={detail} sunElDeg={instant.sky.sun.el} />
           {landing && !landed && grids && <DescentReticle detail={detail} grids={grids} />}
           {landing && grids && <DescentDust detail={detail} grids={grids} />}
           {(orbit || roving) && grids && <Lander detail={detail} grids={grids} />}
+          {(orbit || roving) && grids && traverse.data && traverse.data.plan.points.length > 1 && (
+            <LanderRamp
+              detail={detail}
+              grids={grids}
+              headingDeg={traverse.data.plan.points[0].headingDeg}
+            />
+          )}
+          {(orbit || roving) && grids && (
+            <NearGround
+              detail={detail}
+              grids={grids}
+              follow={roving && traverse.data ? 'rover' : 'lander'}
+              route={roving ? roverRoute : undefined}
+              sunElDeg={instant.sky.sun.el}
+            />
+          )}
+          {roving && grids && traverse.data && (
+            <RoverTracks detail={detail} grids={grids} traverse={traverse.data} />
+          )}
           {/* Clickable score labels would clutter (and relocate) the descent. */}
           {!(landing && !landed) && <DispersionMarkers detail={detail} />}
           <SunDisc instant={instant} />

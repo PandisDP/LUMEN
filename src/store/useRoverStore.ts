@@ -4,6 +4,8 @@ import type { RoverId } from '../astro/traverse.ts'
 /** Simulated seconds per real second while the traverse plays. */
 export const ROVER_SPEEDS = [120, 600, 1800, 3600] as const
 export type RoverCam = 'follow' | 'mast' | 'top'
+/** 'egress': rolling down the lander's ramps (visual only, no mission time); then 'drive'. */
+export type RoverPhase = 'egress' | 'drive'
 
 /**
  * Playback of the rover traverse to the ice (landing view, after touchdown). As in
@@ -21,6 +23,7 @@ export interface RoverState {
   /** Bumped by restart() so the controller starts over. */
   run: number
   cam: RoverCam
+  phase: RoverPhase
   /** Which rover drives: its energy profile and vehicle (config/energyProfiles.ts). */
   roverId: RoverId
   setAutoDeploy: (mode: RoverState['autoDeploy']) => void
@@ -30,6 +33,7 @@ export interface RoverState {
   seekTo: (tMs: number) => void
   publishT: (tMs: number) => void
   setCam: (cam: RoverCam) => void
+  setPhase: (phase: RoverPhase) => void
   setRover: (id: RoverId) => void
 }
 
@@ -41,16 +45,21 @@ export const useRoverStore = create<RoverState>()((set) => ({
   seek: null,
   run: 0,
   cam: 'follow',
+  phase: 'egress',
   roverId: 'rover',
   setAutoDeploy: (autoDeploy) => set({ autoDeploy }),
-  restart: () => set((s) => ({ playing: true, tMs: 0, seek: null, run: s.run + 1 })),
+  restart: () =>
+    set((s) => ({ playing: true, tMs: 0, seek: null, run: s.run + 1, phase: 'egress' })),
   setPlaying: (playing) => set({ playing }),
   setSpeed: (speed) => {
     if ((ROVER_SPEEDS as readonly number[]).includes(speed)) set({ speed })
   },
-  seekTo: (tMs) => set((s) => ({ seek: { tMs, nonce: (s.seek?.nonce ?? 0) + 1 }, tMs })),
+  // Jumping along the traverse skips the ramp.
+  seekTo: (tMs) =>
+    set((s) => ({ seek: { tMs, nonce: (s.seek?.nonce ?? 0) + 1 }, tMs, phase: 'drive' })),
   publishT: (tMs) => set({ tMs }),
   setCam: (cam) => set({ cam }),
+  setPhase: (phase) => set({ phase }),
   setRover: (roverId) =>
-    set((s) => ({ roverId, playing: true, tMs: 0, seek: null, run: s.run + 1 })),
+    set((s) => ({ roverId, playing: true, tMs: 0, seek: null, run: s.run + 1, phase: 'egress' })),
 }))
