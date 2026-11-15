@@ -801,6 +801,7 @@ export const en: Record<keyof typeof es, string> = {
   'choose.sub': 'The 3 best sites for today. Pick one to begin.',
   'choose.back': 'Back',
   'step.aria': 'Decision steps',
+  'step.plan': 'Plan',
   'step.orbit': 'Orbit',
   'step.surface': 'Surface',
   'step.landing': 'Landing',

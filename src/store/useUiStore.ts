@@ -29,8 +29,11 @@ export const DEFAULT_AUDIENCE: Audience = 'planner'
  * Where the user is in the guided flow: the welcome card, choosing a site (Top 3), or exploring
  * it through the four steps (Orbit, Surface, Landing, Decide).
  */
-export type Stage = 'welcome' | 'choose' | 'explore'
-const STAGES: readonly Stage[] = ['welcome', 'choose', 'explore']
+export type Stage = 'welcome' | 'choose' | 'plan' | 'explore'
+const STAGES: readonly Stage[] = ['welcome', 'choose', 'plan', 'explore']
+/** Where "choose where to land" happens: planners get the planner, everyone else the Top 3. */
+export const chooseStage = (audience: Audience): Stage =>
+  audience === 'planner' ? 'plan' : 'choose'
 
 /** First visit: every panel minimised so the 3D view is visible. */
 export const DEFAULT_PANELS: PanelsOpen = { left: false, right: false, bottom: false }

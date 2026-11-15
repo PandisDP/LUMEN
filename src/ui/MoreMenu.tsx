@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useT } from '../i18n/index.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
-import { useUiStore } from '../store/useUiStore.ts'
+import { chooseStage, useUiStore } from '../store/useUiStore.ts'
 import { openChallenges } from '../hooks/useChallengeState.ts'
 import { IconBook, IconEye, IconEyeOff, IconFilter, IconPin, IconTarget } from './icons.tsx'
 import { useShow } from './audience.ts'
@@ -25,7 +25,11 @@ export function MoreMenu() {
         ⋯ <span className="btn__label">{t('more.title')}</span>
       </summary>
       <div className="menu__list menu__list--end" role="menu">
-        <button type="button" role="menuitem" onClick={run(() => setStage('choose'))}>
+        <button
+          type="button"
+          role="menuitem"
+          onClick={run(() => setStage(chooseStage(useUiStore.getState().audience)))}
+        >
           <IconPin /> {t('more.changeSite')}
         </button>
         {showHardware && (

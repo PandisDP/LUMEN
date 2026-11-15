@@ -20,6 +20,7 @@ import { ExplainPanel } from './ui/ExplainPanel.tsx'
 import { IconPin } from './ui/icons.tsx'
 import { Loader } from './ui/Loader.tsx'
 import { MetricsPanel } from './ui/MetricsPanel.tsx'
+import { Planner } from './ui/Planner.tsx'
 import { SitePicker } from './ui/SitePicker.tsx'
 import { Splash } from './ui/Splash.tsx'
 import { StepHint } from './ui/StepBar.tsx'
@@ -76,6 +77,10 @@ export default function App() {
   }, [])
   useUrlSync(ready)
   usePlayback()
+  // The planner step belongs to the planner audience: the others choose among the Top 3.
+  useEffect(() => {
+    if (stage === 'plan' && audience !== 'planner') useUiStore.getState().setStage('choose')
+  }, [stage, audience])
   usePanelShortcuts()
 
   const cls = [
@@ -133,6 +138,7 @@ export default function App() {
       )}
       {!splash && ready && stage === 'welcome' && <Welcome />}
       {!splash && ready && stage === 'choose' && <ChooseSite />}
+      {!splash && ready && stage === 'plan' && <Planner />}
       <Tour />
       <Loader />
       {splash && <Splash ready={ready} onDone={() => setSplash(false)} />}

@@ -810,6 +810,7 @@ export const es = {
   'choose.sub': 'Los 3 mejores sitios para hoy. Elige uno para empezar.',
   'choose.back': 'Volver',
   'step.aria': 'Pasos de la decisión',
+  'step.plan': 'Planificar',
   'step.orbit': 'Órbita',
   'step.surface': 'Superficie',
   'step.landing': 'Aterrizaje',

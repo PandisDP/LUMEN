@@ -52,6 +52,7 @@ export function AudienceToggle() {
 export function TopBar() {
   const t = useT()
   const exploring = useUiStore((s) => s.stage === 'explore')
+  const planning = useUiStore((s) => s.stage === 'plan')
   const touring = useUiStore((s) => s.tourStep !== null)
   const startTour = useUiStore((s) => s.startTour)
 
@@ -64,7 +65,7 @@ export function TopBar() {
         </span>
         <span className="topbar__tag">{t('topbar.tag')}</span>
       </div>
-      {exploring && <StepBar />}
+      {(exploring || planning) && <StepBar />}
       <div className="topbar__actions" role="group" aria-label={t('topbar.tools')}>
         {exploring && (
           <>
@@ -82,7 +83,7 @@ export function TopBar() {
             <MoreMenu />
           </>
         )}
-        {exploring && <AudienceToggle />}
+        {(exploring || planning) && <AudienceToggle />}
         <LangToggle />
       </div>
     </header>

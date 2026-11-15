@@ -1,7 +1,7 @@
 import { openChallenges } from '../hooks/useChallengeState.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
-import { AUDIENCES, useUiStore } from '../store/useUiStore.ts'
+import { AUDIENCES, chooseStage, useUiStore } from '../store/useUiStore.ts'
 import { IconCompare, IconLander, IconMountain, IconOrbit } from './icons.tsx'
 import { STEPS } from './steps.ts'
 import { TopSites } from './TopSites.tsx'
@@ -64,7 +64,7 @@ export function Welcome() {
           <button
             type="button"
             className="btn btn--accent btn--big"
-            onClick={() => setStage('choose')}
+            onClick={() => setStage(chooseStage(useUiStore.getState().audience))}
             autoFocus
           >
             {t('welcome.start')} →
