@@ -5,6 +5,7 @@ import { decodeProfile, encodeProfile } from '../config/energyProfiles.ts'
 import type { PresetScenario } from '../config/presets.ts'
 import { getLang, useLangStore } from '../i18n/index.ts'
 import {
+  type IceTarget,
   type Scenario,
   type ScenarioParams,
   scenarioIndex,
@@ -28,13 +29,26 @@ function decodeEnergy(en: string): Partial<ScenarioParams> {
   return en ? { energyId: en } : {}
 }
 
+/** Ice target as `lat<sep>lon` with 4 decimals (≈ 3 m), and back (null when malformed). */
+const encodeTarget = (t: IceTarget, sep: string) => `${t.lat.toFixed(4)}${sep}${t.lon.toFixed(4)}`
+
+function decodeTarget(value: string, sep: string): IceTarget | null {
+  const parts = value.split(sep)
+  const [lat, lon] = parts.map(Number)
+  if (parts.length !== 2 || parts.some((x) => x.trim() === '')) return null
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null
+  return Math.abs(lat) <= 90 && Math.abs(lon) <= 180 ? { lat, lon } : null
+}
+
 /**
  * Per-scenario overrides inside `s=`, only for settings that differ from the active scenario
  * (whose settings travel as the top-level keys): `~d30~l3~sci0.3~enrover~hw15_120_30_20`.
- * Commas separate scenarios, so the lists inside use `_`.
+ * Commas separate scenarios, so the lists inside use `_`. The ice target of a planner pick is
+ * not a shared setting: every scenario that has one carries its own `~i-89.1234_45.6789`.
  */
-function encodeOverrides(sc: ScenarioParams, base: ScenarioParams): string {
+function encodeOverrides(sc: ScenarioParams & { iceTarget?: IceTarget }, base: ScenarioParams) {
   let out = ''
+  if (sc.iceTarget) out += `~i${encodeTarget(sc.iceTarget, '_')}`
   if (sc.missionDays !== base.missionDays) out += `~d${sc.missionDays}`
   if (sc.linkMarginDeg !== base.linkMarginDeg) out += `~l${sc.linkMarginDeg}`
   if (sc.requireDsn !== base.requireDsn) out += `~gs${sc.requireDsn ? 1 : 0}`
@@ -45,10 +59,14 @@ function encodeOverrides(sc: ScenarioParams, base: ScenarioParams): string {
   return out
 }
 
-function decodeOverrides(parts: string[]): Partial<ScenarioParams> {
-  const out: Partial<ScenarioParams> = {}
+function decodeOverrides(parts: string[]): Partial<ScenarioParams> & { iceTarget?: IceTarget } {
+  const out: Partial<ScenarioParams> & { iceTarget?: IceTarget } = {}
   for (const part of parts) {
-    if (part.startsWith('gs')) out.requireDsn = part.slice(2) === '1'
+    // No other token starts with 'i' ('d', 'l', 'gs', 'sci', 'en', 'hw').
+    if (part.startsWith('i')) {
+      const target = decodeTarget(part.slice(1), '_')
+      if (target) out.iceTarget = target
+    } else if (part.startsWith('gs')) out.requireDsn = part.slice(2) === '1'
     else if (part.startsWith('sci')) out.scienceWeight = Number(part.slice(3))
     else if (part.startsWith('en'))
       Object.assign(out, decodeEnergy(part.slice(2).replaceAll('_', ',')))
@@ -112,6 +130,7 @@ function topLevelParams(p: URLSearchParams): Partial<ScenarioParams> {
  *   &view=landing&ap=90 (descent view; ap = approach azimuth, deg, omitted = Sun behind)
  *   &view=landing&rover=1 (the rover traverse to the ice, skipping the descent)
  *   ?lat=-89.1&lon=-60 (custom coordinates)
+ *   &ice=-89.4044,-140.0766 (planner pick: the ice the rover goes to; `~i…` inside `s=`)
  *   &s=shackleton-rim@2027-03-01T00:00Z,shackleton-floor@2027-03-01T00:00Z~d30&a=0&cmp=1 (Compare;
  *     `~…` = settings of that scenario that differ from the top-level ones)
  *   &link=3 (DTE link margin, deg) &dsn=1 (the link also needs a DSN station in view)
@@ -159,6 +178,9 @@ function applySingle(p: URLSearchParams) {
   }
   const date = Date.parse(p.get('date') ?? '')
   if (Number.isFinite(date)) s.setStart(date)
+  // After the site: choosing a site drops the target of the previous one.
+  const ice = decodeTarget(p.get('ice') ?? '', ',')
+  if (ice) s.updateScenario(useMissionStore.getState().activeId, { iceTarget: ice })
 }
 
 const scenarioItem = (x: Scenario, base: ScenarioParams) =>
@@ -176,6 +198,7 @@ export function stateToSearch(): string {
     p.set('site', sc.siteId)
   }
   p.set('date', urlDate(sc.startMs))
+  if (sc.iceTarget && s.scenarios.length <= 1) p.set('ice', encodeTarget(sc.iceTarget, ','))
   p.set('days', String(sc.missionDays))
   p.set('view', s.view)
   if (s.approachAz !== null) p.set('ap', String(Math.round(s.approachAz)))

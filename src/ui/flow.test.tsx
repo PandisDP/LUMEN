@@ -13,7 +13,8 @@ beforeEach(() => {
   useMissionStore
     .getState()
     .setSites(SITE_SEEDS.map((s) => ({ ...s, heightM: 0, accuracy: 'lola', hasTerrain: true })))
-  useUiStore.setState({ stage: 'welcome', tourStep: null })
+  // The classic four-step flow (educators and the public); planners are covered further down.
+  useUiStore.setState({ stage: 'welcome', tourStep: null, audience: 'educator' })
 })
 
 describe('MoonLocator projection', () => {
@@ -100,5 +101,33 @@ describe('welcome and site choice', () => {
     fireEvent.click(screen.getByRole('button', { name: /Ver más sitios/ }))
     expect(useUiStore.getState().showAllSites).toBe(true)
     expect(useUiStore.getState().stage).toBe('explore')
+  })
+})
+
+describe('planner flow', () => {
+  beforeEach(() => useUiStore.setState({ audience: 'planner', stage: 'welcome' }))
+
+  it('starting leads to the Plan step instead of the Top 3', () => {
+    render(<Welcome />)
+    fireEvent.click(screen.getByRole('button', { name: /Empezar/ }))
+    expect(useUiStore.getState().stage).toBe('plan')
+  })
+
+  it('the step bar gains "Plan" as step 1 and the other steps leave it', () => {
+    useUiStore.setState({ stage: 'plan' })
+    render(
+      <>
+        <StepBar />
+        <StepHint />
+      </>,
+    )
+    expect(screen.getByRole('button', { current: 'step' })).toHaveTextContent('Planificar')
+    fireEvent.click(screen.getByRole('button', { name: 'Superficie' }))
+    expect(useUiStore.getState().stage).toBe('explore')
+    expect(useMissionStore.getState().view).toBe('micro')
+    expect(screen.getByRole('button', { current: 'step' })).toHaveTextContent('Superficie')
+    expect(screen.getByText('Paso 3 de 5')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Planificar' }))
+    expect(useUiStore.getState().stage).toBe('plan')
   })
 })

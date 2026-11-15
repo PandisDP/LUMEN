@@ -114,6 +114,8 @@ async function main() {
         roverMaxSlopeDeg: ROVER_MAX_SLOPE_DEG,
       })
       patch.ice = {
+        // Where the route ends: the planner offers it as "the ice next to this site".
+        ...(a.target && { target: { lat: round(a.target.lat, 5), lon: round(a.target.lon, 5) } }),
         straightM: roundOrNull(a.straightM, 0),
         routeM: roundOrNull(a.routeM, 0),
         maxSlopeDeg: roundOrNull(a.maxSlopeDeg, 1),

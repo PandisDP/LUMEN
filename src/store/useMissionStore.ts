@@ -33,7 +33,26 @@ export interface Scenario extends ScenarioParams {
   siteId: string
   /** Landing (start of the analysis window), UTC ms. */
   startMs: number
+  /**
+   * The ice the mission is after, when the scenario comes from the planner: the rover route, the
+   * ice card and the traverse go to the permanently shadowed ground nearest to this point
+   * instead of the one nearest to the landing site. Dropped when the site is changed by hand.
+   */
+  iceTarget?: IceTarget
 }
+
+export interface IceTarget {
+  lat: number
+  lon: number
+}
+
+const validTarget = (t: unknown): t is IceTarget =>
+  !!t &&
+  typeof t === 'object' &&
+  Number.isFinite((t as IceTarget).lat) &&
+  Number.isFinite((t as IceTarget).lon) &&
+  Math.abs((t as IceTarget).lat) <= 90 &&
+  Math.abs((t as IceTarget).lon) <= 180
 
 /** What creating or editing a scenario may set (ids are assigned by the store). */
 export type ScenarioPatch = Partial<Omit<Scenario, 'id'>>
@@ -297,6 +316,15 @@ export const useMissionStore = create<MissionState>()((set, get) => {
           patch.startMs !== undefined && Number.isFinite(patch.startMs)
             ? patch.startMs
             : sc.startMs,
+        // A new site without a target of its own is no longer the planner's pick.
+        iceTarget:
+          'iceTarget' in patch
+            ? validTarget(patch.iceTarget)
+              ? patch.iceTarget
+              : undefined
+            : siteOk && patch.siteId && patch.siteId !== sc.siteId
+              ? undefined
+              : sc.iceTarget,
       }
     })
     commit(next)
@@ -351,6 +379,7 @@ export const useMissionStore = create<MissionState>()((set, get) => {
         id: newScenarioId(),
         siteId: x.siteId,
         startMs: x.startMs,
+        iceTarget: validTarget(x.iceTarget) ? x.iceTarget : undefined,
       }))
       const active = scenarios[Math.min(Math.max(0, activeIndex), scenarios.length - 1)]
       commit(scenarios, active.id)

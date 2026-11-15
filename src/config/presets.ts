@@ -6,6 +6,8 @@ import type { ScenarioParams } from '../store/useMissionStore.ts'
 export interface PresetScenario extends Partial<ScenarioParams> {
   siteId: string
   startMs: number
+  /** Ice the mission is after (scenarios created by the planner). */
+  iceTarget?: { lat: number; lon: number }
 }
 
 export interface PresetContext {

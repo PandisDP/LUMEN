@@ -112,6 +112,12 @@ export interface DateCandidate {
   maxSunEl: number
   /** Mean Sun elevation while lit, degrees (NaN when the window is never lit). */
   meanSunElLit: number
+  /**
+   * Continuous sunlight from touchdown, h: time to the first dark sample after it (0 when
+   * touchdown is in the dark). It looks past the mission window and is capped at the end of the
+   * series, so a long requirement needs a series that long.
+   */
+  sunFromLandingH: number
 }
 
 /**
@@ -132,6 +138,10 @@ export function sweepLandingDates(
     pe[i + 1] = pe[i] + s.sunFrac[i]
     pd[i + 1] = pd[i] + (s.earthFrac[i] >= VISIBLE_THRESHOLD ? 1 : 0)
   }
+  // Lit samples in a row from each sample on (one backward pass).
+  const run = new Int32Array(s.count + 1)
+  for (let i = s.count - 1; i >= 0; i--)
+    run[i] = s.sunFrac[i] >= VISIBLE_THRESHOLD ? run[i + 1] + 1 : 0
   const out: DateCandidate[] = []
   for (let i0 = 0; i0 + win <= s.count; i0 += stride) {
     const i1 = i0 + win
@@ -164,6 +174,7 @@ export function sweepLandingDates(
       score: scoreOf(energyPct, dtePct, longestDarkH),
       maxSunEl,
       meanSunElLit: lit ? elLitSum / lit : NaN,
+      sunFromLandingH: (Math.min(run[i0], s.count - 1 - i0) * s.stepMs) / HOUR_MS,
     })
   }
   return out

@@ -151,7 +151,11 @@ function ScienceRows({
 }) {
   const t = useT()
   const w = scenario.scienceWeight
-  const ice = useIceAccess(detail, scenario.hardwareLimits.roverMaxSlopeDeg)
+  const ice = useIceAccess(
+    detail,
+    scenario.hardwareLimits.roverMaxSlopeDeg,
+    scenario.iceTarget ?? null,
+  )
   if (!ice.available) return <Cell label={t('row.ice')} value={t('row.iceNoData')} />
   const sci = ice.data ? scienceScore(ice.data, ice.rover) : undefined
   const route = ice.data?.insidePsr

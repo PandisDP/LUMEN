@@ -25,6 +25,54 @@ export interface IceAccess {
 }
 
 export const ICE_RADIUS_M = 2000
+/** A target point is snapped to the nearest permanently shadowed cell within this distance, m. */
+export const ICE_TARGET_SNAP_M = 1500
+/** With a target, the search window reaches this far beyond the start-to-ice distance, m. */
+export const ICE_TARGET_MARGIN_M = 600
+
+export interface IceAccessOptions {
+  radiusM?: number
+  roverMaxSlopeDeg?: number
+  /**
+   * Go to the permanently shadowed cell nearest to this point instead of the shadow nearest to
+   * the start (the planner's "ice the mission is after"). The search window then grows to hold
+   * both ends (`radiusM` is only its minimum), and other shadowed ground on the way is driven
+   * over like any terrain: only the goal cell itself may be entered whatever its slope.
+   */
+  target?: { lat: number; lon: number }
+}
+
+/**
+ * Cell of the illumination map in permanent shadow nearest to a point (the cell under the point
+ * if it is one), or null when there is none within `maxDistM`.
+ */
+export function nearestPsrCell(
+  illum: IllumGrid,
+  lat: number,
+  lon: number,
+  maxDistM = ICE_TARGET_SNAP_M,
+): { c: number; r: number; lat: number; lon: number; distM: number } | null {
+  const { c: fc, r: fr } = latLonToPixel(illum, lat, lon)
+  if (!Number.isFinite(fc) || !Number.isFinite(fr)) return null
+  const rad = Math.ceil(maxDistM / illum.scaleM)
+  const c0 = Math.round(fc)
+  const r0 = Math.round(fr)
+  let best: { c: number; r: number } | null = null
+  let bestD = Infinity
+  for (let r = Math.max(0, r0 - rad); r <= Math.min(illum.height - 1, r0 + rad); r++) {
+    for (let c = Math.max(0, c0 - rad); c <= Math.min(illum.width - 1, c0 + rad); c++) {
+      if (illum.data[r * illum.width + c] !== 0) continue
+      // The cell under the point counts as distance 0.
+      const d = c === c0 && r === r0 ? 0 : Math.hypot(c - fc, r - fr) * illum.scaleM
+      if (d < bestD) {
+        bestD = d
+        best = { c, r }
+      }
+    }
+  }
+  if (!best || bestD > maxDistM) return null
+  return { ...best, ...pixelToLatLon(illum, best.c, best.r), distM: bestD }
+}
 
 class MinHeap {
   private k: number[] = []
@@ -77,8 +125,21 @@ export function computeIceAccess(
   illum: IllumGrid,
   lat: number,
   lon: number,
-  { radiusM = ICE_RADIUS_M, roverMaxSlopeDeg = 20 } = {},
+  { radiusM: minRadiusM = ICE_RADIUS_M, roverMaxSlopeDeg = 20, target }: IceAccessOptions = {},
 ): IceAccess {
+  const { c: fc, r: fr } = latLonToPixel(tile, lat, lon)
+  const c0 = Math.round(fc)
+  const r0 = Math.round(fr)
+  // With a target: the one shadowed cell the route must end in, and a window that holds it.
+  const cell = target ? nearestPsrCell(illum, target.lat, target.lon) : null
+  let radiusM = minRadiusM
+  if (cell) {
+    const g = latLonToPixel(tile, cell.lat, cell.lon)
+    radiusM = Math.max(
+      minRadiusM,
+      Math.hypot(g.c - c0, g.r - r0) * tile.scaleM + ICE_TARGET_MARGIN_M,
+    )
+  }
   const empty: IceAccess = {
     straightM: null,
     routeM: null,
@@ -89,9 +150,7 @@ export function computeIceAccess(
     path: [],
     radiusM,
   }
-  const { c: fc, r: fr } = latLonToPixel(tile, lat, lon)
-  const c0 = Math.round(fc)
-  const r0 = Math.round(fr)
+  if (target && !cell) return empty
   if (c0 < 0 || r0 < 0 || c0 >= tile.width || r0 >= tile.height) return empty
   const rad = Math.ceil(radiusM / tile.scaleM)
   const minC = Math.max(1, c0 - rad)
@@ -105,6 +164,8 @@ export function computeIceAccess(
 
   // Per-pixel PSR flag and slope inside the search window.
   const psr = new Uint8Array(n)
+  // Where the route may end: any shadowed pixel, or only those of the target's cell.
+  const stop = cell ? new Uint8Array(n) : psr
   const slope = new Float32Array(n)
   let straight = Infinity
   for (let r = minR; r <= maxR; r++) {
@@ -122,14 +183,18 @@ export function computeIceAccess(
       const i = at(c, r)
       if (v === 0) {
         psr[i] = 1
-        straight = Math.min(straight, d)
+        if (!cell) straight = Math.min(straight, d)
+        else if (ic === cell.c && ir === cell.r) {
+          stop[i] = 1
+          straight = Math.min(straight, d)
+        }
       }
       slope[i] = slopeAtPixel(tile, c, r)
     }
   }
   if (!Number.isFinite(straight)) return empty
   const start = at(c0, r0)
-  if (psr[start]) {
+  if (stop[start]) {
     return {
       ...empty,
       straightM: 0,
@@ -152,7 +217,7 @@ export function computeIceAccess(
   while (heap.size) {
     const [d, i] = heap.pop()
     if (d > dist[i]) continue
-    if (psr[i]) {
+    if (stop[i]) {
       goal = i
       break
     }
@@ -168,7 +233,7 @@ export function computeIceAccess(
         const j = at(nc, nr)
         // Crater floors can be steep at the edge: entering the PSR itself is always allowed
         // if the step onto it is passable from where the rover stands.
-        if (!passable(j) && !psr[j]) continue
+        if (!passable(j) && !stop[j]) continue
         const len = (dr && dc ? Math.SQRT2 : 1) * tile.scaleM
         const s = Number.isFinite(slope[j]) ? slope[j] : roverMaxSlopeDeg
         const nd = d + len * (1 + s / roverMaxSlopeDeg)
@@ -180,7 +245,7 @@ export function computeIceAccess(
       }
     }
   }
-  if (goal < 0) return { ...empty, straightM: straight }
+  if (goal < 0) return { ...empty, straightM: straight, insidePsr: psr[start] === 1 }
 
   const chain: number[] = []
   for (let i = goal; i >= 0; i = prev[i]) chain.push(i)
@@ -195,7 +260,7 @@ export function computeIceAccess(
       const a = chain[k - 1]
       routeM += Math.hypot((i % w) - (a % w), Math.floor(i / w) - Math.floor(a / w)) * tile.scaleM
     }
-    if (!psr[i] && Number.isFinite(slope[i])) maxSlope = Math.max(maxSlope, slope[i])
+    if (!stop[i] && Number.isFinite(slope[i])) maxSlope = Math.max(maxSlope, slope[i])
     if (k % 4 === 0 || k === chain.length - 1) path.push(toLatLon(i))
   }
   return {
@@ -203,7 +268,7 @@ export function computeIceAccess(
     routeM,
     maxSlopeDeg: maxSlope,
     reachable: true,
-    insidePsr: false,
+    insidePsr: psr[start] === 1,
     target: toLatLon(goal),
     path,
     radiusM,
@@ -212,6 +277,8 @@ export function computeIceAccess(
 
 /** Compact form stored per curated site in index.json (no path). */
 export interface IceSummary {
+  /** Where the route ends (the shadowed pixel reached), when published. */
+  target?: { lat: number; lon: number }
   straightM: number | null
   routeM: number | null
   maxSlopeDeg: number | null

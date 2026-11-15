@@ -13,6 +13,7 @@ const candidate = (day: number): DateCandidate => ({
   earthAtLanding: true,
   maxSunEl: 1,
   meanSunElLit: 1,
+  sunFromLandingH: 24,
   score: 50 + day,
 })
 

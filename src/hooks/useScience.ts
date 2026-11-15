@@ -10,7 +10,12 @@ import type { RoverId, TraverseResult } from '../astro/traverse.ts'
 import { energyPreset } from '../config/energyProfiles.ts'
 import { type SiteDetail, asset, demRefs } from '../data/catalog.ts'
 import { loadIllum } from '../data/loadDem.ts'
-import { type Scenario, useMissionStore } from '../store/useMissionStore.ts'
+import {
+  type IceTarget,
+  type Scenario,
+  selectActiveScenario,
+  useMissionStore,
+} from '../store/useMissionStore.ts'
 import { runIceAccess, runOptimize, runTraverse } from '../workers/astroClient.ts'
 import type { DemRef, IllumRef } from '../workers/protocol.ts'
 import { useAsync } from './useAsync.ts'
@@ -42,13 +47,26 @@ const tileRef = (detail: SiteDetail): DemRef | undefined =>
 
 const iceCache = new Map<string, Promise<IceAccess>>()
 
-/** Rover access to the nearest permanently shadowed ground from the site (worker). */
-export function useIceAccess(detail: SiteDetail | undefined, roverMaxSlopeDeg?: number) {
+/**
+ * Rover access from the site to permanently shadowed ground (worker): the nearest one, or the
+ * cell nearest to the scenario's ice target when it has one (a planner pick). `target` defaults
+ * to the active scenario's; pass the scenario's own (or null) when `detail` is another one's.
+ */
+export function useIceAccess(
+  detail: SiteDetail | undefined,
+  roverMaxSlopeDeg?: number,
+  target?: IceTarget | null,
+) {
   const activeRover = useMissionStore((s) => s.hardwareLimits.roverMaxSlopeDeg)
+  const activeTarget = useMissionStore((s) => selectActiveScenario(s).iceTarget)
   const rover = roverMaxSlopeDeg ?? activeRover
+  const goal = (target === undefined ? activeTarget : target) ?? undefined
   const illum = detail && illumRef(detail)
   const dem = detail && tileRef(detail)
-  const key = detail && illum && dem ? `ice|${detail.site.lat}|${detail.site.lon}|${rover}` : null
+  const key =
+    detail && illum && dem
+      ? `ice|${detail.site.lat}|${detail.site.lon}|${rover}|${goal ? `${goal.lat},${goal.lon}` : ''}`
+      : null
   const r = useAsync<IceAccess>(key, () => {
     // Shared by the card, the score and the 3D route: one worker request per point.
     let p = iceCache.get(key!)
@@ -59,6 +77,7 @@ export function useIceAccess(detail: SiteDetail | undefined, roverMaxSlopeDeg?: 
           lon: detail!.site.lon,
           radiusM: ICE_RADIUS_M,
           roverMaxSlopeDeg: rover,
+          ...(goal && { target: { lat: goal.lat, lon: goal.lon } }),
         },
         dem!,
         illum!,
@@ -164,7 +183,7 @@ export function useTraverse(
   const { detail } = useScenarioData(scenario)
   const rover = scenario.hardwareLimits.roverMaxSlopeDeg
   const { linkMarginDeg, requireDsn } = scenario
-  const ice = useIceAccess(detail, rover)
+  const ice = useIceAccess(detail, rover, scenario.iceTarget ?? null)
   const energy = energyPreset(energyId)?.profile
   const dems = detail ? demRefs(detail) : []
   const route = ice.data
@@ -179,7 +198,7 @@ export function useTraverse(
     dems.length > 0
   const key =
     enabled && available
-      ? `trv|${detail!.site.lat}:${detail!.site.lon}|${rover}|${departMs}|${energyId}|${linkMarginDeg}|${requireDsn}`
+      ? `trv|${detail!.site.lat}:${detail!.site.lon}|${rover}|${departMs}|${energyId}|${linkMarginDeg}|${requireDsn}|${scenario.iceTarget ? `${scenario.iceTarget.lat},${scenario.iceTarget.lon}` : ''}`
       : null
   const r = useAsync<TraverseResult>(key, () => {
     let p = traverseCache.get(key!)
