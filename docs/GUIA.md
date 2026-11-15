@@ -41,13 +41,13 @@ La primera vez aparece abajo una invitación al **recorrido guiado** (1 minuto).
 
 ![Vista general](img/orbita.jpg)
 
-| Zona                | Qué contiene                                                                                                                |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Zona                | Qué contiene                                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | **Barra superior**  | Selector de vista (Órbita · Superficie · Aterrizaje), Exportar, Comparar, Ocultar paneles, ¿Por qué?, Guía e idioma (ES/EN/QU) |
-| **Escena 3D**       | Ocupa toda la ventana; encima van los controles de la vista actual (HUD)                                                    |
-| **Panel izquierdo** | Sitios y escenarios                                                                                                         |
-| **Panel derecho**   | Estado del sitio en el instante actual y resumen de la misión                                                               |
-| **Panel inferior**  | Tiempo de misión y gráficas                                                                                                 |
+| **Escena 3D**       | Ocupa toda la ventana; encima van los controles de la vista actual (HUD)                                                       |
+| **Panel izquierdo** | Sitios y escenarios                                                                                                            |
+| **Panel derecho**   | Estado del sitio en el instante actual y resumen de la misión                                                                  |
+| **Panel inferior**  | Tiempo de misión y gráficas                                                                                                    |
 
 Los tres paneles empiezan **minimizados**: solo se ve su cabecera con un resumen (sitio activo, Sol/Tierra, hora de misión). Pulsa la cabecera o las teclas **1**, **2** y **3** para abrirlos o cerrarlos; la elección se recuerda. **Ocultar paneles** deja solo la escena y su HUD.
 
