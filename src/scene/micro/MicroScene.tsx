@@ -16,6 +16,7 @@ import { maskAt } from '../../astro/horizon.ts'
 import type { InstantState } from '../../astro/instant.ts'
 import type { SiteSeries } from '../../astro/series.ts'
 import {
+  latLonToScene,
   buildFlatGeometry,
   buildHorizonRing,
   buildTerrainGeometry,
@@ -31,7 +32,9 @@ import { FOV, selectActiveScenario, useMissionStore } from '../../store/useMissi
 import { useDescentStore } from '../../store/useDescentStore.ts'
 import { useViewStore } from '../../store/useViewStore.ts'
 import { DescentControls } from './DescentControls.tsx'
+import { NearGround } from './NearGround.tsx'
 import { RoverRig } from './Rover.tsx'
+import { RoverTracks } from './RoverTracks.tsx'
 import { roverTelemetry } from './roverTelemetry.ts'
 import { useRoverTraverse } from '../../hooks/useRover.ts'
 import { useRoverStore } from '../../store/useRoverStore.ts'
@@ -414,6 +417,16 @@ export function MicroScene() {
   const roving = landing && landed && landerCam === 'rover'
   const traverse = useRoverTraverse(landing)
   const autoDeploy = useRoverStore((s) => s.autoDeploy)
+  // The rover path on the ground, in scene coordinates (for the close-range ground).
+  const roverRoute = useMemo(
+    () =>
+      detail && traverse.data
+        ? traverse.data.plan.points.map(
+            (p) => latLonToScene(detail.site, p.lat, p.lon, p.heightM) as [number, number, number],
+          )
+        : undefined,
+    [detail, traverse.data],
+  )
   // "Full mission": once down (and the route is known), hand over to the rover.
   useEffect(() => {
     if (!landing || !landed || autoDeploy === 'no' || !traverse.data) return
@@ -451,6 +464,18 @@ export function MicroScene() {
           {landing && !landed && grids && <DescentReticle detail={detail} grids={grids} />}
           {landing && grids && <DescentDust detail={detail} grids={grids} />}
           {(orbit || roving) && grids && <Lander detail={detail} grids={grids} />}
+          {(orbit || roving) && grids && (
+            <NearGround
+              detail={detail}
+              grids={grids}
+              follow={roving && traverse.data ? 'rover' : 'lander'}
+              route={roving ? roverRoute : undefined}
+              sunElDeg={instant.sky.sun.el}
+            />
+          )}
+          {roving && grids && traverse.data && (
+            <RoverTracks detail={detail} grids={grids} traverse={traverse.data} />
+          )}
           {/* Clickable score labels would clutter (and relocate) the descent. */}
           {!(landing && !landed) && <DispersionMarkers detail={detail} />}
           <SunDisc instant={instant} />
