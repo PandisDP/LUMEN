@@ -8,7 +8,7 @@ Herramienta web para **comparar sitios y fechas de alunizaje en el polo sur de l
 - **Comunicación directa con la Tierra (DTE)**: visibilidad con un **ángulo mínimo de enlace** sobre el relieve, tiempo hasta la puesta o salida y cortes de enlace.
 - **Seguridad de aterrizaje**: **pendiente del terreno** a 20 m/px y **sensibilidad dentro de la elipse de aterrizaje**: cuánto cambia la misión si el lander toca suelo unos cientos de metros más allá.
 
-Responde al reto de NASA Space Apps sobre iluminación y comunicaciones en el polo sur lunar. La interfaz está en **español e inglés**.
+Responde al reto de NASA Space Apps sobre iluminación y comunicaciones en el polo sur lunar. La interfaz está en **español, inglés y quechua**.
 
 📘 **[Guía de usuario completa](docs/GUIA.md)**: qué hace cada parte de la pantalla y cómo leer los resultados.
 
@@ -64,10 +64,16 @@ Responde al reto de NASA Space Apps sobre iluminación y comunicaciones en el po
 | Escenarios rápidos                            | **Comparar** o **¿Por qué?**: «¿Y si Artemis III se retrasa 14 días?», «Pico de luz vs. cráter en sombra», «Candidatos Artemis III», «Luz vs. hielo»                                                                                                                                                                                                                                                                                                                           |
 | Exportar datos                                | **Exportar**: serie temporal (CSV), escenario completo (JSON), perfil de horizonte (CSV) o todos los escenarios de Comparar (JSON)                                                                                                                                                                                                                                                                                                                                             |
 | Compartir un escenario                        | La URL de la barra del navegador guarda sitios, fechas, vista, escenarios de Comparar, margen de enlace, perfil energético, límites de hardware, peso científico e idioma                                                                                                                                                                                                                                                                                                      |
-| Cambiar de idioma                             | Botones **ES / EN** (por defecto, el idioma del navegador; también `?lang=en`)                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Cambiar de idioma                             | Botones **ES / EN / QU** (por defecto, el idioma del navegador; también `?lang=en` o `?lang=qu`)                                                                                                                                                                                                                                                                                                                                                                               |
 | Entender por qué                              | **¿Por qué?**: explicaciones para público general, cada una con un sitio que la ilustra; tarjeta **Canadá en la Luna** (CSA) y lista de fuentes                                                                                                                                                                                                                                                                                                                                |
 | Aprender la interfaz                          | **Guía**: recorrido de 12 pasos (← → y Esc); botón **?** en cada panel y en el HUD con su explicación; [guía completa](docs/GUIA.md)                                                                                                                                                                                                                                                                                                                                           |
 | Organizar la pantalla                         | Paneles plegables (minimizados muestran un resumen); teclas **1 / 2 / 3** para el izquierdo, el derecho y el inferior; **Ocultar paneles** deja solo la escena                                                                                                                                                                                                                                                                                                                 |
+
+## Idiomas
+
+Español, inglés y quechua (_runasimi_, variedad Cusco-Collao). El quechua cubre la interfaz
+principal y está **en revisión**: lo no traducido se muestra en español. Criterios, glosario y
+lista de revisión en [docs/QUECHUA.md](docs/QUECHUA.md).
 
 ## Diseño
 
@@ -220,7 +226,7 @@ LUMEN_3D/
 │  │                     optimizador y acceso a hielo
 │  ├─ config/            Sitios curados, escenarios rápidos y perfiles energéticos
 │  ├─ data/              Carga del catálogo, detalle de sitio, tiles y DEMs
-│  ├─ i18n/              Diccionarios ES/EN y textos de sitios
+│  ├─ i18n/              Diccionarios ES/EN/QU y textos de sitios
 │  ├─ store/             Estado global (Zustand): misión, interfaz (paneles, recorrido, ayuda), descenso
 │  ├─ hooks/             Unión de store, datos y worker; URL; exportación; atajos de paneles
 │  ├─ scene/             Vistas 3D: macro/ (órbita: Tierra, Sol), micro/ (superficie, regolito,

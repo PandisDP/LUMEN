@@ -244,7 +244,7 @@ export function PolarMap() {
   const toCanvas = (lat: number, lon: number) => project(lat, lon, ox + S / 2, oy + S / 2, R)
 
   const compare = scenarios.length > 1
-  const west = lang === 'es' ? 'O' : 'W'
+  const west = lang === 'en' ? 'W' : 'O'
   const activeSiteId = active?.siteId
 
   useEffect(() => {

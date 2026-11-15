@@ -2,22 +2,27 @@ import { useCallback } from 'react'
 import { create } from 'zustand'
 import { en } from './en.ts'
 import { es } from './es.ts'
+import { qu } from './qu.ts'
 
 /**
- * Minimal ES/EN translation layer (no dependency). Spanish is the source dictionary; the
- * English one is typed against it, so a missing or extra key is a compile error.
+ * Minimal translation layer (no dependency). Spanish is the source dictionary; the English one is
+ * typed against it, so a missing or extra key is a compile error. Quechua (Southern, Cusco-Collao)
+ * covers the main interface only: it is a partial dictionary and anything it lacks falls back to
+ * Spanish (see docs/QUECHUA.md).
  */
-export type Lang = 'es' | 'en'
+export type Lang = 'es' | 'en' | 'qu'
 export type MsgKey = keyof typeof es
 export type MsgParams = Record<string, string | number>
 
-export const LANGS: readonly Lang[] = ['es', 'en']
-const DICTS: Record<Lang, Record<MsgKey, string>> = { es, en }
+export const LANGS: readonly Lang[] = ['es', 'en', 'qu']
+/** Name of each language in that language (tooltips of the switcher). */
+export const LANG_NAMES: Record<Lang, string> = { es: 'Español', en: 'English', qu: 'Runasimi' }
+const DICTS: Record<Lang, Partial<Record<MsgKey, string>>> = { es, en, qu }
 const STORAGE_KEY = 'lumen3d.lang'
 
-const isLang = (v: unknown): v is Lang => v === 'es' || v === 'en'
+const isLang = (v: unknown): v is Lang => v === 'es' || v === 'en' || v === 'qu'
 
-/** ?lang= → saved choice → browser language (Spanish browsers get ES, everyone else EN). */
+/** ?lang= → saved choice → browser language (Spanish → ES, Quechua → QU, everyone else EN). */
 export function detectLang(
   search = typeof location !== 'undefined' ? location.search : '',
   navLang = typeof navigator !== 'undefined' ? navigator.language : 'es',
@@ -30,7 +35,9 @@ export function detectLang(
   } catch {
     // Storage blocked (private mode, sandbox): fall through to the browser language.
   }
-  return (navLang ?? '').toLowerCase().startsWith('es') ? 'es' : 'en'
+  const nav = (navLang ?? '').toLowerCase()
+  if (nav.startsWith('qu')) return 'qu'
+  return nav.startsWith('es') ? 'es' : 'en'
 }
 
 interface LangState {

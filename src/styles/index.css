@@ -638,6 +638,7 @@ select {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
   height: 28px;
   padding: 0 14px;
   font-weight: 500;

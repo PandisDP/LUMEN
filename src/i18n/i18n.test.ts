@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { SITE_SEEDS } from '../config/sites.ts'
 import { en } from './en.ts'
 import { es } from './es.ts'
+import { qu } from './qu.ts'
 import { detectLang, translate, useLangStore } from './index.ts'
 import { siteText } from './sites.ts'
 
@@ -24,6 +25,43 @@ describe('dictionaries', () => {
   })
 })
 
+describe('Quechua dictionary (partial, falls back to Spanish)', () => {
+  const keys = Object.keys(qu) as (keyof typeof es)[]
+
+  it('only has keys of the Spanish source, no empty values and the same {params}', () => {
+    for (const k of keys) {
+      expect(k in es, k).toBe(true)
+      expect(qu[k]!.trim(), k).not.toBe('')
+      expect(params(qu[k]!), k).toEqual(params(es[k]))
+    }
+  })
+
+  it('covers the main interface', () => {
+    expect(keys.length).toBeGreaterThan(400)
+    const areas = [
+      'topbar.',
+      'step.',
+      'audience.',
+      'panel.',
+      'tour.',
+      'time.',
+      'metrics.',
+      'rover.',
+    ]
+    for (const area of [...areas, 'challenge.', 'assistant.', 'killa.', 'kit.', 'plan.', 'top.']) {
+      const all = Object.keys(es).filter((k) => k.startsWith(area))
+      const done = keys.filter((k) => k.startsWith(area))
+      expect(done.length / all.length, area).toBeGreaterThan(0.3)
+    }
+  })
+
+  it('falls back to Spanish for what it does not translate', () => {
+    const missing = (Object.keys(es) as (keyof typeof es)[]).find((k) => !(k in qu))!
+    expect(translate('qu', missing)).toBe(es[missing])
+    expect(translate('qu', keys[0])).toBe(qu[keys[0]])
+  })
+})
+
 describe('detectLang', () => {
   it('prefers ?lang=, then the browser language', () => {
     expect(detectLang('?lang=en', 'es-MX')).toBe('en')
@@ -31,12 +69,16 @@ describe('detectLang', () => {
     expect(detectLang('', 'es-AR')).toBe('es')
     expect(detectLang('', 'en-GB')).toBe('en')
     expect(detectLang('', 'fr-FR')).toBe('en')
+    expect(detectLang('?lang=qu', 'en-GB')).toBe('qu')
+    expect(detectLang('', 'quz-PE')).toBe('qu')
   })
 
   it('setLang persists and updates <html lang>', () => {
     useLangStore.getState().setLang('en')
     expect(document.documentElement.lang).toBe('en')
     expect(detectLang('', 'es-MX')).toBe('en') // saved choice wins over the browser
+    useLangStore.getState().setLang('qu')
+    expect(document.documentElement.lang).toBe('qu')
     useLangStore.getState().setLang('es')
     expect(detectLang('', 'en-US')).toBe('es')
   })

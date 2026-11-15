@@ -24,7 +24,7 @@ const SWEEP_DAYS = 1826 // through 2030-12-31
 const PAD = { left: 42, right: 10, top: 8, bottom: 50 }
 const LANE_H = 12
 
-const LOCALES: Record<Lang, string> = { es: 'es-MX', en: 'en-US' }
+const LOCALES: Record<Lang, string> = { es: 'es-MX', en: 'en-US', qu: 'es-PE' }
 const monthName = (m: MonthStat) =>
   new Intl.DateTimeFormat(LOCALES[getLang()], {
     timeZone: 'UTC',

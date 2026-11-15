@@ -451,7 +451,7 @@ export const planFileName = (result: PlanResult) =>
 
 // ---------------------------------------------------------------- dates as text
 
-const LOCALES = { es: 'es-MX', en: 'en-US' } as const
+const LOCALES = { es: 'es-MX', en: 'en-US', qu: 'es-PE' } as const
 type PlanLang = keyof typeof LOCALES
 const fmtCache = new Map<string, Intl.DateTimeFormat>()
 
