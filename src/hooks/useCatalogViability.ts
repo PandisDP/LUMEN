@@ -33,7 +33,7 @@ export function useCatalogViability(enabled: boolean) {
     enabled && curated.length
       ? `catalog|${startMs}|${missionDays}|${linkMarginDeg}|${requireDsn}|${curated.map((s) => s.id).join(',')}`
       : null
-  const { data, loading, error } = useAsync(key, () =>
+  const { data, loading, error, retry } = useAsync(key, () =>
     cached(key!, () =>
       Promise.all(
         curated.map(async (info) => {
@@ -67,7 +67,7 @@ export function useCatalogViability(enabled: boolean) {
         .sort((a, b) => rank(a) - rank(b) || b.score - a.score),
     [data, limits, scienceWeight],
   )
-  return { rows, loading, error }
+  return { rows, loading, error, retry }
 }
 
 const ORDER = { good: 0, warn: 1, bad: 2 } as const

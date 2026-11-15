@@ -26,6 +26,7 @@ import { roverTelemetry } from './roverTelemetry.ts'
 import { surfaceHalfSize } from './surface.ts'
 import { terrainMeshHeight } from './trackGeometry.ts'
 import { terrainSegments } from './nearGroundField.ts'
+import { SCENE_COLORS } from '../sceneColors.ts'
 
 type P3 = [number, number, number]
 const DEG = Math.PI / 180
@@ -362,7 +363,14 @@ export function RoverRig({
         <RoverModel key={roverId} id={roverId} ref={model} />
       </group>
       {route.length > 1 && (
-        <Line points={route} color="#7fd4ff" lineWidth={2} dashed dashSize={6} gapSize={4} />
+        <Line
+          points={route}
+          color={SCENE_COLORS.route}
+          lineWidth={2}
+          dashed
+          dashSize={6}
+          gapSize={4}
+        />
       )}
       {goal && (
         <Html position={goal} center className="label label--ice" style={{ pointerEvents: 'none' }}>

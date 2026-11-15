@@ -85,7 +85,7 @@ export function TopBar() {
           <>
             <button
               type="button"
-              className="btn btn--accent"
+              className="btn"
               aria-pressed={touring}
               onClick={() => startTour(0)}
               title={t('topbar.guideTitle')}

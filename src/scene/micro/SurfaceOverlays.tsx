@@ -11,8 +11,10 @@ import { useIceAccess } from '../../hooks/useScience.ts'
 import { useDispersion, useLandingEllipse } from '../../hooks/useTerrain.ts'
 import { useT } from '../../i18n/index.ts'
 import { selectActiveScenario, useMissionStore } from '../../store/useMissionStore.ts'
+import { LEVEL_GLYPH } from '../../ui/bands.ts'
 import { scoreLevel } from '../../ui/levels.ts'
 import { relocateTo } from './relocate.ts'
+import { SCENE_COLORS } from '../sceneColors.ts'
 
 type P3 = [number, number, number]
 
@@ -45,7 +47,7 @@ export function EllipseRing({ detail, grids }: { detail: SiteDetail; grids: DemG
   return (
     <Line
       points={points}
-      color="#ffffff"
+      color={SCENE_COLORS.ink}
       lineWidth={aerial ? 2.5 : 1.5}
       transparent
       opacity={0.9}
@@ -76,6 +78,9 @@ function Marker({ p, site }: { p: DispersionPoint; site: SiteDetail['site'] }) {
       >
         {steep && <span aria-hidden>✕ </span>}
         {p.score}
+        <span className="dmark__glyph" aria-hidden>
+          {LEVEL_GLYPH[scoreLevel(p.score)]}
+        </span>
       </button>
     </Html>
   )
@@ -119,7 +124,7 @@ export function IceRoute({ detail, grids }: { detail: SiteDetail; grids: DemGrid
     <>
       <Line
         points={points}
-        color="#7fd4ff"
+        color={SCENE_COLORS.route}
         lineWidth={aerial ? 3 : 2}
         dashed
         dashSize={30}

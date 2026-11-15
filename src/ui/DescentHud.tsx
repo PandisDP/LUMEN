@@ -372,7 +372,7 @@ export function DescentHud() {
           {rover.available && (
             <button
               type="button"
-              className="btn btn--accent"
+              className="btn btn--primary"
               disabled={!rover.data}
               aria-busy={rover.loading}
               onClick={() => {

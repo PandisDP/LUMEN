@@ -320,7 +320,7 @@ export const es = {
 
   // Seasons (2026–2030 by month)
   'season.hint':
-    'Mes a mes, 2026–2030, en {site}: barras = energía media de una misión de {days} días que alunice ese mes (más tenues cuando pocos días tienen Sol al tocar suelo); línea azul = Tierra visible (DTE); línea blanca = altura máxima del Sol. Haz clic en un mes para fijar esa fecha.',
+    'Mes a mes, 2026–2030, en {site}: barras = energía media de una misión de {days} días que alunice ese mes (más tenues cuando pocos días tienen Sol al tocar suelo); línea azul = Tierra visible (DTE); franja inferior = altura máxima del Sol. Haz clic en un mes para fijar esa fecha.',
   'season.computing': 'Calculando 60 meses…',
   'season.noDetail': 'Esperando el horizonte del sitio…',
   'season.aria': 'Energía, enlace con la Tierra y altura máxima del Sol por mes, 2026–2030',
@@ -1078,4 +1078,26 @@ export const es = {
     'Ahora mismo la mejor opción es {name} ({score}/100). Pulsa "Comparar las 3 opciones" para verlo frente a otras.',
   'assistant.answer.default':
     'Te recomiendo empezar por {name} ({score}/100). Pregúntame sobre luz, Tierra, pendiente, hielo o noche.',
+  // Killa
+  'killa.role': 'Te ayudo a elegir dónde y cuándo alunizar',
+  'killa.noOptions': 'No encontré opciones para esta misión. Prueba con otra fecha o con más días.',
+  'killa.askFailed': 'No pude responder ahora. Inténtalo de nuevo en un momento.',
+  'killa.offline': 'Sin conexión a internet. Seguiré cargando cuando vuelva.',
+  // Kit: notices, empty states, band labels
+  'kit.retry': 'Reintentar',
+  'band.ok': 'En banda',
+  'band.deficit': 'Déficit',
+  'band.excess': 'Exceso',
+  'band.stopped': 'Detenido',
+  'band.idle': 'Sin asignar',
+  'band.none': 'Sin dato',
+  'plan.map.error': 'No se pudo cargar el relieve: {msg}',
+  'plan.when.emptyTitle': 'Aún no hay días calculados',
+  'plan.empty.title': 'Aún no hay plan',
+  'plan.fixbtn.widenRange': 'Ampliar el rango a {n} días',
+  'plan.fixbtn.lowerSun': 'Bajar la luz mínima a {n} días',
+  'plan.fixbtn.lowerSoc': 'Bajar la batería mínima del rover al {n} %',
+  'plan.fixbtn.widenRadius': 'Ampliar el radio a {r}',
+  'plan.fixbtn.narrowRadius': 'Reducir el radio a {r}',
+  'plan.fixbtn.then': 'Cada botón cambia un dato del plan. Después pulsa «Planificar».',
 } as const

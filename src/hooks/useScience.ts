@@ -93,6 +93,7 @@ export function useIceAccess(
     data: key ? r.data : undefined,
     loading: r.loading,
     error: r.error,
+    retry: r.retry,
     rover,
   }
 }

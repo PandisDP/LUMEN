@@ -7,8 +7,8 @@ import type { SiteSeries } from '../astro/series.ts'
 import { context2d, useCanvasSize } from '../hooks/useCanvas.ts'
 import { t, useLang } from '../i18n/index.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
+import { DARK_CHART_THEME as SKY, alpha, chartFont, useChartTheme } from './chartTheme.ts'
 import { cardinals } from './format.ts'
-import { EARTH_COLOR, SUN_COLOR } from './Timeline.tsx'
 
 interface HorizonChartProps {
   mask: HorizonMask
@@ -41,6 +41,8 @@ export function HorizonChart({
   const { ref, width, height, dpr } = useCanvasSize()
   const lang = useLang()
   const [earthMode, setEarthMode] = useState(false)
+  // The sky is a dark picture in both themes (SKY); only the axis labels around it follow the UI.
+  const ui = useChartTheme()
 
   useEffect(() => {
     const ctx = context2d(ref.current, width, height, dpr)
@@ -72,23 +74,23 @@ export function HorizonChart({
 
     // Sky. In "Earth" mode the sky keeps glowing while the Sun is less than 18° below the
     // local horizon (astronomical twilight); on the Moon it is black the instant the disc sets.
-    ctx.fillStyle = '#02040c'
+    ctx.fillStyle = SKY.background
     ctx.fillRect(PAD_L, 0, plotW, plotH)
     if (earthMode && instant) {
       const depth = instant.sky.sun.el + refractionDeg(instant.sky.sun.el) - instant.sunHorizonDeg
       const glow = depth >= 0 ? 1 : Math.max(0, 1 + depth / 18)
       if (glow > 0) {
         const sky = ctx.createLinearGradient(0, 0, 0, plotH)
-        sky.addColorStop(0, `rgba(70,120,200,${0.55 * glow})`)
-        sky.addColorStop(1, `rgba(230,150,90,${0.6 * glow})`)
+        sky.addColorStop(0, alpha(SKY.earth, 0.55 * glow))
+        sky.addColorStop(1, alpha(SKY.sun, 0.6 * glow))
         ctx.fillStyle = sky
         ctx.fillRect(PAD_L, 0, plotW, plotH)
       }
     }
     // Grid.
-    ctx.strokeStyle = 'rgba(154,168,189,0.18)'
-    ctx.fillStyle = '#9aa8bd'
-    ctx.font = '10px system-ui, sans-serif'
+    ctx.strokeStyle = alpha(SKY.inkMuted, 0.18)
+    ctx.fillStyle = ui.inkMuted
+    ctx.font = chartFont(10, 'mono')
     const stepEl = hi - lo > 20 ? 10 : hi - lo > 8 ? 2 : 1
     for (let e = Math.ceil(lo / stepEl) * stepEl; e <= hi; e += stepEl) {
       ctx.beginPath()
@@ -97,6 +99,7 @@ export function HorizonChart({
       ctx.stroke()
       ctx.fillText(`${e}°`, 2, y(e) + 3)
     }
+    ctx.font = chartFont(10)
     cardinals().forEach((name, k) => {
       const px = x(k * 45)
       ctx.beginPath()
@@ -106,7 +109,7 @@ export function HorizonChart({
       ctx.fillText(name, px + 2, height - 4)
     })
     // Ideal horizon (0°).
-    ctx.strokeStyle = 'rgba(230,237,247,0.45)'
+    ctx.strokeStyle = alpha(SKY.ink, 0.45)
     ctx.setLineDash([4, 3])
     ctx.beginPath()
     ctx.moveTo(PAD_L, y(0))
@@ -137,12 +140,12 @@ export function HorizonChart({
         }
         ctx.globalAlpha = 1
       }
-      dots(series.sunAz, series.sunEl, series.sunFrac, SUN_COLOR)
-      dots(series.earthAz, series.earthEl, series.earthFrac, EARTH_COLOR)
+      dots(series.sunAz, series.sunEl, series.sunFrac, SKY.sun)
+      dots(series.earthAz, series.earthEl, series.earthFrac, SKY.earth)
       if (earthMode) {
         // The same Sun lifted by Earth's atmospheric refraction: drawn as short dashes (a
         // different mark, not just a different colour).
-        ctx.strokeStyle = '#ffb36b'
+        ctx.strokeStyle = SKY.sun
         ctx.globalAlpha = 0.9
         for (let i = 0; i < series.count; i += stride) {
           const px = x(series.sunAz[i])
@@ -181,10 +184,10 @@ export function HorizonChart({
         instant.sky.earth.az,
         instant.sky.earth.el,
         instant.sky.earth.radiusDeg,
-        EARTH_COLOR,
+        SKY.earth,
         false,
       )
-      body(instant.sky.sun.az, instant.sky.sun.el, instant.sky.sun.radiusDeg, '#fff3c4', true)
+      body(instant.sky.sun.az, instant.sky.sun.el, instant.sky.sun.radiusDeg, SKY.sun, true)
     }
 
     // Terrain silhouette.
@@ -197,16 +200,20 @@ export function HorizonChart({
     ctx.lineTo(PAD_L + plotW, plotH)
     ctx.closePath()
     const grad = ctx.createLinearGradient(0, 0, 0, plotH)
-    grad.addColorStop(0, '#5b606b')
-    grad.addColorStop(1, '#1d2028')
+    grad.addColorStop(0, alpha(SKY.inkMuted, 0.5))
+    grad.addColorStop(1, alpha(SKY.inkMuted, 0.08))
+    // Opaque first: the ridges must hide the paths behind them.
+    ctx.fillStyle = SKY.card
+    ctx.fill()
     ctx.fillStyle = grad
     ctx.fill()
-    ctx.strokeStyle = '#c9d1dc'
+    ctx.strokeStyle = SKY.inkMuted
     ctx.stroke()
 
     // DTE link threshold: the Earth must clear the terrain by this margin.
     if (linkMarginDeg > 0) {
-      ctx.strokeStyle = EARTH_COLOR
+      ctx.strokeStyle = SKY.earth
+      ctx.lineWidth = 2
       ctx.globalAlpha = 0.85
       ctx.setLineDash([5, 4])
       ctx.beginPath()
@@ -218,20 +225,20 @@ export function HorizonChart({
       }
       ctx.stroke()
       ctx.setLineDash([])
+      ctx.lineWidth = 1
       ctx.globalAlpha = 1
       if (!compact) {
-        ctx.fillStyle = EARTH_COLOR
+        ctx.fillStyle = SKY.ink
         ctx.fillText(t('horizon.linkLine', { deg: linkMarginDeg }), PAD_L + 4, 12)
       }
     }
 
     if (!compact) {
-      ctx.fillStyle = '#9aa8bd'
+      ctx.fillStyle = SKY.inkMuted
       ctx.textAlign = 'right'
       ctx.fillText(t('horizon.scale', { k: (pxPerDegY / pxPerDegX).toFixed(1) }), width - 4, 12)
       if (series && showPaths) ctx.fillText(t('horizon.legend'), width - 4, 24)
       if (earthMode) {
-        ctx.fillStyle = '#ffb36b'
         ctx.fillText(`– ${t('horizon.earthLegend')}`, width - 4, 36)
       }
       ctx.textAlign = 'left'
@@ -249,6 +256,7 @@ export function HorizonChart({
     linkMarginDeg,
     lang,
     earthMode,
+    ui,
   ])
 
   const canvas = (

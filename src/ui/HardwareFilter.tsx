@@ -4,6 +4,8 @@ import { type MsgKey, useT } from '../i18n/index.ts'
 import { useSiteText } from '../i18n/sites.ts'
 import { MAX_SCENARIOS, selectActiveScenario, useMissionStore } from '../store/useMissionStore.ts'
 import { formatDeg, formatHours, formatPct } from './format.ts'
+import { Busy } from './kit/Busy.tsx'
+import { Notice } from './kit/Notice.tsx'
 import { LevelTag } from './LevelTag.tsx'
 
 const FIELDS: [keyof HardwareLimits, MsgKey, number][] = [
@@ -53,7 +55,7 @@ export function HardwareFilter() {
   const missionDays = useMissionStore((s) => s.missionDays)
   const { setHardwareOpen, setHardwareLimits, setScenarios, setCompareOpen } =
     useMissionStore.getState()
-  const { rows, loading, error } = useCatalogViability(open)
+  const { rows, loading, error, retry } = useCatalogViability(open)
   if (!open) return null
 
   const viable = rows?.filter((r) => r.viability.verdict !== 'bad') ?? []
@@ -98,8 +100,12 @@ export function HardwareFilter() {
           </label>
         ))}
       </div>
-      {error && <p className="error">{error.message}</p>}
-      {!rows && <p className="hint">{t('common.computing')}</p>}
+      {error && (
+        <Notice tone="error" action={{ label: t('kit.retry'), onClick: retry }}>
+          {t('metrics.error', { msg: error.message })}
+        </Notice>
+      )}
+      {!rows && !error && <Busy>{t('common.computing')}</Busy>}
       {rows && (
         <table className="hwfilter__table">
           <thead>

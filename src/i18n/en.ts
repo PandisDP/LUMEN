@@ -317,7 +317,7 @@ export const en: Record<keyof typeof es, string> = {
 
   // Seasons (2026–2030 by month)
   'season.hint':
-    'Month by month, 2026–2030, at {site}: bars = mean energy of a {days}-day mission landing that month (fainter when few days have the Sun up at touchdown); blue line = Earth visible (DTE); white line = maximum Sun elevation. Click a month to set that date.',
+    'Month by month, 2026–2030, at {site}: bars = mean energy of a {days}-day mission landing that month (fainter when few days have the Sun up at touchdown); blue line = Earth visible (DTE); lower strip = maximum Sun elevation. Click a month to set that date.',
   'season.computing': 'Computing 60 months…',
   'season.noDetail': 'Waiting for the site horizon…',
   'season.aria': 'Energy, Earth link and maximum Sun elevation by month, 2026–2030',
@@ -1066,4 +1066,26 @@ export const en: Record<keyof typeof es, string> = {
     'Right now the best option is {name} ({score}/100). Press "Compare the 3 options" to see it against others.',
   'assistant.answer.default':
     'I suggest starting with {name} ({score}/100). Ask me about light, Earth, slope, ice or night.',
+  // Killa
+  'killa.role': 'I help you choose where and when to land',
+  'killa.noOptions': 'I found no options for this mission. Try another date or more days.',
+  'killa.askFailed': 'I could not answer just now. Please try again in a moment.',
+  'killa.offline': 'No internet connection. I will keep loading when it comes back.',
+  // Kit: notices, empty states, band labels
+  'kit.retry': 'Retry',
+  'band.ok': 'In band',
+  'band.deficit': 'Deficit',
+  'band.excess': 'Excess',
+  'band.stopped': 'Stopped',
+  'band.idle': 'Unassigned',
+  'band.none': 'No data',
+  'plan.map.error': 'The terrain could not be loaded: {msg}',
+  'plan.when.emptyTitle': 'No days computed yet',
+  'plan.empty.title': 'No plan yet',
+  'plan.fixbtn.widenRange': 'Widen the range to {n} days',
+  'plan.fixbtn.lowerSun': 'Lower the minimum light to {n} days',
+  'plan.fixbtn.lowerSoc': 'Lower the rover’s minimum battery to {n} %',
+  'plan.fixbtn.widenRadius': 'Widen the radius to {r}',
+  'plan.fixbtn.narrowRadius': 'Narrow the radius to {r}',
+  'plan.fixbtn.then': 'Each button changes one input of the plan. Then press “Plan”.',
 }

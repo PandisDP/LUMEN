@@ -6,6 +6,7 @@ import './styles/tokens.css'
 import './styles/index.css'
 import './styles/flow.css'
 import './styles/planner.css'
+import './styles/charts.css'
 import './styles/kit.css'
 import './styles/killa.css'
 

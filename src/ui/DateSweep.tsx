@@ -8,11 +8,16 @@ import { selectActiveScenario, todayUtc, useMissionStore } from '../store/useMis
 import { useT } from '../i18n/index.ts'
 import { useSiteText } from '../i18n/sites.ts'
 import { runDateSweep } from '../workers/astroClient.ts'
+import { alpha, chartFont, levelFill, useChartTheme } from './chartTheme.ts'
 import { formatDay, formatHours, formatPct } from './format.ts'
+import { Busy } from './kit/Busy.tsx'
+import { LevelTag } from './LevelTag.tsx'
+import { type Level, scoreLevel } from './levels.ts'
 
 const SWEEP_DAYS = 365
 
-const scoreColor = (s: number) => (s >= 65 ? '#7ee081' : s >= 45 ? '#ffc94d' : '#ff6b6b')
+/** Same steps as the bar colours of the chart: the shared score thresholds (60 / 35). */
+const sweepLevel = (s: number): Level => scoreLevel(s)
 
 function SweepChart({
   candidates,
@@ -25,6 +30,7 @@ function SweepChart({
 }) {
   const { ref, width, height, dpr } = useCanvasSize()
   const t = useT()
+  const theme = useChartTheme()
   useEffect(() => {
     const ctx = context2d(ref.current, width, height, dpr)
     if (!ctx || !candidates.length) return
@@ -32,26 +38,26 @@ function SweepChart({
     const bw = width / candidates.length
     candidates.forEach((c, i) => {
       const h = (c.score / 100) * plotH
-      ctx.fillStyle = scoreColor(c.score)
+      ctx.fillStyle = levelFill(theme, sweepLevel(c.score))
       ctx.globalAlpha = c.sunAtLanding ? 0.9 : 0.35
       ctx.fillRect(i * bw, plotH - h, Math.max(1, bw - 0.5), h)
       ctx.globalAlpha = 1
       // Strip: Earth visible at touchdown.
-      ctx.fillStyle = c.earthAtLanding ? '#4da6ff' : 'rgba(255,255,255,0.08)'
+      ctx.fillStyle = c.earthAtLanding ? theme.earth : alpha(theme.inkMuted, 0.15)
       ctx.fillRect(i * bw, plotH + 2, Math.max(1, bw - 0.5), 5)
     })
-    ctx.fillStyle = '#9aa8bd'
-    ctx.font = '10px system-ui, sans-serif'
+    ctx.fillStyle = theme.inkMuted
+    ctx.font = chartFont(10, 'mono')
     for (let i = 0; i < candidates.length; i += 30)
       ctx.fillText(formatDay(candidates[i].startMs), i * bw + 2, height - 2)
     const sel = candidates.findIndex((c) => Math.abs(c.startMs - selectedMs) < DAY_MS / 2)
     if (sel >= 0) {
-      ctx.strokeStyle = '#fff'
+      ctx.strokeStyle = theme.ink
       ctx.lineWidth = 2
       ctx.strokeRect(sel * bw, 0, Math.max(2, bw), plotH + 7)
       ctx.lineWidth = 1
     }
-  }, [ref, width, height, dpr, candidates, selectedMs])
+  }, [ref, width, height, dpr, candidates, selectedMs, theme])
 
   const pick = (e: PointerEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -116,7 +122,7 @@ export function DateSweep() {
         {data ? (
           <SweepChart candidates={data} selectedMs={scenario.startMs} onPick={pick} />
         ) : (
-          <p className="hint">{t('sweep.computing')}</p>
+          <Busy>{t('sweep.computing')}</Busy>
         )}
       </div>
       <ol className="sweep-panel__best">
@@ -125,7 +131,10 @@ export function DateSweep() {
             <button type="button" className="linklike" onClick={() => pick(c.startMs)}>
               {formatDay(c.startMs)} {new Date(c.startMs).getUTCFullYear()}
             </button>{' '}
-            <strong style={{ color: scoreColor(c.score) }}>{c.score}</strong> ·{' '}
+            <strong className="sweep-score" data-level={sweepLevel(c.score)}>
+              {c.score} <LevelTag level={sweepLevel(c.score)} />
+            </strong>{' '}
+            ·{' '}
             {t('sweep.item', {
               e: formatPct(c.energyPct),
               d: formatPct(c.dtePct),

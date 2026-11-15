@@ -10,12 +10,18 @@ import { useLang, useT } from '../i18n/index.ts'
 import { useSiteText } from '../i18n/sites.ts'
 import { ILLUM_COLORS } from '../scene/micro/illumColors.ts'
 import {
-  SCENARIO_COLORS,
   SCENARIO_LABELS,
   findSite,
   selectActiveScenario,
   useMissionStore,
 } from '../store/useMissionStore.ts'
+import {
+  DARK_CHART_THEME as MAP,
+  alpha,
+  chartFont,
+  scenarioColor,
+  useChartTheme,
+} from './chartTheme.ts'
 import { formatLatLon } from './format.ts'
 import { POLAR_EDGE_LAT, polarXY } from './locator.ts'
 
@@ -204,6 +210,8 @@ export function PolarMap() {
   const [showIllum, setShowIllum] = useState(true)
   const [hover, setHover] = useState<Hover | null>(null)
   const { ref, width, height, dpr } = useCanvasSize()
+  // The disc is imagery, dark in both themes (MAP); the labels around it follow the UI theme.
+  const ui = useChartTheme()
 
   const polarSites = useMemo(() => sites.filter(isPolarSite), [sites])
   const dem = useAsync('polar-dem', () => loadDem(MACRO_DEM.bin, MACRO_DEM.meta))
@@ -272,9 +280,9 @@ export function PolarMap() {
 
     // Graticule: latitude rings every 2° and the 0°/90° meridians.
     ctx.lineWidth = 1
-    ctx.strokeStyle = 'rgb(255 255 255 / .22)'
-    ctx.fillStyle = 'rgb(255 255 255 / .6)'
-    ctx.font = '10px Inter, system-ui, sans-serif'
+    ctx.strokeStyle = alpha(MAP.ink, 0.22)
+    ctx.fillStyle = alpha(MAP.ink, 0.7)
+    ctx.font = chartFont(10, 'mono')
     ctx.textAlign = 'left'
     ctx.textBaseline = 'bottom'
     for (const lat of RINGS) {
@@ -284,19 +292,19 @@ export function PolarMap() {
       ctx.stroke()
       ctx.fillText(`${-lat}°S`, cx + r * Math.SQRT1_2 + 2, cy - r * Math.SQRT1_2 - 1)
     }
-    ctx.strokeStyle = 'rgb(255 255 255 / .14)'
+    ctx.strokeStyle = alpha(MAP.ink, 0.14)
     ctx.beginPath()
     ctx.moveTo(cx, cy - R)
     ctx.lineTo(cx, cy + R)
     ctx.moveTo(cx - R, cy)
     ctx.lineTo(cx + R, cy)
     ctx.stroke()
-    ctx.strokeStyle = 'rgb(148 184 255 / .45)'
+    ctx.strokeStyle = ui.grid
     ctx.beginPath()
     ctx.arc(cx, cy, R, 0, Math.PI * 2)
     ctx.stroke()
     // Pole cross.
-    ctx.strokeStyle = 'rgb(255 255 255 / .8)'
+    ctx.strokeStyle = alpha(MAP.ink, 0.8)
     ctx.beginPath()
     ctx.moveTo(cx - 4, cy - 4)
     ctx.lineTo(cx + 4, cy + 4)
@@ -305,13 +313,13 @@ export function PolarMap() {
     ctx.stroke()
 
     // Direction labels: the Earth lies towards 0° longitude (top).
-    ctx.fillStyle = '#e9eef8'
-    ctx.font = 'bold 11px Inter, system-ui, sans-serif'
+    ctx.fillStyle = ui.ink
+    ctx.font = chartFont(11, 'mono', 500)
     ctx.textAlign = 'center'
     ctx.textBaseline = 'bottom'
     ctx.fillText('⊕ 0°', cx, cy - R - 2)
-    ctx.font = '10px Inter, system-ui, sans-serif'
-    ctx.fillStyle = 'rgb(255 255 255 / .7)'
+    ctx.font = chartFont(10, 'mono')
+    ctx.fillStyle = ui.inkMuted
     ctx.textBaseline = 'top'
     ctx.fillText('180°', cx, cy + R + 2)
     ctx.textBaseline = 'middle'
@@ -325,7 +333,7 @@ export function PolarMap() {
     scenarios.forEach((sc, i) => {
       if (!scenarioOf.has(sc.siteId)) scenarioOf.set(sc.siteId, i)
     })
-    ctx.font = 'bold 11px Inter, system-ui, sans-serif'
+    ctx.font = chartFont(11, 'sans', 600)
     ctx.textBaseline = 'middle'
     ctx.textAlign = 'left'
     for (const s of polarSites) {
@@ -335,10 +343,10 @@ export function PolarMap() {
       if (!highlighted) {
         ctx.beginPath()
         ctx.arc(x, y, 3, 0, Math.PI * 2)
-        ctx.fillStyle = '#e9eef8'
+        ctx.fillStyle = MAP.ink
         ctx.fill()
         ctx.lineWidth = 1
-        ctx.strokeStyle = '#000'
+        ctx.strokeStyle = MAP.background
         ctx.stroke()
       }
     }
@@ -347,7 +355,7 @@ export function PolarMap() {
       const highlighted = compare ? idx !== undefined : s.id === activeSiteId
       if (!highlighted) continue
       const [x, y] = project(s.lat, s.lon, cx, cy, R)
-      const color = compare ? SCENARIO_COLORS[idx ?? 0] : SCENARIO_COLORS[0]
+      const color = scenarioColor(MAP, compare ? (idx ?? 0) : 0)
       ctx.beginPath()
       ctx.arc(x, y, 8, 0, Math.PI * 2)
       ctx.fillStyle = color
@@ -358,11 +366,12 @@ export function PolarMap() {
       ctx.arc(x, y, 4, 0, Math.PI * 2)
       ctx.fill()
       ctx.lineWidth = 1.2
-      ctx.strokeStyle = '#000'
+      ctx.strokeStyle = MAP.ink
       ctx.stroke()
       const label = compare ? SCENARIO_LABELS[idx ?? 0] : (siteText(s)?.name ?? s.name)
-      ctx.fillStyle = color
-      ctx.strokeStyle = 'rgb(0 0 0 / .8)'
+      // The name in ink (never in the series colour), haloed so it reads over the relief.
+      ctx.fillStyle = MAP.ink
+      ctx.strokeStyle = alpha(MAP.background, 0.85)
       ctx.lineWidth = 3
       ctx.strokeText(label, x + 7, y - 7)
       ctx.fillText(label, x + 7, y - 7)
@@ -385,6 +394,7 @@ export function PolarMap() {
     activeSiteId,
     siteText,
     west,
+    ui,
   ])
 
   const locate = (e: MouseEvent<HTMLCanvasElement>): Hover | null => {

@@ -1,13 +1,15 @@
 import { SLOPE_CAUTION_DEG, SLOPE_SAFE_DEG } from '../../astro/slope.ts'
+import { SCENE_COLORS } from '../sceneColors.ts'
 
 /**
- * Slope classes in an Okabe-Ito based ramp (blue / yellow / vermillion): distinguishable with
- * the common colour-vision deficiencies, and also ordered by lightness.
+ * Slope classes as states of the design system: nominal = band-ok, marginal = band-excess (the
+ * system's warning is blue, there is no amber), unsafe = band-deficit. Fill values of the dark
+ * theme (the scene is always dark), ordered by hue and told apart by the legend labels.
  */
 export const SLOPE_COLORS = {
-  safe: '#56b4e9',
-  caution: '#f0e442',
-  steep: '#d55e00',
+  safe: SCENE_COLORS.ok,
+  caution: SCENE_COLORS.warn,
+  steep: SCENE_COLORS.bad,
 } as const
 
 const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)

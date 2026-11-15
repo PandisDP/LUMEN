@@ -5,6 +5,7 @@ import { useAsync } from '../hooks/useAsync.ts'
 import { useT } from '../i18n/index.ts'
 import { type Scenario, useMissionStore } from '../store/useMissionStore.ts'
 import { runDateSweep } from '../workers/astroClient.ts'
+import { LevelTag } from './LevelTag.tsx'
 import { scoreLevel } from './levels.ts'
 
 /**
@@ -53,7 +54,9 @@ export function DateShift({ scenario, detail }: { scenario: Scenario; detail?: S
             onClick={() => s.days !== 0 && setStart(s.startMs)}
           >
             <small>{s.days === 0 ? t('shift.now') : `${s.days > 0 ? '+' : ''}${s.days} d`}</small>
-            <strong>{s.score}</strong>
+            <strong>
+              {s.score} <LevelTag level={scoreLevel(s.score)} />
+            </strong>
           </button>
         ))}
       </div>

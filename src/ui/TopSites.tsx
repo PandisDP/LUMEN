@@ -3,6 +3,8 @@ import { useT } from '../i18n/index.ts'
 import { useSiteText } from '../i18n/sites.ts'
 import { selectActiveScenario, useMissionStore } from '../store/useMissionStore.ts'
 import { formatNight, formatPct } from './format.ts'
+import { Busy } from './kit/Busy.tsx'
+import { LevelTag } from './LevelTag.tsx'
 import { type Level, dteLevel, energyLevel, nightLevel, scoreLevel } from './levels.ts'
 import { MoonLocator } from './MoonLocator.tsx'
 
@@ -20,6 +22,7 @@ function Fact({
   return (
     <span className="fact" data-level={level} title={title}>
       <span aria-hidden>{icon}</span> {value}
+      <LevelTag level={level} />
     </span>
   )
 }
@@ -84,6 +87,7 @@ export function TopSites({
                       <span className="top__score" data-level={scoreLevel(row.score)}>
                         {row.score}
                         <small>/100</small>
+                        <LevelTag level={scoreLevel(row.score)} />
                       </span>
                       <Fact
                         icon="☀"
@@ -105,7 +109,9 @@ export function TopSites({
                       />
                     </span>
                   ) : (
-                    <span className="top__facts top__facts--loading">{t('top.computing')}</span>
+                    <span className="top__facts top__facts--loading">
+                      <Busy>{t('top.computing')}</Busy>
+                    </span>
                   )}
                 </span>
               </button>
