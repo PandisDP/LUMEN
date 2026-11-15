@@ -14,6 +14,7 @@ const PANELS_KEY = 'lumen3d.panels'
 const TOUR_KEY = 'lumen3d.tourSeen'
 const STAGE_KEY = 'lumen3d.stage'
 const AUDIENCE_KEY = 'lumen3d.audience'
+const CHALLENGES_KEY = 'lumen3d.challenges'
 
 /**
  * Who is using the tool. It only changes what is shown (see ui/audience.ts), never what is
@@ -77,6 +78,21 @@ export function loadAudience(): Audience {
   return isAudience(v) ? v : DEFAULT_AUDIENCE
 }
 
+/** Best score per completed challenge id (see config/challenges.ts). */
+export function loadChallengeDone(): Record<string, number> {
+  try {
+    const raw = JSON.parse(read(CHALLENGES_KEY) ?? 'null') as unknown
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+    return Object.fromEntries(
+      Object.entries(raw).filter(
+        (e): e is [string, number] => typeof e[1] === 'number' && Number.isFinite(e[1]),
+      ),
+    )
+  } catch {
+    return {}
+  }
+}
+
 export interface UiState {
   panels: PanelsOpen
   /** Current tour step, or null when the tour is closed. */
@@ -92,6 +108,16 @@ export interface UiState {
   /** Floating assistant expanded. */
   assistantOpen: boolean
   audience: Audience
+  /** "Retos" overlay (the list, or the brief and checklist of the challenge in progress). */
+  challengesOpen: boolean
+  /** Challenge in progress, if any; it stays active while the overlay is closed. */
+  challengeId: string | null
+  /** Goals of the challenge in progress whose hint was revealed (each one lowers the score). */
+  challengeHints: string[]
+  /** Score of the challenge in progress once every goal was met; null while it is unsolved. */
+  challengeResult: number | null
+  /** Best score per completed challenge (persisted). */
+  challengeDone: Record<string, number>
 
   setPanel: (id: PanelId, open: boolean) => void
   togglePanel: (id: PanelId) => void
@@ -105,6 +131,12 @@ export interface UiState {
   setShowAllSites: (show: boolean) => void
   setAssistantOpen: (open: boolean) => void
   setAudience: (audience: Audience) => void
+  setChallengesOpen: (open: boolean) => void
+  /** Starts (or, with null, leaves) a challenge: hints and result start clean. */
+  setChallenge: (id: string | null) => void
+  revealChallengeHint: (goalId: string) => void
+  /** Latches the result of the challenge in progress and keeps its best score. */
+  completeChallenge: (id: string, score: number) => void
 }
 
 export const useUiStore = create<UiState>()((set, get) => ({
@@ -117,6 +149,11 @@ export const useUiStore = create<UiState>()((set, get) => ({
   showAllSites: false,
   assistantOpen: false,
   audience: loadAudience(),
+  challengesOpen: false,
+  challengeId: null,
+  challengeHints: [],
+  challengeResult: null,
+  challengeDone: loadChallengeDone(),
 
   setPanel: (id, open) => {
     const panels = { ...get().panels, [id]: open }
@@ -157,5 +194,18 @@ export const useUiStore = create<UiState>()((set, get) => ({
     if (!isAudience(audience)) return
     write(AUDIENCE_KEY, audience)
     set({ audience })
+  },
+  setChallengesOpen: (challengesOpen) => set({ challengesOpen }),
+  setChallenge: (challengeId) => set({ challengeId, challengeHints: [], challengeResult: null }),
+  revealChallengeHint: (goalId) => {
+    const hints = get().challengeHints
+    if (!hints.includes(goalId)) set({ challengeHints: [...hints, goalId] })
+  },
+  completeChallenge: (id, score) => {
+    if (get().challengeId !== id || !Number.isFinite(score)) return
+    const done = get().challengeDone
+    const challengeDone = { ...done, [id]: Math.max(done[id] ?? 0, score) }
+    write(CHALLENGES_KEY, JSON.stringify(challengeDone))
+    set({ challengeResult: score, challengeDone })
   },
 }))

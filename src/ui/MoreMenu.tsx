@@ -2,7 +2,8 @@ import { useRef } from 'react'
 import { useT } from '../i18n/index.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
 import { useUiStore } from '../store/useUiStore.ts'
-import { IconBook, IconEye, IconEyeOff, IconFilter, IconPin } from './icons.tsx'
+import { openChallenges } from '../hooks/useChallengeState.ts'
+import { IconBook, IconEye, IconEyeOff, IconFilter, IconPin, IconTarget } from './icons.tsx'
 import { useShow } from './audience.ts'
 
 /** "⋯ More": the secondary tools, out of the way of the four steps. */
@@ -34,6 +35,9 @@ export function MoreMenu() {
         )}
         <button type="button" role="menuitem" onClick={run(() => s.setExplainOpen(true))}>
           <IconBook /> {t('topbar.why')}
+        </button>
+        <button type="button" role="menuitem" onClick={run(openChallenges)}>
+          <IconTarget /> {t('challenge.menu')}
         </button>
         <button type="button" role="menuitem" onClick={run(s.togglePanels)}>
           {panelsHidden ? <IconEye /> : <IconEyeOff />}{' '}

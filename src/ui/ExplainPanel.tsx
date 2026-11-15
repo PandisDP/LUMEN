@@ -1,5 +1,6 @@
 import { CSA_MOON_URL, HORIZONS_URL, MOON_TREK_URL, QUICKMAP_URL } from '../config/externalLinks.ts'
 import { PRESETS } from '../config/presets.ts'
+import { openChallenges } from '../hooks/useChallengeState.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
 import { PresetBar } from './PresetBar.tsx'
@@ -68,6 +69,11 @@ export function ExplainPanel() {
           {t('common.close')}
         </button>
       </header>
+      <p className="explain__challenges">
+        <button type="button" className="btn btn--accent" onClick={openChallenges}>
+          {t('challenge.explain')} →
+        </button>
+      </p>
       <PresetBar variant="cards" />
       <div className="explain__grid">
         {CARDS.map((c) => (

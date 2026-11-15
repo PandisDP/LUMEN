@@ -12,6 +12,7 @@ import { useUiStore } from './store/useUiStore.ts'
 import { AssistantFab } from './ui/AssistantFab.tsx'
 import { useShow } from './ui/audience.ts'
 import { BottomPanel } from './ui/BottomPanel.tsx'
+import { Challenges } from './ui/Challenges.tsx'
 import { CollapsiblePanel } from './ui/CollapsiblePanel.tsx'
 import { CompareView } from './ui/CompareView.tsx'
 import { HardwareFilter } from './ui/HardwareFilter.tsx'
@@ -56,6 +57,8 @@ export default function App() {
   useEffect(() => {
     if (!exploring || !explainAuto || explained.current) return
     explained.current = true
+    // Arriving through "Play the challenges": that overlay is the introduction.
+    if (useUiStore.getState().challengesOpen) return
     try {
       if (sessionStorage.getItem(EXPLAINED_KEY)) return
       sessionStorage.setItem(EXPLAINED_KEY, '1')
@@ -124,6 +127,7 @@ export default function App() {
           <CompareView />
           <HardwareFilter />
           <ExplainPanel />
+          <Challenges />
           {ready && <AssistantFab />}
         </>
       )}

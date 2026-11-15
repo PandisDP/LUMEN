@@ -214,7 +214,7 @@ export const en: Record<keyof typeof es, string> = {
   'hw.col.notes': 'Constraint',
   'hw.send': 'Send {n} viable to Compare',
   'hw.note':
-    'Slope from the 20 m DEM (reference sites count as level). The score includes science if you move the Engineering ↔ Science control.',
+    'Slope from the 20 m DEM (60 m at the reference sites, which smooths it). The score includes science if you move the Engineering ↔ Science control.',
 
   // Ice access / science
   'ice.title': 'Ice access (PSR)',
@@ -348,6 +348,11 @@ export const en: Record<keyof typeof es, string> = {
   'acc.lola': 'LOLA 20 m',
   'acc.lola480': 'LOLA 480 m',
   'acc.spherical': 'No relief',
+  'acc.lolaGlobal': 'LOLA 60 m',
+  'source.lolaGlobal':
+    'LOLA global LDEM_512 ({res} m/px, ±30 km) + LDEM_64 (480 m/px, up to 300 km) · real terrain horizon',
+  'source.globalTile':
+    'LOLA global {res} m/px ({site} tile, horizon up to the tile edge), computed in the browser',
 
   // Horizon chart
   'horizon.scale': 'vertical scale ×{k}',
@@ -426,12 +431,99 @@ export const en: Record<keyof typeof es, string> = {
     'Permanently shadowed region: crater floors the Sun never reaches, where ice can survive.',
   'glossary.slope.term': 'Slope',
   'glossary.slope.def':
-    'Tilt of the ground computed on the 20 m terrain. Under 10° is safe to land on; over 15° is hazardous.',
+    'Tilt of the ground computed on the 20 m terrain (60 m at the reference sites). Under 10° is safe to land on; over 15° is hazardous.',
   'glossary.lola.term': 'LOLA',
   'glossary.lola.def':
     'Lunar Orbiter Laser Altimeter: the laser altimeter on the LRO orbiter, the source of all the topography.',
   'glossary.tplus.term': 'T+',
   'glossary.tplus.def': 'Time elapsed since touchdown; shared by every scenario.',
+  'challenge.title': 'Challenges',
+  'challenge.aria': 'Challenges: learn by playing',
+  'challenge.intro':
+    'Five short missions to find out why landing at the lunar south pole is so hard. Each challenge drops you into a tricky situation: solve it with the usual controls (site, date, views…). You can ask for hints, but they cost points.',
+  'challenge.total': 'Score: {score} / {max}',
+  'challenge.best': 'Best score: {score}',
+  'challenge.number': 'Challenge {n}',
+  'challenge.start': 'Start',
+  'challenge.retry': 'Play again',
+  'challenge.restart': 'Restart',
+  'challenge.all': 'All challenges',
+  'challenge.go': 'Go to the simulator',
+  'challenge.goals': 'Goals',
+  'challenge.goal.todo': 'pending',
+  'challenge.now': '(now: {value})',
+  'challenge.hint': 'Hint (−{cost} points)',
+  'challenge.how':
+    'Press “Go to the simulator” and use the panels: the challenge stays active at the bottom left and ticks itself off when you make it.',
+  'challenge.progress': '{met} of {total} goals met',
+  'challenge.bar.aria': 'Challenge in progress',
+  'challenge.bar.open': 'View challenge',
+  'challenge.bar.result': 'View result',
+  'challenge.success.title': 'Challenge complete!',
+  'challenge.success.score': 'Score: {score} / {max}',
+  'challenge.success.hints': '(hints used: {n}; each one costs {cost})',
+  'challenge.success.learned': 'What you learned',
+  'challenge.next': 'Next challenge',
+  'challenge.finished': 'That was the last challenge. You now think like a lunar mission planner!',
+  'challenge.menu': 'Challenges',
+  'challenge.welcome': 'Play the challenges',
+  'challenge.explain': 'Rather learn by playing? Try the 5 challenges',
+  'challenge.light.title': 'Find the light',
+  'challenge.light.brief':
+    'You have landed on the floor of Shackleton crater: permanent shadow, 0 % Sun and the panels produce nothing. Find another south-pole site where the Sun shines for at least 80 % of a 14-day mission.',
+  'challenge.light.goal.sun':
+    'A south-pole site (south of 80° S) with Sun ≥ 80 % of the time over 14 days',
+  'challenge.light.hint.sun':
+    'No need to go far: the rim of the same crater is a few kilometres away and much higher up. Pick it in the sites panel.',
+  'challenge.light.why':
+    'At the south pole the Sun barely clears the horizon, so the terrain decides: a crater floor never sees it, while its rim, a few kilometres away, almost always does. Moving the site a few kilometres changes everything.',
+  'challenge.earth.title': 'Don’t lose the Earth',
+  'challenge.earth.brief':
+    'You are on the Shackleton rim, landing on 19 March 2027: for the whole 14-day mission the Earth stays below the horizon and there is no direct-to-Earth (DTE) link. Change the landing date (or the site, staying at the south pole) until you have a link at least 50 % of the time.',
+  'challenge.earth.goal.dte':
+    'Direct-to-Earth link ≥ 50 % of the time over 14 days, at the south pole',
+  'challenge.earth.hint.dte':
+    'The Earth rises and sets on a cycle of about 27 days: try moving the landing date by about 10 days.',
+  'challenge.earth.why':
+    'Seen from the pole the Earth always hugs the horizon, and the Moon’s libration (about ±7°) makes it rise and set every 27 days: two weeks in a row can go by without direct contact. That is why the date matters as much as the site… or a relay satellite is needed.',
+  'challenge.night.title': 'Survive the night',
+  'challenge.night.brief':
+    'A 30-day mission on the Malapert massif from 1 March 2027: a night of more than 300 hours awaits and the lander cannot take more than 120. Find a south-pole site and date with shorter nights.',
+  'challenge.night.goal.dark':
+    'The longest night lasts ≤ 120 h in a 30-day mission at the south pole',
+  'challenge.night.goal.verdict': 'The site’s verdict is not “Ruled out”',
+  'challenge.night.hint.dark':
+    'The highest ridges next to the pole are almost never in the dark: try the Connecting ridge or the Shackleton rim, and move the date if needed.',
+  'challenge.night.hint.verdict':
+    'The verdict also looks at the slope and the Earth link: check in the data panel which limit fails.',
+  'challenge.night.why':
+    'On most of the Moon the night lasts about 14 days (more than 300 h) and freezes a lander with no heating of its own. On a few polar ridges the Sun only hides behind the terrain for hours or a few days: these are the “near-permanent light” sites Artemis is after.',
+  'challenge.landing.title': 'Land with margin',
+  'challenge.landing.brief':
+    'You are about to come down with the heavy lander on the Nobile rim: ground that is too steep and a lander that arrives with barely any propellant. Choose a site with a safe slope, go to the Landing step and complete a physics descent that touches down with at least 20 % propellant.',
+  'challenge.landing.goal.slope': 'A site with a safe slope (p90 < 15°)',
+  'challenge.landing.goal.margin': 'In Landing: physics descent with propellant margin ≥ 20 %',
+  'challenge.landing.goal.touchdown': 'Complete the descent down to the surface',
+  'challenge.landing.hint.slope':
+    'The Nobile rim has slopes above 16°. Mons Mouton or the Malapert massif are much flatter.',
+  'challenge.landing.hint.margin':
+    'The margin depends on the lander: in the Landing view switch “Lander” to a lighter one (CLPS class or small).',
+  'challenge.landing.hint.touchdown':
+    'In the Landing view let the descent run to the end (you can speed it up). The model must be “with physics”.',
+  'challenge.landing.why':
+    'Braking from lunar orbit costs close to 2 km/s of Δv, and almost all of it is paid in propellant. The margin left at touchdown is what lets you dodge a rock or a slope at the last moment: with no margin and no flat ground there is no safe landing.',
+  'challenge.ice.title': 'Reach the ice',
+  'challenge.ice.brief':
+    'The ice lies in permanently shadowed regions, where you cannot live off solar panels. From the Chang’e-7 area the rover has no route to it. Landing on 15 March 2027, find a sunlit site from which the rover reaches the ice without its battery dropping below 30 %.',
+  'challenge.ice.goal.route':
+    'A site outside the permanent shadow with a drivable route to the ice',
+  'challenge.ice.goal.battery': 'The rover reaches the ice with its battery always ≥ 30 %',
+  'challenge.ice.hint.route':
+    'The Artemis candidates (rims and ridges next to the pole) have permanent shadow within 2 km: pick one in the sites panel.',
+  'challenge.ice.hint.battery':
+    'The shorter the route and the more Sun at departure, the better: try Mons Mouton or the Connecting ridge, or change the landing date.',
+  'challenge.ice.why':
+    'Inside the permanent shadow there is no Sun: the rover lives on its battery alone, at about −200 °C. That is why you land on a nearby sunlit spot and plan the traverse (distance, slope and departure time) to drive in, measure and arrive with energy to spare.',
   'explain.sources.title': 'NASA and CSA resources used by LUMEN 3D',
   'explain.sources.horizons':
     'DE441 ephemerides: Sun and Earth positions seen from each site (2026–2030), arcsecond-level validation and DSN geometry.',

@@ -215,7 +215,7 @@ export const es = {
   'hw.col.notes': 'Restricción',
   'hw.send': 'Enviar {n} viables a Comparar',
   'hw.note':
-    'Pendiente con el DEM de 20 m (los sitios de referencia se tratan como llanos). La puntuación incluye la ciencia si mueves el control Ingeniería ↔ Ciencia.',
+    'Pendiente con el DEM de 20 m (60 m en los sitios de referencia, que la suaviza). La puntuación incluye la ciencia si mueves el control Ingeniería ↔ Ciencia.',
 
   // Ice access / science
   'ice.title': 'Acceso a hielo (PSR)',
@@ -351,6 +351,11 @@ export const es = {
   'acc.lola': 'LOLA 20 m',
   'acc.lola480': 'LOLA 480 m',
   'acc.spherical': 'Sin relieve',
+  'acc.lolaGlobal': 'LOLA 60 m',
+  'source.lolaGlobal':
+    'LOLA global LDEM_512 ({res} m/px, ±30 km) + LDEM_64 (480 m/px, hasta 300 km) · horizonte topográfico real',
+  'source.globalTile':
+    'LOLA global {res} m/px (tile de {site}, horizonte hasta el borde del tile), calculado en el navegador',
 
   // Horizon chart
   'horizon.scale': 'escala vertical ×{k}',
@@ -429,13 +434,101 @@ export const es = {
     'Región en sombra permanente: fondos de cráter donde nunca da el Sol y puede conservarse hielo.',
   'glossary.slope.term': 'Pendiente',
   'glossary.slope.def':
-    'Inclinación del terreno calculada sobre el relieve de 20 m. Menos de 10° es seguro para aterrizar; más de 15°, peligroso.',
+    'Inclinación del terreno calculada sobre el relieve de 20 m (60 m en los sitios de referencia). Menos de 10° es seguro para aterrizar; más de 15°, peligroso.',
   'glossary.lola.term': 'LOLA',
   'glossary.lola.def':
     'Lunar Orbiter Laser Altimeter: el altímetro láser del orbitador LRO, de donde sale toda la topografía.',
   'glossary.tplus.term': 'T+',
   'glossary.tplus.def':
     'Tiempo transcurrido desde el alunizaje; todos los escenarios lo comparten.',
+  'challenge.title': 'Retos',
+  'challenge.aria': 'Retos: aprende jugando',
+  'challenge.intro':
+    'Cinco misiones cortas para descubrir por qué es tan difícil alunizar en el polo sur. Cada reto te deja en una situación complicada: resuélvela con los controles de siempre (sitio, fecha, vistas…). Puedes pedir pistas, pero restan puntos.',
+  'challenge.total': 'Puntuación: {score} / {max}',
+  'challenge.best': 'Mejor puntuación: {score}',
+  'challenge.number': 'Reto {n}',
+  'challenge.start': 'Empezar',
+  'challenge.retry': 'Repetir',
+  'challenge.restart': 'Reiniciar',
+  'challenge.all': 'Todos los retos',
+  'challenge.go': 'Ir al simulador',
+  'challenge.goals': 'Objetivos',
+  'challenge.goal.todo': 'pendiente',
+  'challenge.now': '(ahora: {value})',
+  'challenge.hint': 'Pista (−{cost} puntos)',
+  'challenge.how':
+    'Pulsa «Ir al simulador» y usa los paneles: el reto sigue activo abajo a la izquierda y se marca solo cuando lo consigas.',
+  'challenge.progress': '{met} de {total} objetivos cumplidos',
+  'challenge.bar.aria': 'Reto en curso',
+  'challenge.bar.open': 'Ver reto',
+  'challenge.bar.result': 'Ver resultado',
+  'challenge.success.title': '¡Reto superado!',
+  'challenge.success.score': 'Puntuación: {score} / {max}',
+  'challenge.success.hints': '(pistas usadas: {n}; cada una resta {cost})',
+  'challenge.success.learned': 'Qué has aprendido',
+  'challenge.next': 'Siguiente reto',
+  'challenge.finished': 'Era el último reto. ¡Ya piensas como quien planifica una misión lunar!',
+  'challenge.menu': 'Retos',
+  'challenge.welcome': 'Jugar los retos',
+  'challenge.explain': '¿Prefieres aprender jugando? Prueba los 5 retos',
+  'challenge.light.title': 'Encuentra la luz',
+  'challenge.light.brief':
+    'Has alunizado en el fondo del cráter Shackleton: sombra permanente, 0 % de Sol y los paneles no producen nada. Busca otro sitio del polo sur donde el Sol dé al menos el 80 % de una misión de 14 días.',
+  'challenge.light.goal.sun':
+    'Un sitio del polo sur (al sur de 80° S) con Sol ≥ 80 % del tiempo en 14 días',
+  'challenge.light.hint.sun':
+    'No hace falta ir lejos: el borde del mismo cráter está a pocos kilómetros y mucho más arriba. Elígelo en el panel de sitios.',
+  'challenge.light.why':
+    'En el polo sur el Sol apenas se levanta sobre el horizonte, así que el relieve decide: el fondo de un cráter no lo ve jamás y su borde, a pocos kilómetros, casi siempre. Mover el sitio unos kilómetros lo cambia todo.',
+  'challenge.earth.title': 'No pierdas a la Tierra',
+  'challenge.earth.brief':
+    'Estás en el borde de Shackleton y alunizas el 19 de marzo de 2027: durante los 14 días de misión la Tierra queda bajo el horizonte y no hay enlace directo (DTE). Cambia la fecha de alunizaje (o el sitio, sin salir del polo sur) hasta tener enlace al menos el 50 % del tiempo.',
+  'challenge.earth.goal.dte':
+    'Enlace directo con la Tierra ≥ 50 % del tiempo en 14 días, en el polo sur',
+  'challenge.earth.hint.dte':
+    'La Tierra sube y baja con un ciclo de unos 27 días: prueba a mover la fecha de alunizaje unos 10 días.',
+  'challenge.earth.why':
+    'Desde el polo la Tierra siempre roza el horizonte, y la libración de la Luna (unos ±7°) la hace subir y bajar cada 27 días: pueden pasar dos semanas seguidas sin contacto directo. Por eso la fecha importa tanto como el sitio… o hace falta un satélite repetidor.',
+  'challenge.night.title': 'Sobrevive a la noche',
+  'challenge.night.brief':
+    'Misión de 30 días en el macizo Malapert desde el 1 de marzo de 2027: te espera una noche de más de 300 horas y el módulo no aguanta más de 120. Encuentra un sitio y una fecha del polo sur con noches más cortas.',
+  'challenge.night.goal.dark':
+    'La noche más larga dura ≤ 120 h en una misión de 30 días en el polo sur',
+  'challenge.night.goal.verdict': 'El veredicto del sitio no es «Descartado»',
+  'challenge.night.hint.dark':
+    'Las crestas más altas junto al polo casi nunca quedan a oscuras: prueba la Cresta de conexión o el borde de Shackleton, y mueve la fecha si hace falta.',
+  'challenge.night.hint.verdict':
+    'El veredicto también mira la pendiente y el enlace con la Tierra: revisa en el panel de datos qué límite falla.',
+  'challenge.night.why':
+    'En casi toda la Luna la noche dura unos 14 días (más de 300 h) y congela un módulo sin calefacción propia. En unas pocas crestas polares el Sol solo se esconde tras el relieve durante horas o pocos días: son los sitios de «luz casi permanente» que busca Artemis.',
+  'challenge.landing.title': 'Aterriza con margen',
+  'challenge.landing.brief':
+    'Vas a bajar con el módulo pesado sobre el borde de Nobile: terreno demasiado inclinado y un módulo que llega con el propelente justo. Elige un sitio con pendiente segura, ve al paso Aterrizaje y completa un descenso con física que toque suelo con al menos un 20 % de propelente.',
+  'challenge.landing.goal.slope': 'Sitio con pendiente segura (p90 < 15°)',
+  'challenge.landing.goal.margin':
+    'En Aterrizaje: descenso con física y margen de propelente ≥ 20 %',
+  'challenge.landing.goal.touchdown': 'Completa el descenso hasta tocar la superficie',
+  'challenge.landing.hint.slope':
+    'El borde de Nobile tiene pendientes de más de 16°. Mons Mouton o el macizo Malapert son mucho más llanos.',
+  'challenge.landing.hint.margin':
+    'El margen depende del módulo: en la vista Aterrizaje cambia «Módulo» por uno más ligero (clase CLPS o pequeño).',
+  'challenge.landing.hint.touchdown':
+    'En la vista Aterrizaje deja que el descenso llegue al final (puedes acelerarlo). El modelo debe ser «con física».',
+  'challenge.landing.why':
+    'Frenar desde la órbita lunar cuesta cerca de 2 km/s de Δv, y casi todo se paga en propelente. El margen que queda al tocar suelo es lo que permite esquivar una roca o una pendiente en el último momento: sin margen ni terreno llano no hay aterrizaje seguro.',
+  'challenge.ice.title': 'Llega al hielo',
+  'challenge.ice.brief':
+    "El hielo está en zonas de sombra permanente, donde no se puede vivir de paneles solares. Desde la zona de Chang'e-7 el rover no tiene ruta hasta él. Con alunizaje el 15 de marzo de 2027, encuentra un sitio soleado desde el que el rover llegue al hielo sin que su batería baje del 30 %.",
+  'challenge.ice.goal.route':
+    'Sitio fuera de la sombra permanente con ruta transitable hasta el hielo',
+  'challenge.ice.goal.battery': 'El rover llega al hielo con la batería siempre ≥ 30 %',
+  'challenge.ice.hint.route':
+    'Los candidatos de Artemis (bordes y crestas junto al polo) tienen sombra permanente a menos de 2 km: elige uno en el panel de sitios.',
+  'challenge.ice.hint.battery':
+    'Cuanto más corta la ruta y más Sol haya al salir, mejor: prueba Mons Mouton o la Cresta de conexión, o cambia la fecha de alunizaje.',
+  'challenge.ice.why':
+    'Dentro de la sombra permanente no hay Sol: el rover vive solo de su batería, a unos −200 °C. Por eso se aluniza en un punto iluminado cercano y se planifica la travesía (distancia, pendiente y hora de salida) para entrar, medir y llegar con energía de sobra.',
   'explain.sources.title': 'Recursos de la NASA y la CSA que usa LUMEN 3D',
   'explain.sources.horizons':
     'Efemérides DE441: posiciones del Sol y la Tierra vistas desde cada sitio (2026–2030), validación al segundo de arco y geometría de la DSN.',
