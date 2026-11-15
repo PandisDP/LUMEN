@@ -10,7 +10,7 @@ import { type MsgKey, useT } from '../i18n/index.ts'
 import { descentTelemetry } from '../scene/micro/descentTelemetry.ts'
 import { DESCENT_SPEEDS, useDescentStore } from '../store/useDescentStore.ts'
 import { selectActiveScenario, useMissionStore } from '../store/useMissionStore.ts'
-import { IconEye, IconPause, IconPlay, IconRestart, IconSatellite } from './icons.tsx'
+import { IconEye, IconPause, IconPlay, IconRestart, IconSatellite, IconRover } from './icons.tsx'
 import { LevelTag } from './LevelTag.tsx'
 import { type Level, slopeLevel } from './levels.ts'
 import { cardinal, formatDeg, formatDistance, formatPct } from './format.ts'
@@ -372,7 +372,7 @@ export function DescentHud() {
           {rover.available && (
             <button
               type="button"
-              className="btn btn--primary"
+              className="btn btn--accent dhud__deploy"
               disabled={!rover.data}
               aria-busy={rover.loading}
               onClick={() => {
@@ -380,7 +380,7 @@ export function DescentHud() {
                 setLanderCam('rover')
               }}
             >
-              ❄ {t('rover.deploy')}
+              <IconRover /> {t('rover.deploy')}
             </button>
           )}
         </div>

@@ -235,7 +235,7 @@
 }
 
 .splash__mark {
-  filter: drop-shadow(0 0 24px hsl(var(--primary) / 0.4));
+  filter: drop-shadow(0 0 22px hsl(var(--foreground) / 0.3));
 }
 
 .splash__wait {

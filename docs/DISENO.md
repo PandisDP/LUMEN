@@ -75,6 +75,12 @@ aviso; «al límite» es la banda azul de exceso.
 - **Movimiento**: `--duration-fast` 120 ms, `--duration-base` 200 ms, `--ease-out`; entrada
   escalonada de 55 ms. Todo se detiene con `prefers-reduced-motion`.
 
+## Logotipo
+
+La marca junto a «KILLA LANDING» es una luna llena con cráteres (`public/favicon.svg`, y en grande
+en la pantalla de inicio). Sus grises son color de imagen, como el disco lunar de los mapas, no
+tokens de interfaz.
+
 ## Killa
 
 Mascota hermana de Wayra: misma geometría, cuerpo cobre y una media luna en la pantalla del

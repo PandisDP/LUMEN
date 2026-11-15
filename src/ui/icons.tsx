@@ -185,3 +185,13 @@ export const IconMoon = () => (
     <path d="M20 14.2A8.3 8.3 0 0 1 9.8 4a8.3 8.3 0 1 0 10.2 10.2Z" />
   </Icon>
 )
+
+export const IconRover = () => (
+  <Icon>
+    <path d="M4 14h13l2-4h-9l-1.5 4" />
+    <path d="M10 10V6h6v4M13 6V3.5" />
+    <circle cx="6.5" cy="17.5" r="2.2" />
+    <circle cx="12" cy="17.5" r="2.2" />
+    <circle cx="17.5" cy="17.5" r="2.2" />
+  </Icon>
+)
