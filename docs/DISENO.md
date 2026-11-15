@@ -7,16 +7,16 @@ CSS propio. No se inventan colores.
 
 ## Dónde vive cada cosa
 
-| Archivo | Contenido |
-| --- | --- |
-| `src/styles/tokens.css` | Tokens copiados del documento: `:root` (claro), `.dark` (oscuro), foco y movimiento reducido |
-| `src/styles/index.css` | Cabina, botones, paneles, tarjetas, controles sobre la escena |
-| `src/styles/flow.css` | Bienvenida, elegir sitio, barra de pasos, retos, comparar |
-| `src/styles/planner.css` | Paso «Planificar» |
-| `src/styles/kit.css` | `Notice`, `Empty`, `Stat`, `Busy` (`src/ui/kit/`) |
-| `src/styles/killa.css` | Killa, asistente, pantalla de inicio y carga |
-| `src/ui/theme.ts` | Tema claro / oscuro (`lumen-theme` en `localStorage`) |
-| `src/ui/chartTheme.ts` | Paleta de las gráficas en canvas, leída de los tokens |
+| Archivo                  | Contenido                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------- |
+| `src/styles/tokens.css`  | Tokens copiados del documento: `:root` (claro), `.dark` (oscuro), foco y movimiento reducido |
+| `src/styles/index.css`   | Cabina, botones, paneles, tarjetas, controles sobre la escena                                |
+| `src/styles/flow.css`    | Bienvenida, elegir sitio, barra de pasos, retos, comparar                                    |
+| `src/styles/planner.css` | Paso «Planificar»                                                                            |
+| `src/styles/kit.css`     | `Notice`, `Empty`, `Stat`, `Busy` (`src/ui/kit/`)                                            |
+| `src/styles/killa.css`   | Killa, asistente, pantalla de inicio y carga                                                 |
+| `src/ui/theme.ts`        | Tema claro / oscuro (`lumen-theme` en `localStorage`)                                        |
+| `src/ui/chartTheme.ts`   | Paleta de las gráficas en canvas, leída de los tokens                                        |
 
 ## Tema
 
@@ -30,34 +30,34 @@ CSS propio. No se inventan colores.
 
 ## Reparto de color
 
-| Trabajo | Token | En LUMEN |
-| --- | --- | --- |
-| Dato, enlace, foco, selección | violeta `--primary`, `--accent` | enlaces, foco, fila o tarjeta elegida |
-| Acción principal, **una por vista** | degradado `--bg-action` (`.btn--accent`) | Empezar, Planificar, siguiente paso |
-| Marca y elemento activo | degradado `--bg-neon` | paso activo, puesto n.º 1, regla de sección |
-| Estado | bandas `--band-*` con glifo y texto | viable, al límite, descartado |
-| Oro `--lamp` | solo la lámpara de Killa | — |
-| Rojo `--destructive` | error y borrar | — |
+| Trabajo                             | Token                                    | En LUMEN                                    |
+| ----------------------------------- | ---------------------------------------- | ------------------------------------------- |
+| Dato, enlace, foco, selección       | violeta `--primary`, `--accent`          | enlaces, foco, fila o tarjeta elegida       |
+| Acción principal, **una por vista** | degradado `--bg-action` (`.btn--accent`) | Empezar, Planificar, siguiente paso         |
+| Marca y elemento activo             | degradado `--bg-neon`                    | paso activo, puesto n.º 1, regla de sección |
+| Estado                              | bandas `--band-*` con glifo y texto      | viable, al límite, descartado               |
+| Oro `--lamp`                        | solo la lámpara de Killa                 | —                                           |
+| Rojo `--destructive`                | error y borrar                           | —                                           |
 
 ### Series (el color sigue a la entidad)
 
-| Entidad | Token |
-| --- | --- |
-| Sol y Tierra a la vez | `--series-1` violeta |
-| Ruta del rover, hielo | `--series-2` cian |
-| Sol, energía solar | `--series-4` ámbar |
-| Batería | `--series-5` verde |
-| Tierra, enlace directo | `--series-6` azul |
-| Escenarios A, B, C, D | `--series-1`, `--series-2`, `--series-3`, `--series-7` |
+| Entidad                | Token                                                  |
+| ---------------------- | ------------------------------------------------------ |
+| Sol y Tierra a la vez  | `--series-1` violeta                                   |
+| Ruta del rover, hielo  | `--series-2` cian                                      |
+| Sol, energía solar     | `--series-4` ámbar                                     |
+| Batería                | `--series-5` verde                                     |
+| Tierra, enlace directo | `--series-6` azul                                      |
+| Escenarios A, B, C, D  | `--series-1`, `--series-2`, `--series-3`, `--series-7` |
 
 ### Estados
 
-| Nivel (`src/ui/levels.ts`) | Banda | Glifo |
-| --- | --- | --- |
-| `good` | `--band-ok` | ✓ |
-| `warn` (al límite) | `--band-excess` | ▲ |
-| `bad` | `--band-deficit` | ▼ |
-| sin dato, detenido | `--band-stopped` | ■ ○ |
+| Nivel (`src/ui/levels.ts`) | Banda            | Glifo |
+| -------------------------- | ---------------- | ----- |
+| `good`                     | `--band-ok`      | ✓     |
+| `warn` (al límite)         | `--band-excess`  | ▲     |
+| `bad`                      | `--band-deficit` | ▼     |
+| sin dato, detenido         | `--band-stopped` | ■ ○   |
 
 El estado nunca va solo en color: siempre lleva glifo y texto. El sistema no tiene ámbar de
 aviso; «al límite» es la banda azul de exceso.
