@@ -1,15 +1,21 @@
 import { type DemGrid, type DemMeta, demCovers, latLonToPixel } from '../astro/dem.ts'
 import type { Site } from '../astro/ephemeris.ts'
+import { surfaceDistance } from '../astro/frames.ts'
 import type { IceSummary } from '../astro/iceAccess.ts'
 import type { IllumMeta } from '../astro/illumination.ts'
 import { type HorizonMask, sphericalMask } from '../astro/horizon.ts'
-import { SITE_SEEDS, type SiteSeed } from '../config/sites.ts'
+import { SITE_SEEDS, type SiteSeed, usesPolarProduct } from '../config/sites.ts'
 import { loadDem } from './loadDem.ts'
 import { runCustomHorizon } from '../workers/astroClient.ts'
 import type { DemRef } from '../workers/protocol.ts'
 import type { MsgKey, MsgParams } from '../i18n/index.ts'
 
-export type Accuracy = 'lola' | 'lola-480' | 'spherical'
+/**
+ * 'lola': 20 m polar tile + 240 m far field; 'lola-480': browser horizon on the 480 m polar
+ * DEM; 'lola-global': 60 m tile cut from the LOLA global grids (sites outside the polar
+ * products); 'spherical': no topography.
+ */
+export type Accuracy = 'lola' | 'lola-480' | 'lola-global' | 'spherical'
 
 export interface SiteInfo extends SiteSeed {
   heightM: number
@@ -86,7 +92,7 @@ export async function loadSiteIndex(): Promise<SiteInfo[]> {
           heightM: e.heightM,
           accuracy: e.accuracy,
           hasTerrain: e.hasTerrain,
-          // Reference sites use an ideal flat horizon: treat them as level ground.
+          // Sites without terrain use an ideal flat horizon: treat them as level ground.
           slopeCenterDeg: e.slopeCenterDeg ?? (e.hasTerrain ? undefined : 0),
           slopeP90Deg: e.slopeP90Deg ?? (e.hasTerrain ? undefined : 0),
           ice: e.ice,
@@ -97,7 +103,10 @@ export async function loadSiteIndex(): Promise<SiteInfo[]> {
 
 const detailCache = new Map<string, Promise<SiteDetail>>()
 
-/** A curated site's 20 m tile, reusable for any user point that falls inside it. */
+/**
+ * A curated site's terrain tile (20 m polar, or 60 m local for the reference sites), reusable
+ * for any user point that falls inside it.
+ */
 export interface TileRef {
   siteId: string
   file: string
@@ -107,7 +116,7 @@ export interface TileRef {
 
 let tilesPromise: Promise<TileRef[]> | null = null
 
-/** All published 20 m tiles (one per curated polar site). Empty without generated data. */
+/** All published terrain tiles (one per curated site). Empty without generated data. */
 export function polarTiles(): Promise<TileRef[]> {
   tilesPromise ??= (async () => {
     try {
@@ -146,7 +155,8 @@ export function tileFor(tiles: readonly TileRef[], lat: number, lon: number) {
   for (const t of tiles) {
     if (!demCovers(t.meta, lat, lon, 8)) continue
     const { c, r } = latLonToPixel(t.meta, lat, lon)
-    const d = Math.hypot(c - t.meta.width / 2, r - t.meta.height / 2)
+    // Metres, not pixels: tiles come in two resolutions.
+    const d = Math.hypot(c - t.meta.width / 2, r - t.meta.height / 2) * t.meta.scaleM
     if (d < bestD) {
       bestD = d
       best = t
@@ -160,27 +170,45 @@ const tileDem = (terrain: { file: string; meta: DemMeta }): DemRef => ({
   meta: terrain.meta,
 })
 
-/** DEM stack (finest first) behind a site, for worker requests such as dispersion. */
+/**
+ * DEM stack (finest first) behind a site, for worker requests such as dispersion. A reference
+ * site outside the polar cap only has its 60 m tile (rasters may differ in projection).
+ */
 export function demRefs(detail: SiteDetail): DemRef[] {
   const coarse = detail.site.lat <= CUSTOM_DEM_MAX_LAT ? [COARSE_DEM] : []
   return detail.terrain ? [tileDem(detail.terrain), ...coarse] : coarse
 }
 
+/**
+ * Reach of a reference site's 60 m tile (±30.7 km square) for user points: inside this radius
+ * the point gets the tile's terrain, with a horizon limited to what the tile contains.
+ */
+const GLOBAL_TILE_REACH_M = 28_000
+
+const inGlobalTile = (lat: number, lon: number) =>
+  SITE_SEEDS.some(
+    (s) => !usesPolarProduct(s) && surfaceDistance(s.lat, s.lon, lat, lon) <= GLOBAL_TILE_REACH_M,
+  )
+
 export function customSiteInfo(lat: number, lon: number): SiteInfo {
-  const inDem = lat <= CUSTOM_DEM_MAX_LAT
+  const inPolar = lat <= CUSTOM_DEM_MAX_LAT
+  const inGlobal = !inPolar && inGlobalTile(lat, lon)
+  const inDem = inPolar || inGlobal
   return {
     id: `custom:${lat.toFixed(4)}:${lon.toFixed(4)}`,
     name: `Personalizado ${Math.abs(lat).toFixed(2)}°${lat < 0 ? 'S' : 'N'} ${Math.abs(lon).toFixed(2)}°${lon < 0 ? 'O' : 'E'}`,
     mission: 'Coordenadas del usuario',
-    description: inDem
+    description: inPolar
       ? 'Horizonte calculado en tu navegador con el DEM LOLA de 480 m/px.'
-      : 'Fuera del DEM polar: se usa un horizonte esférico ideal.',
+      : inGlobal
+        ? 'Horizonte calculado en tu navegador con el tile LOLA de 60 m/px del sitio de referencia cercano.'
+        : 'Fuera de los DEM publicados: se usa un horizonte esférico ideal.',
     category: 'south-pole',
     lat,
     lon,
     snapRadiusM: 0,
     heightM: 0,
-    accuracy: inDem ? 'lola-480' : 'spherical',
+    accuracy: inPolar ? 'lola-480' : inGlobal ? 'lola-global' : 'spherical',
     hasTerrain: inDem,
     custom: true,
   }
@@ -188,20 +216,28 @@ export function customSiteInfo(lat: number, lon: number): SiteInfo {
 
 async function fetchDetail(info: SiteInfo): Promise<SiteDetail> {
   if (info.custom) {
-    if (info.lat <= CUSTOM_DEM_MAX_LAT) {
-      // Inside a curated 20 m tile (e.g. a point picked on the terrain): full-resolution
-      // horizon near the site, 480 m beyond it.
-      const tile = tileFor(await polarTiles(), info.lat, info.lon)
-      const dems = tile ? [tileDem(tile), COARSE_DEM] : [COARSE_DEM]
+    const inPolar = info.lat <= CUSTOM_DEM_MAX_LAT
+    // Inside a curated tile (e.g. a point picked on the terrain): full-resolution horizon
+    // near the site; beyond it, the 480 m polar DEM where it exists. Around a reference site
+    // there is nothing published past its 60 m tile, so the horizon stops at the tile's edge.
+    const tile =
+      inPolar || info.accuracy === 'lola-global'
+        ? tileFor(await polarTiles(), info.lat, info.lon)
+        : undefined
+    if (inPolar || tile) {
+      const dems = [...(tile ? [tileDem(tile)] : []), ...(inPolar ? [COARSE_DEM] : [])]
       const h = await runCustomHorizon(info.lat, info.lon, dems, tile ? 0.5 : 1)
+      const local = Boolean(tile?.meta.projection)
       return {
         site: { lat: info.lat, lon: info.lon, heightM: h.heightM },
         mask: h.mask,
-        source: tile
-          ? `LOLA LDEM_80S_20M (tile de ${tile.siteId}) + 480 m/px, calculado en el navegador`
-          : 'LOLA LDEM_75S_240M remuestreado a 480 m/px (calculado en el navegador)',
-        sourceKey: tile ? 'source.tile' : 'source.coarse',
-        sourceParams: tile ? { site: tile.siteId } : undefined,
+        source: !tile
+          ? 'LOLA LDEM_75S_240M remuestreado a 480 m/px (calculado en el navegador)'
+          : local
+            ? `LOLA global ${tile.meta.scaleM} m/px (tile de ${tile.siteId}), calculado en el navegador`
+            : `LOLA LDEM_80S_20M (tile de ${tile.siteId}) + 480 m/px, calculado en el navegador`,
+        sourceKey: !tile ? 'source.coarse' : local ? 'source.globalTile' : 'source.tile',
+        sourceParams: tile ? { site: tile.siteId, res: tile.meta.scaleM } : undefined,
         terrain: tile ? { file: tile.file, meta: tile.meta } : undefined,
         illum: tile?.illum,
         demResolutionM: tile ? tile.meta.scaleM : 480,
@@ -235,11 +271,14 @@ async function fetchDetail(info: SiteInfo): Promise<SiteDetail> {
     mask: json.mask,
     obstructionKm: json.mask.obstructionKm,
     source: json.source,
-    sourceKey: json.terrain
-      ? 'source.lola20'
-      : json.mask?.obstructionKm
-        ? undefined
-        : 'source.spherical',
+    sourceKey: json.terrain?.meta?.projection
+      ? 'source.lolaGlobal'
+      : json.terrain
+        ? 'source.lola20'
+        : json.mask?.obstructionKm
+          ? undefined
+          : 'source.spherical',
+    sourceParams: json.terrain?.meta?.projection ? { res: json.terrain.meta.scaleM } : undefined,
     terrain: json.terrain,
     illum: json.illum,
     demResolutionM: json.terrain?.meta?.scaleM,
@@ -257,9 +296,9 @@ export function loadSiteDetail(info: SiteInfo): Promise<SiteDetail> {
 }
 
 /**
- * Terrain rasters for the surface view and slopes, finest first: the 20 m tile (plus the
- * 480 m DEM around it for user points, which can sit off-centre), the 480 m DEM alone, or
- * nothing (flat plain) outside the polar products.
+ * Terrain rasters for the surface view and slopes, finest first: the site's tile (20 m polar
+ * or 60 m local; plus the 480 m DEM around it for user points in the polar cap, which can
+ * sit off-centre), the 480 m DEM alone, or nothing (flat plain) where no DEM is published.
  */
 export function loadTerrainGrids(detail: SiteDetail): Promise<DemGrid[]> {
   const refs = detail.terrain && !detail.custom ? [tileDem(detail.terrain)] : demRefs(detail)

@@ -163,7 +163,7 @@ El modelo es una estimación: velocidad reducida por la pendiente, potencia de t
 ## 7. Sitios y escenarios (panel izquierdo)
 
 - **Pestañas A, B, C, D**: cada una es un escenario. **+ Escenario** añade otro (máximo 4).
-- **Lista de sitios**: candidatos Artemis III (borde de Shackleton, cresta de conexión, borde de de Gerlache, macizo Malapert…), IM-2, VIPER, regiones en sombra permanente (PSR) y referencias fuera del polo. La etiqueta **LOLA 20 m** indica horizonte de alta resolución.
+- **Lista de sitios**: candidatos Artemis III (borde de Shackleton, cresta de conexión, borde de de Gerlache, macizo Malapert…), IM-2, VIPER, regiones en sombra permanente (PSR) y referencias fuera del polo. La etiqueta **LOLA 20 m** indica horizonte de alta resolución. **LOLA 60 m** marca los sitios de referencia, con relieve del DEM LOLA global.
 - **Ver este punto en los visores del LRO**: abre el sitio activo en **LROC QuickMap** y **Moon Trek** para contrastarlo con todas las capas del LRO.
 - **Coordenadas personalizadas**: introduce latitud y longitud; el horizonte se calcula en el navegador (con LOLA 20 m si el punto cae dentro de un tile curado).
 
@@ -286,7 +286,7 @@ El mismo glosario está dentro de la app, al final del panel **¿Por qué?**.
 | Síntoma                                    | Causa / solución                                                                                                      |
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | Pantalla negra en Superficie               | Es de noche en el sitio (Sol bajo el horizonte). Mueve el tiempo o activa **Pendientes**, que se ve siempre           |
-| No aparecen Pendientes, Elipse ni Reubicar | El sitio no tiene terreno LOLA de 20 m (referencias fuera del polo)                                                   |
+| No aparecen Pendientes, Elipse ni Reubicar | Coordenadas personalizadas sin terreno LOLA (fuera del polo y lejos de un sitio curado)                               |
 | Los números aparecen atenuados un momento  | Se están recalculando; los valores anteriores se muestran hasta tener los nuevos                                      |
 | La escena va lenta                         | Cierra paneles que no uses (las gráficas no se calculan si su panel está minimizado) o reduce el tamaño de la ventana |
 

@@ -6,11 +6,17 @@
  * Products used (PDS Geosciences node, LOLA GDR polar, south pole stereographic):
  *   LDEM_80S_20M  20 m/px  80°S-90°S  (1.8 GB; only the rows around each site are fetched)
  *   LDEM_75S_240M 240 m/px 75°S-90°S  (29 MB; far-field horizon + browser DEM)
+ * and, for the sites north of 80.2°S (IM-1, Luna 25, Chandrayaan-3, Chang'e 4/6, Blue Ghost,
+ * SLIM, Apollo 11/15/17), the LOLA GDR global cylindrical products (see lola-global.ts):
+ *   LDEM_512  512 px/deg ≈ 59 m  (only the ±31 km window around each site is fetched)
+ *   LDEM_64   64 px/deg ≈ 474 m  (±300 km window: far-field horizon, build time only)
  *
  * Outputs:
  *   public/data/sites/index.json      refined coordinates/heights for every curated site
  *   public/data/sites/<id>.json       horizon mask (+ terrain tile metadata)
- *   public/data/terrain/<id>.bin      1024x1024 Int16 LOLA DN tile (20 m/px, 20.5 km)
+ *   public/data/terrain/<id>.bin      1024x1024 Int16 LOLA DN tile: 20 m/px (20.5 km) in the
+ *                                     polar projection, or 60 m/px (61 km) in an oblique
+ *                                     stereographic centred on the site (global products)
  *   public/data/dem/south_480m.bin    75°S-90°S DEM for custom coordinates (worker)
  *   public/data/dem/south_960m.bin    lighter version for the orbital (macro) view
  */
@@ -34,8 +40,16 @@ import {
 import { computeHorizonMask } from '../../src/astro/horizonFromDem.ts'
 import { evaluateSite } from '../../src/astro/series.ts'
 import { maskStats, sphericalMask } from '../../src/astro/horizon.ts'
-import { SITE_SEEDS, type SiteSeed } from '../../src/config/sites.ts'
+import { SITE_SEEDS, type SiteSeed, usesPolarProduct } from '../../src/config/sites.ts'
 import { readPublishedTable } from './horizons.ts'
+import {
+  LDEM_512,
+  LDEM_64,
+  loadWindow,
+  localMeta,
+  resampleWindow,
+  windowFor,
+} from './lola-global.ts'
 
 const PDS =
   'https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img'
@@ -45,6 +59,9 @@ const TILE = 1024
 
 const P20 = { file: 'ldem_80s_20m.img', size: 30400, scaleM: 20 }
 const P240 = { file: 'ldem_75s_240m.img', size: 3812, scaleM: 240 }
+/** Local tiles cut from the global products: published near tile and build-time far grid. */
+const GLOBAL_NEAR = { size: TILE, scaleM: 60 }
+const GLOBAL_FAR = { size: 1252, scaleM: 480 }
 
 const log = (...args: unknown[]) => console.log('[data]', ...args)
 
@@ -176,7 +193,7 @@ interface SiteIndexEntry {
   lat: number
   lon: number
   heightM: number
-  accuracy: 'lola' | 'spherical'
+  accuracy: 'lola' | 'lola-global' | 'spherical'
   maskMaxDeg: number
   hasTerrain: boolean
 }
@@ -233,6 +250,62 @@ async function buildPolarSite(seed: SiteSeed, far: DemGrid): Promise<SiteIndexEn
   }
 }
 
+/**
+ * A site outside the polar products: real terrain from the LOLA global grids, resampled into
+ * two oblique stereographic rasters centred on the site. The 60 m tile is published (3D
+ * surface, slopes); the 480 m one only feeds the horizon march out to 300 km.
+ */
+async function buildGlobalSite(seed: SiteSeed): Promise<SiteIndexEntry> {
+  const { lat, lon } = seed
+  const nearMeta = localMeta(lat, lon, GLOBAL_NEAR.size, GLOBAL_NEAR.scaleM)
+  const farMeta = localMeta(lat, lon, GLOBAL_FAR.size, GLOBAL_FAR.scaleM)
+  const tile = resampleWindow(
+    await loadWindow(LDEM_512, windowFor(LDEM_512, nearMeta, lon), CACHE, seed.id),
+    nearMeta,
+  )
+  const far = resampleWindow(
+    await loadWindow(LDEM_64, windowFor(LDEM_64, farMeta, lon), CACHE, seed.id),
+    farMeta,
+  )
+
+  const t0 = performance.now()
+  const horizon = computeHorizonMask([tile, far], lat, lon, { azStepDeg: 0.5 })
+  const stats = maskStats(horizon)
+  log(
+    `${seed.id}: ${lat.toFixed(4)}, ${lon.toFixed(4)} h=${horizon.terrainHeightM.toFixed(0)} m, ` +
+      `horizon ${stats.min.toFixed(2)}°…${stats.max.toFixed(2)}° (${(performance.now() - t0).toFixed(0)} ms)`,
+  )
+
+  await writeFile(join(OUT, 'terrain', `${seed.id}.bin`), Buffer.from(tile.data.buffer))
+  await writeFile(
+    join(OUT, 'sites', `${seed.id}.json`),
+    JSON.stringify({
+      id: seed.id,
+      lat,
+      lon,
+      heightM: round(horizon.terrainHeightM, 1),
+      accuracy: 'lola-global',
+      source: 'LOLA LDEM_512 (60 m/px, ±30 km) + LDEM_64 (480 m/px, hasta 300 km)',
+      mask: {
+        azStepDeg: horizon.azStepDeg,
+        elevDeg: Array.from(horizon.elevDeg, (v) => round(v, 3)),
+        obstructionKm: Array.from(horizon.obstructionDistM, (v) => round(v / 1000, 2)),
+      },
+      terrain: { file: `terrain/${seed.id}.bin`, meta: metaOf(tile) },
+    }),
+  )
+  return {
+    id: seed.id,
+    lat,
+    lon,
+    heightM: round(horizon.terrainHeightM, 1),
+    accuracy: 'lola-global',
+    maskMaxDeg: round(stats.max, 2),
+    hasTerrain: true,
+  }
+}
+
+/** Fallback when the global products cannot be fetched: ideal horizon, no terrain. */
 async function buildReferenceSite(seed: SiteSeed): Promise<SiteIndexEntry> {
   const mask = sphericalMask(2, 1)
   await writeFile(
@@ -271,7 +344,6 @@ async function main() {
     await mkdir(dir, { recursive: true })
   }
 
-
   const far = await loadFar()
   await writeDem('south_480m', downsampleGrid(far, 2))
   await writeDem('south_960m', downsampleGrid(far, 4))
@@ -280,9 +352,15 @@ async function main() {
   const seeds = SITE_SEEDS.filter((s) => only.length === 0 || only.includes(s.id))
   const entries: SiteIndexEntry[] = []
   for (const seed of seeds) {
-    entries.push(
-      seed.lat <= -80.2 ? await buildPolarSite(seed, far) : await buildReferenceSite(seed),
-    )
+    if (usesPolarProduct(seed)) entries.push(await buildPolarSite(seed, far))
+    else {
+      entries.push(
+        await buildGlobalSite(seed).catch((err: Error) => {
+          log(`${seed.id}: global LOLA products unavailable (${err.message}); spherical horizon`)
+          return buildReferenceSite(seed)
+        }),
+      )
+    }
   }
 
   // Merge with an existing index so partial runs (`npm run data -- <id>`) keep other sites.

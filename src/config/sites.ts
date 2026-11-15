@@ -24,6 +24,14 @@ export interface SiteSeed {
   snapMode?: 'height' | 'sun'
 }
 
+/**
+ * South of this latitude a site gets its terrain from the LOLA south polar products (20 m);
+ * the rest (the reference sites) from the LOLA global grids (60 m). The 20 m product ends at
+ * 80°S, so IM-1 (80.13°S) cannot have a full polar tile and takes the global path too.
+ */
+export const POLAR_PRODUCT_MAX_LAT = -80.2
+export const usesPolarProduct = (site: { lat: number }) => site.lat <= POLAR_PRODUCT_MAX_LAT
+
 export const SITE_SEEDS: readonly SiteSeed[] = [
   {
     id: 'shackleton-rim',
@@ -140,7 +148,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     name: 'IM-1 Odysseus (Malapert A)',
     mission: 'Intuitive Machines, CLPS 2024',
     description:
-      'Primer alunizaje comercial, a 80°S junto al cráter Malapert A. Volcó al tocar suelo, pero transmitió datos. Horizonte sin relieve.',
+      'Primer alunizaje comercial, a 80°S junto al cráter Malapert A. Volcó al tocar suelo, pero transmitió datos.',
     category: 'reference',
     lat: -80.13,
     lon: 1.44,
@@ -151,7 +159,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     name: 'Luna-25 (sitio previsto)',
     mission: 'Roscosmos, 2023',
     description:
-      'Sitio previsto al norte del cráter Boguslawsky, a 69,5°S; la sonda se estrelló antes del descenso. Horizonte sin relieve.',
+      'Sitio previsto al norte del cráter Boguslawsky, a 69,5°S; la sonda se estrelló antes del descenso.',
     category: 'reference',
     lat: -69.545,
     lon: 43.544,
@@ -161,7 +169,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     id: 'chandrayaan-3',
     name: 'Chandrayaan-3',
     mission: 'ISRO, 2023',
-    description: 'Alunizaje más cercano al polo sur hasta 2023 (69°S). Horizonte sin relieve.',
+    description: 'Alunizaje más cercano al polo sur hasta 2023 (69°S).',
     category: 'reference',
     lat: -69.3733,
     lon: 32.3191,
@@ -183,7 +191,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     name: "Chang'e-6",
     mission: 'CNSA, 2024 (cara oculta)',
     description:
-      'Primeras muestras de la cara oculta, en la cuenca Apolo (41,6°S). Sin Tierra a la vista: enlace vía el relé Queqiao-2. Horizonte sin relieve.',
+      'Primeras muestras de la cara oculta, en la cuenca Apolo (41,6°S). Sin Tierra a la vista: enlace vía el relé Queqiao-2.',
     category: 'reference',
     lat: -41.6385,
     lon: -153.9852,
@@ -194,7 +202,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     name: 'Blue Ghost M1',
     mission: 'Firefly Aerospace, CLPS 2025',
     description:
-      'Mare Crisium, 18,6°N. Operó un día lunar completo con la Tierra alta en el cielo. Horizonte sin relieve.',
+      'Mare Crisium, 18,6°N. Operó un día lunar completo con la Tierra alta en el cielo.',
     category: 'reference',
     lat: 18.56,
     lon: 61.81,
@@ -204,7 +212,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     id: 'slim',
     name: 'SLIM',
     mission: 'JAXA, 2024',
-    description: 'Alunizaje de precisión cerca del cráter Shioli. Horizonte sin relieve.',
+    description: 'Alunizaje de precisión cerca del cráter Shioli.',
     category: 'reference',
     lat: -13.316,
     lon: 25.251,
@@ -224,7 +232,8 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     id: 'apollo-15',
     name: 'Apolo 15',
     mission: 'NASA, 1971',
-    description: 'Hadley-Apennine. Horizonte sin relieve.',
+    description:
+      'Hadley-Apennine: una bahía de mare cerrada por el frente de los Apeninos (Mons Hadley Delta, Mons Hadley).',
     category: 'reference',
     lat: 26.1322,
     lon: 3.6339,
@@ -234,7 +243,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     id: 'apollo-17',
     name: 'Apolo 17',
     mission: 'NASA, 1972',
-    description: 'Taurus-Littrow. Horizonte sin relieve.',
+    description: 'Taurus-Littrow: un valle entre los macizos Norte y Sur, de unos 2 km de altura.',
     category: 'reference',
     lat: 20.1908,
     lon: 30.7717,

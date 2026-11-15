@@ -1,10 +1,21 @@
-import { mapToSouthPolar, southPolarToMap } from './frames.ts'
+import { mapToSouthPolar, mapToStereo, southPolarToMap, stereoToMap } from './frames.ts'
 
 /** Missing-data sentinel used by our Int16 products. */
 export const DEM_NODATA = -32768
 
 /**
- * A raster in the LOLA south polar stereographic projection (see frames.southPolarToMap).
+ * Map projection of a raster. Absent = the LOLA south polar stereographic of the polar
+ * products (frames.southPolarToMap); 'stereo' = oblique stereographic centred on
+ * (lat0, lon0), used by the tiles cut from the LOLA global products (frames.stereoToMap).
+ */
+export interface DemProjection {
+  kind: 'stereo'
+  lat0: number
+  lon0: number
+}
+
+/**
+ * A raster in a stereographic map projection (south polar unless `projection` says otherwise).
  * Pixel (c, r) has its centre at map x = originX + c * scaleM, y = originY - r * scaleM.
  * Heights are stored as LOLA DNs: height_m = DN * heightScale (0.5 m for LOLA).
  */
@@ -15,6 +26,7 @@ export interface DemGrid {
   width: number
   height: number
   heightScale: number
+  projection?: DemProjection
   data: Int16Array
 }
 
@@ -35,14 +47,35 @@ export function pixelToMap(g: DemMeta, c: number, r: number) {
   return { x: g.originX + c * g.scaleM, y: g.originY - r * g.scaleM }
 }
 
+/** Map coordinates (m) of a point in a raster projection (undefined = south polar). */
+export function projectLatLon(projection: DemProjection | undefined, lat: number, lon: number) {
+  return projection
+    ? stereoToMap(projection.lat0, projection.lon0, lat, lon)
+    : southPolarToMap(lat, lon)
+}
+
+/** Inverse of projectLatLon. */
+export function unprojectMap(projection: DemProjection | undefined, x: number, y: number) {
+  return projection ? mapToStereo(projection.lat0, projection.lon0, x, y) : mapToSouthPolar(x, y)
+}
+
+export const sameProjection = (a: DemProjection | undefined, b: DemProjection | undefined) =>
+  a === b || (!!a && !!b && a.kind === b.kind && a.lat0 === b.lat0 && a.lon0 === b.lon0)
+
+/**
+ * The south polar formula folds the northern hemisphere onto the southern one, so polar
+ * rasters only answer for the south; an oblique stereographic has no such alias.
+ */
+const outOfDomain = (g: DemMeta, lat: number) => !g.projection && lat > -45
+
 export function latLonToPixel(g: DemMeta, lat: number, lon: number) {
-  const { x, y } = southPolarToMap(lat, lon)
+  const { x, y } = projectLatLon(g.projection, lat, lon)
   return mapToPixel(g, x, y)
 }
 
 export function pixelToLatLon(g: DemMeta, c: number, r: number) {
   const { x, y } = pixelToMap(g, c, r)
-  return mapToSouthPolar(x, y)
+  return unprojectMap(g.projection, x, y)
 }
 
 /** Height (m above the reference sphere) at fractional pixel (c, r), bilinear. NaN outside. */
@@ -69,10 +102,10 @@ export function sampleMap(g: DemGrid, x: number, y: number): number {
   return samplePixel(g, c, r)
 }
 
-/** Only the southern hemisphere is mapped by these products. */
+/** Height at (lat, lon); NaN outside the raster (polar products: southern hemisphere only). */
 export function sampleDem(g: DemGrid, lat: number, lon: number): number {
-  if (lat > -45) return NaN
-  const { x, y } = southPolarToMap(lat, lon)
+  if (outOfDomain(g, lat)) return NaN
+  const { x, y } = projectLatLon(g.projection, lat, lon)
   return sampleMap(g, x, y)
 }
 
@@ -87,7 +120,7 @@ export function sampleDemStack(grids: readonly DemGrid[], lat: number, lon: numb
 
 /** True if (lat, lon) falls inside the grid with at least `marginPx` pixels to spare. */
 export function demCovers(g: DemMeta, lat: number, lon: number, marginPx = 1): boolean {
-  if (lat > -45) return false
+  if (outOfDomain(g, lat)) return false
   const { c, r } = latLonToPixel(g, lat, lon)
   return (
     c >= marginPx && r >= marginPx && c <= g.width - 1 - marginPx && r <= g.height - 1 - marginPx

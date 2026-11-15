@@ -133,7 +133,8 @@ export function ViewHud() {
   const landed = useDescentStore((s) => s.landed)
   const { az, el, fov, macroFrame, setMacroFrame } = useViewStore()
   const { instant, detail } = useInstant(scenario)
-  const hasTerrain = Boolean(detail && detail.site.lat <= CUSTOM_DEM_MAX_LAT)
+  // Polar cap (480 m DEM everywhere) or a site with its own tile (reference sites, 60 m).
+  const hasTerrain = Boolean(detail && (detail.terrain || detail.site.lat <= CUSTOM_DEM_MAX_LAT))
   const hasIllum = Boolean(detail?.illum)
   const nacRef = useImageryIndex()?.sites[terrainTileId(detail?.terrain?.file) ?? '']
 

@@ -72,18 +72,18 @@ const EN: Record<string, SiteText> = {
     name: 'IM-1 Odysseus (Malapert A)',
     mission: 'Intuitive Machines, CLPS 2024',
     description:
-      'First commercial landing, at 80°S next to Malapert A crater. It tipped over on touchdown but still returned data. Horizon without relief.',
+      'First commercial landing, at 80°S next to Malapert A crater. It tipped over on touchdown but still returned data.',
   },
   'luna-25': {
     name: 'Luna-25 (planned site)',
     mission: 'Roscosmos, 2023',
     description:
-      'Planned site north of Boguslawsky crater, at 69.5°S; the probe crashed before descent. Horizon without relief.',
+      'Planned site north of Boguslawsky crater, at 69.5°S; the probe crashed before descent.',
   },
   'chandrayaan-3': {
     name: 'Chandrayaan-3',
     mission: 'ISRO, 2023',
-    description: 'Closest landing to the south pole until 2023 (69°S). Horizon without relief.',
+    description: 'Closest landing to the south pole until 2023 (69°S).',
   },
   'change-4': {
     name: "Chang'e-4",
@@ -94,18 +94,17 @@ const EN: Record<string, SiteText> = {
     name: "Chang'e-6",
     mission: 'CNSA, 2024 (far side)',
     description:
-      'First samples from the far side, in the Apollo basin (41.6°S). No Earth in the sky: link through the Queqiao-2 relay. Horizon without relief.',
+      'First samples from the far side, in the Apollo basin (41.6°S). No Earth in the sky: link through the Queqiao-2 relay.',
   },
   'blue-ghost-m1': {
     name: 'Blue Ghost M1',
     mission: 'Firefly Aerospace, CLPS 2025',
-    description:
-      'Mare Crisium, 18.6°N. Operated a full lunar day with the Earth high in the sky. Horizon without relief.',
+    description: 'Mare Crisium, 18.6°N. Operated a full lunar day with the Earth high in the sky.',
   },
   slim: {
     name: 'SLIM',
     mission: 'JAXA, 2024',
-    description: 'Precision landing near Shioli crater. Horizon without relief.',
+    description: 'Precision landing near Shioli crater.',
   },
   'apollo-11': {
     name: 'Apollo 11',
@@ -116,12 +115,13 @@ const EN: Record<string, SiteText> = {
   'apollo-15': {
     name: 'Apollo 15',
     mission: 'NASA, 1971',
-    description: 'Hadley-Apennine. Horizon without relief.',
+    description:
+      'Hadley-Apennine: a mare embayment walled in by the Apennine front (Mons Hadley Delta, Mons Hadley).',
   },
   'apollo-17': {
     name: 'Apollo 17',
     mission: 'NASA, 1972',
-    description: 'Taurus-Littrow. Horizon without relief.',
+    description: 'Taurus-Littrow: a valley between the North and South Massifs, about 2 km high.',
   },
 }
 
