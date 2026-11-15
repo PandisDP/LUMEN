@@ -139,3 +139,48 @@ export function mapToSouthPolar(x: number, y: number): { lat: number; lon: numbe
     lon: wrap180(Math.atan2(x, y) * RAD),
   }
 }
+
+/**
+ * Oblique stereographic projection of the 1737.4 km sphere centred on (lat0, lon0), true
+ * scale at the centre: x east and y north there, metres. It is the projection of the local
+ * tiles cut from the LOLA global (cylindrical) products; with lat0 = -90, lon0 = 0 it is
+ * exactly southPolarToMap. The antipode of the centre has no image (non-finite result).
+ */
+export function stereoToMap(
+  lat0Deg: number,
+  lon0Deg: number,
+  latDeg: number,
+  lonDeg: number,
+): { x: number; y: number } {
+  const p0 = lat0Deg * DEG
+  const p = latDeg * DEG
+  const dl = (lonDeg - lon0Deg) * DEG
+  const s0 = Math.sin(p0)
+  const c0 = Math.cos(p0)
+  const s = Math.sin(p)
+  const c = Math.cos(p)
+  const cdl = Math.cos(dl)
+  const k = (2 * MOON_RADIUS_M) / (1 + s0 * s + c0 * c * cdl)
+  return { x: k * c * Math.sin(dl), y: k * (c0 * s - s0 * c * cdl) }
+}
+
+export function mapToStereo(
+  lat0Deg: number,
+  lon0Deg: number,
+  x: number,
+  y: number,
+): { lat: number; lon: number } {
+  const rho = Math.hypot(x, y)
+  if (rho === 0) return { lat: lat0Deg, lon: wrap180(lon0Deg) }
+  const p0 = lat0Deg * DEG
+  const s0 = Math.sin(p0)
+  const c0 = Math.cos(p0)
+  const ang = 2 * Math.atan(rho / (2 * MOON_RADIUS_M))
+  const sc = Math.sin(ang)
+  const cc = Math.cos(ang)
+  const sLat = cc * s0 + (y * sc * c0) / rho
+  return {
+    lat: Math.asin(Math.max(-1, Math.min(1, sLat))) * RAD,
+    lon: wrap180(lon0Deg + Math.atan2(x * sc, rho * c0 * cc - y * s0 * sc) * RAD),
+  }
+}

@@ -18,6 +18,7 @@ import { useShow } from './audience.ts'
 const ACCURACY_LABEL: Record<SiteInfo['accuracy'], MsgKey> = {
   lola: 'acc.lola',
   'lola-480': 'acc.lola480',
+  'lola-global': 'acc.lolaGlobal',
   spherical: 'acc.spherical',
 }
 

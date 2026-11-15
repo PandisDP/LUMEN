@@ -18,6 +18,7 @@ export type Feature =
   | 'datesTab' // alternative dates tab
   | 'seasonsTab' // Sun elevation and Earth visibility by month, 2026–2030
   | 'dateShift' // score if the landing slips ±1, ±3, ±7 days
+  | 'roverTelemetry' // power and temperature rows of the rover HUD
   | 'linkMargin' // DTE link margin control
   | 'customCoords' // custom coordinates form
   | 'explainAuto' // open "Why?" automatically on entering the exploration
@@ -36,6 +37,7 @@ export const FEATURES: readonly Feature[] = [
   'datesTab',
   'seasonsTab',
   'dateShift',
+  'roverTelemetry',
   'linkMargin',
   'customCoords',
   'explainAuto',

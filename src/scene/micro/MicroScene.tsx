@@ -1,5 +1,5 @@
 import { Html, Line, PerspectiveCamera } from '@react-three/drei'
-import type { ThreeEvent } from '@react-three/fiber'
+import { type ThreeEvent, useFrame } from '@react-three/fiber'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import {
   BufferAttribute,
@@ -31,6 +31,10 @@ import { FOV, selectActiveScenario, useMissionStore } from '../../store/useMissi
 import { useDescentStore } from '../../store/useDescentStore.ts'
 import { useViewStore } from '../../store/useViewStore.ts'
 import { DescentControls } from './DescentControls.tsx'
+import { RoverRig } from './Rover.tsx'
+import { roverTelemetry } from './roverTelemetry.ts'
+import { useRoverTraverse } from '../../hooks/useRover.ts'
+import { useRoverStore } from '../../store/useRoverStore.ts'
 import { DescentDust } from './DescentDust.tsx'
 import { DescentReticle } from './DescentReticle.tsx'
 import { Lander, LanderOrbit } from './Lander.tsx'
@@ -296,9 +300,35 @@ function SkyPaths({ series, detail }: { series: SiteSeries; detail: SiteDetail }
 const SHADOW_HALF_TILE = 10_500
 const SHADOW_HALF_LANDER = 150
 
-function SunLight({ instant, tight = false }: { instant: InstantState; tight?: boolean }) {
+function SunLight({
+  instant,
+  tight = false,
+  followRover = false,
+}: {
+  instant: InstantState
+  tight?: boolean
+  /** Centre the light and its shadow box on the rover, lit by the Sun as seen from there. */
+  followRover?: boolean
+}) {
   const lightRef = useRef<DirectionalLight>(null)
   const targetRef = useRef<Object3D>(null)
+  const sunDir = useRef<[number, number, number]>([0, 1, 0])
+  useFrame(() => {
+    const light = lightRef.current
+    const target = targetRef.current
+    if (!light || !target) return
+    const tm = roverTelemetry
+    const on = followRover && tm.active
+    const [cx, cy, cz] = on ? [tm.x, tm.y, tm.z] : [0, 0, 0]
+    if (target.position.x !== cx || target.position.y !== cy || target.position.z !== cz) {
+      target.position.set(cx, cy, cz)
+      target.updateMatrixWorld()
+    }
+    const d = sunDir.current
+    light.position.set(cx + d[0], cy + d[1], cz + d[2])
+    // The site-wide intensity is the Sun at the lander; under the rover use the Sun at the rover.
+    if (on && Number.isFinite(tm.sunFrac)) light.intensity = 3.2 * tm.sunFrac
+  })
   useEffect(() => {
     if (lightRef.current && targetRef.current) lightRef.current.target = targetRef.current
   }, [])
@@ -311,6 +341,9 @@ function SunLight({ instant, tight = false }: { instant: InstantState; tight?: b
   }, [half])
   const { az, el } = instant.sky.sun
   const pos = skyPoint(az, el, 25_000, 0)
+  useEffect(() => {
+    sunDir.current = skyPoint(az, el, 25_000, 0) as [number, number, number]
+  }, [az, el])
   // Intensity follows the analytically computed visible fraction of the solar disc: when a
   // ridge 100 km away hides the Sun, the whole local tile must go dark too.
   const intensity = 3.2 * instant.sunFrac
@@ -362,7 +395,9 @@ export function MicroScene() {
   useEffect(() => {
     if (!landing) return
     useMissionStore.getState().setLanderCam('eye')
-    useDescentStore.getState().restart()
+    // A link to the rover (or "see the traverse") goes straight to the surface.
+    if (useRoverStore.getState().autoDeploy === 'skip-descent') useDescentStore.getState().land()
+    else useDescentStore.getState().restart()
   }, [landing, siteKey, approachAz])
 
   useEffect(() => {
@@ -376,6 +411,16 @@ export function MicroScene() {
   }, [siteKey])
 
   const orbit = landing && landed && landerCam === 'orbit'
+  const roving = landing && landed && landerCam === 'rover'
+  const traverse = useRoverTraverse(landing)
+  const autoDeploy = useRoverStore((s) => s.autoDeploy)
+  // "Full mission": once down (and the route is known), hand over to the rover.
+  useEffect(() => {
+    if (!landing || !landed || autoDeploy === 'no' || !traverse.data) return
+    useRoverStore.getState().setAutoDeploy('no')
+    useRoverStore.getState().restart()
+    useMissionStore.getState().setLanderCam('rover')
+  }, [landing, landed, autoDeploy, traverse.data])
 
   return (
     <>
@@ -390,6 +435,8 @@ export function MicroScene() {
       <SkyStars />
       {!landing || (landed && landerCam === 'eye') ? (
         <LookControls />
+      ) : roving && detail && grids && traverse.data ? (
+        <RoverRig detail={detail} grids={grids} traverse={traverse.data} />
       ) : landed ? (
         instant && <LanderOrbit instant={instant} />
       ) : (
@@ -399,11 +446,11 @@ export function MicroScene() {
       )}
       {detail && instant && (
         <>
-          <SunLight instant={instant} tight={orbit} />
+          <SunLight instant={instant} tight={orbit || roving} followRover={roving} />
           <Ground detail={detail} sunElDeg={instant.sky.sun.el} />
           {landing && !landed && grids && <DescentReticle detail={detail} grids={grids} />}
           {landing && grids && <DescentDust detail={detail} grids={grids} />}
-          {orbit && grids && <Lander detail={detail} grids={grids} />}
+          {(orbit || roving) && grids && <Lander detail={detail} grids={grids} />}
           {/* Clickable score labels would clutter (and relocate) the descent. */}
           {!(landing && !landed) && <DispersionMarkers detail={detail} />}
           <SunDisc instant={instant} />

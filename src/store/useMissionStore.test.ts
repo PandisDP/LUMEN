@@ -143,3 +143,47 @@ describe('presets', () => {
     expect(state().setScenarios([{ siteId: 'nope', startMs: t }])).toBe(false)
   })
 })
+
+describe('lunar day playback', () => {
+  it('rewinds, stretches a short mission to one synodic day and plays', () => {
+    const s = useMissionStore.getState()
+    s.reset()
+    s.setMissionDays(14)
+    s.setOffset(100)
+    s.playLunarDay()
+    const after = useMissionStore.getState()
+    expect(after.missionDays).toBe(30)
+    expect(after.offsetH).toBe(0)
+    expect(after.playing).toBe(true)
+    expect(after.speed).toBe(24)
+    // A longer mission is left as it is.
+    after.setMissionDays(45)
+    after.playLunarDay()
+    expect(useMissionStore.getState().missionDays).toBe(45)
+  })
+})
+
+describe('landing ellipse settings', () => {
+  it('accepts only the listed aspect ratios', () => {
+    const s = useMissionStore.getState()
+    s.reset()
+    expect(useMissionStore.getState().ellipseAspect).toBe(2)
+    s.setEllipseAspect(3)
+    expect(useMissionStore.getState().ellipseAspect).toBe(3)
+    s.setEllipseAspect(7)
+    expect(useMissionStore.getState().ellipseAspect).toBe(3)
+  })
+})
+
+describe('mission length', () => {
+  it('allows up to a year and clamps beyond it', () => {
+    const s = useMissionStore.getState()
+    s.reset()
+    s.setMissionDays(365)
+    expect(useMissionStore.getState().missionDays).toBe(365)
+    s.setMissionDays(900)
+    expect(useMissionStore.getState().missionDays).toBe(365)
+    s.setSpeed(720)
+    expect(useMissionStore.getState().speed).toBe(720)
+  })
+})

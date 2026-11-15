@@ -14,14 +14,14 @@ afirma la documentación (`README.md`, `ARCHITECTURE.md`, `docs/GUIA.md`) y ejec
 
 ## 1. Resumen ejecutivo
 
-|                                                              |                                                  |
-| ------------------------------------------------------------ | ------------------------------------------------ |
-| **Cumplimiento global estimado**                             | **≈ 85 %**                                       |
-| Estado en la rama `feature/audiencia-y-mision` (15 nov 2026) | **≈ 93 %** tras ejecutar el plan de cierre (§ 9) |
-| Objetivos del reto (70 % del peso)                           | 86 / 100                                         |
-| Consideraciones técnicas, UX, datos e impacto (20 %)         | 85 / 100                                         |
-| Uso de los recursos de la pestaña _Resources_ (10 %)         | 75 / 100                                         |
-| Typecheck · Lint · Tests                                     | ✅ · ✅ · ✅ 1111/1111                           |
+|                                                               |                                                              |
+| ------------------------------------------------------------- | ------------------------------------------------------------ |
+| **Cumplimiento global estimado**                              | **≈ 85 %**                                                   |
+| Estado en la rama `feature/simulacion-y-cierre` (15 nov 2026) | **≈ 97 %**: brechas identificadas cerradas salvo las de § 10 |
+| Objetivos del reto (70 % del peso)                            | 86 / 100                                                     |
+| Consideraciones técnicas, UX, datos e impacto (20 %)          | 85 / 100                                                     |
+| Uso de los recursos de la pestaña _Resources_ (10 %)          | 75 / 100                                                     |
+| Typecheck · Lint · Tests                                      | ✅ · ✅ · ✅ 1111/1111                                       |
 
 **Veredicto**: el proyecto cubre todos los objetivos del reto con implementación real y verificable
 en código, no solo en el README. Siete de los diez bloques evaluados están completos o casi
@@ -297,6 +297,74 @@ los seis sitios de referencia con horizonte esférico ideal (ítem 1), la ventan
 de 60 días (ítems 3 y 7), y la «elipse» que es un círculo sin orientación ni ponderación
 estadística (consideraciones técnicas). Son cambios de más alcance que no compensan su coste para
 el reto.
+
+---
+
+## 10. Cierre de brechas hacia el 100 % y simulación (rama `feature/simulacion-y-cierre`)
+
+El 100 % no es una cifra afirmable: la rúbrica es una estimación propia y quien puntúa es quien
+hizo el trabajo. Lo que sí se puede afirmar es qué brechas de las secciones 7 y 9 quedan cerradas
+con evidencia y cuáles no.
+
+### Nuevo: simulación de aterrizaje y de rover
+
+| Función             | Qué hace                                                                                                                                                                       | Evidencia                                                                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Descenso con física | Masa puntual con empuje, gravedad lunar y ecuación del cohete, guiado ZEM/ZEV hasta el contacto; tres módulos; telemetría de propelente y Δv; aviso de desvío a terreno seguro | `descentPhysics.ts` (23 tests), `descentPlan.ts` (5 tests). En Shackleton: 115 s, contacto a 1,0 m/s, 300 m/s de Δv simulado, 25 % de propelente restante |
+| Recorrido del rover | El rover recorre la ruta al hielo con batería, potencia, temperatura, Sol/sombra permanente y enlace; la hora de misión avanza con él                                          | `traverse.ts` (20 tests). En Shackleton: 1,4 km en 7 h 7 min, batería final 46 %, 4 h 33 min en sombra                                                    |
+
+### Brechas
+
+| Brecha (origen)                                           | Estado       | Evidencia                                                                                                                                                                                                                                                                                                                                                   |
+| --------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sitios de referencia con horizonte esférico (§ 9 «Techo») | ✅ Cerrada   | Los 11 sitios fuera del polo usan LOLA global (tile de 60 m + campo lejano de 480 m). Apollo 15: 13,6° hacia Hadley Delta; Apollo 17: 14,2° hacia el macizo Norte; Apollo 11: 1,6°. Registro comprobado contra el DEM polar (rms 4 m)                                                                                                                       |
+| Ventana de misión de 60 días                              | ✅ Cerrada   | Hasta 365 días con muestreo adaptativo; escenario de un año con DSN en 2,4 s                                                                                                                                                                                                                                                                                |
+| «Elipse» que era un círculo                               | ✅ Cerrada   | Elipse 3σ orientada según la aproximación, ponderada por probabilidad; puntuación esperada y probabilidades                                                                                                                                                                                                                                                 |
+| Móvil: controles solapados                                | ✅ Cerrada   | HUD sobre los rótulos 3D y plegable bajo 640 px; prueba e2e a 390 px                                                                                                                                                                                                                                                                                        |
+| DSN fuera de dispersión y «mejor punto»                   | ✅ Cerrada   | `requireDsn` en ambos                                                                                                                                                                                                                                                                                                                                       |
+| Animación de un día lunar / cuenta atrás visible          | ✅ Cerrada   | Botón «Día lunar»; cuenta atrás de ocaso y puesta de la Tierra en la escena                                                                                                                                                                                                                                                                                 |
+| «Juego educativo» que sugiere el reto                     | ✅ Cerrada   | Modo Retos: cinco misiones con objetivos, pistas y puntuación (32 tests)                                                                                                                                                                                                                                                                                    |
+| Sin pruebas de extremo a extremo                          | ✅ Cerrada   | Seis pruebas Playwright sobre el build, sin errores de consola                                                                                                                                                                                                                                                                                              |
+| Catálogo incompleto                                       | 🟡 Parcial   | Añadidos Nobile Rim 2 e IM-3 (22 sitios) y etiquetadas las listas Artemis de 2022 y 2024, LUPEX, Griffin‑1 y Chang'e‑8 sobre los sitios existentes. **No añadidas**: Peak near Cabeus B, Mons Mouton Plateau, de Gerlache Rim 2 y Slater Plain, porque NASA solo publica un mapa y no encontré coordenadas citables; tampoco Blue Ghost M2 ni Chandrayaan‑4 |
+| CI en GitHub                                              | 🟡 Bloqueada | Workflows listos (incluido el job e2e); GitHub Actions sigue bloqueado por facturación en la cuenta                                                                                                                                                                                                                                                         |
+
+### Verificación
+
+| Comprobación                                   | Resultado                                                                     |
+| ---------------------------------------------- | ----------------------------------------------------------------------------- |
+| typecheck (`strict`) y lint                    | limpios                                                                       |
+| Tests unitarios                                | **45 archivos, 1586 tests, 0 fallos**                                         |
+| Pruebas de extremo a extremo                   | **6 de 6** (Chrome, build de producción)                                      |
+| `npm run validate` (22 sitios, 528 posiciones) | 1,5″ con DE441, 24″ con IAU, 0,0012° DSN                                      |
+| Navegador                                      | Descenso, rover, retos, Apollo 15 y misión de 365 días revisados con capturas |
+
+### Rúbrica recalculada
+
+| Bloque                      | Peso   | § 9        | Ahora      | Por qué                                                                |
+| --------------------------- | ------ | ---------- | ---------- | ---------------------------------------------------------------------- |
+| 1 Selección de sitios       | 8,75 % | 93         | 96         | 22 sitios, todos con relieve real; faltan cuatro regiones Artemis 2024 |
+| 2 Comparación               | 8,75 % | 95         | 96         | Sin cambios de fondo                                                   |
+| 3 Fecha, días y estaciones  | 8,75 % | 90         | 97         | Hasta un año                                                           |
+| 4 Sol y Tierra vs horizonte | 8,75 % | 95         | 98         | Cuenta atrás en la escena; horizonte real en todos los sitios          |
+| 5 Energía y comunicaciones  | 8,75 % | 96         | 97         | Batería del rover en movimiento                                        |
+| 6 Visualizaciones           | 8,75 % | 95         | 98         | Rover y descenso físico en 3D                                          |
+| 7 Dinámica temporal         | 8,75 % | 90         | 97         | Día lunar, un año, descenso y recorrido animados                       |
+| 8 Accesibilidad por niveles | 8,75 % | 93         | 97         | Retos; móvil                                                           |
+| Consideraciones             | 20 %   | 90         | 96         | Elipse real, relieve global, e2e                                       |
+| Recursos                    | 10 %   | 90         | 92         | LOLA global además del polar                                           |
+| **Total**                   |        | **≈ 93 %** | **≈ 97 %** |                                                                        |
+
+### Lo que impide decir 100 %
+
+- Cuatro regiones Artemis de 2024 sin coordenadas publicadas, y misiones futuras sin sitio fijado.
+- Modelos simplificados y declarados como tales: guiado sin dinámica de actitud ni errores de
+  navegación; el frenado desde la órbita no se simula; rover sin hundimiento ni patinaje;
+  trayectoria Tierra–Luna aún sin modelar (`docs/MISION.md`).
+- En los sitios fuera del polo, la elipse y «Sugerir mejor punto» ven el relieve solo hasta
+  ~30 km (el campo lejano no se publica); sin mapas de sombra permanente ni imagen NAC.
+- Los datos publicados suben a 66 MB (2 MB por sitio de referencia).
+- Sin probar en Safari real ni en un móvil físico; CI de GitHub sin ejecutar.
+- La puntuación no es independiente.
 
 ---
 

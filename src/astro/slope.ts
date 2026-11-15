@@ -11,9 +11,12 @@ export const slopeClass = (deg: number): SlopeClass =>
   deg < SLOPE_SAFE_DEG ? 'safe' : deg < SLOPE_CAUTION_DEG ? 'caution' : 'steep'
 
 /**
- * Point scale factor of the polar stereographic map at map radius ρ (true scale at the pole):
- * k = 1 + (ρ / 2R)². Map distances are k times ground distances, so map gradients are scaled
- * by k to get ground gradients (≤ 0.05 % inside 85°S, ~1.6 % at 75°S).
+ * Point scale factor of a stereographic map at map radius ρ from its centre (true scale there:
+ * the pole for the polar products, the site for the local tiles of the global products):
+ * k = 2 / (1 + cos c) = 1 + (ρ / 2R)², with c the angular distance to the centre. The
+ * projection is conformal, so map distances are k times ground distances in every direction
+ * and map gradients are scaled by k to get ground gradients (≤ 0.05 % inside 85°S, ~1.6 % at
+ * 75°S; < 0.01 % anywhere on a ±30 km local tile).
  */
 const scaleFactor = (x: number, y: number) => 1 + (x * x + y * y) / (4 * MOON_RADIUS_M ** 2)
 
@@ -50,7 +53,7 @@ export function slopeAtMap(g: DemGrid, x: number, y: number): number {
 }
 
 export function slopeAt(g: DemGrid, lat: number, lon: number): number {
-  if (lat > -45) return NaN
+  if (!g.projection && lat > -45) return NaN
   const { c, r } = latLonToPixel(g, lat, lon)
   return slopeAtPixel(g, Math.round(c), Math.round(r))
 }

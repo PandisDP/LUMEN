@@ -6,6 +6,7 @@ import type { IllumMeta } from '../astro/illumination.ts'
 import type { OptimizeInput, OptimizeResult } from '../astro/optimize.ts'
 import type { DateCandidate } from '../astro/metrics.ts'
 import type { ScenarioInput, ScenarioResult, SweepInput } from '../astro/scenario.ts'
+import type { TraverseJobInput, TraverseResult } from '../astro/traverse.ts'
 
 /** Messages exchanged with the astro worker. Each request carries an id echoed in the reply. */
 export type AstroRequest =
@@ -15,6 +16,7 @@ export type AstroRequest =
   | { kind: 'dispersion'; input: DispersionInput; dems: DemRef[] }
   | { kind: 'optimize'; input: OptimizeInput; dems: DemRef[]; illum?: IllumRef }
   | { kind: 'iceAccess'; input: IceInput; dem: DemRef; illum: IllumRef }
+  | { kind: 'traverse'; input: TraverseJobInput; dems: DemRef[]; illum?: IllumRef }
 
 /** A DEM the worker loads itself (binary URL + metadata URL or object), finest first. */
 export interface DemRef {
@@ -47,6 +49,7 @@ export type AstroResponse =
   | DispersionResult
   | OptimizeResult
   | IceAccess
+  | TraverseResult
 
 export interface WorkerEnvelope {
   id: number

@@ -32,7 +32,7 @@ export const es = {
   'audience.educator': 'Educador',
   'audience.public': 'Público',
   'audience.planner.desc':
-    'Todos los datos: DSN, térmico, zona de dispersión del aterrizaje, filtro de hardware y exportación.',
+    'Todos los datos: DSN, térmico, elipse de aterrizaje, filtro de hardware y exportación.',
   'audience.educator.desc':
     'La física del lugar: Sol, Tierra, horizonte, iluminación y hielo, sin los detalles de ingeniería.',
   'audience.public.desc': 'Lo esencial: ¿hay Sol?, ¿se ve la Tierra?, y por qué eso importa.',
@@ -61,7 +61,7 @@ export const es = {
   'help.charts':
     'Mueve el tiempo de la misión con el deslizador o pulsa Reproducir. «Línea temporal» muestra Sol, Tierra y batería a lo largo de los días; «Horizonte 360°» dibuja el relieve con las trayectorias; «Fechas alternativas» puntúa cada día de alunizaje de los próximos 12 meses.',
   'help.hud':
-    'Controles de la vista 3D. En Órbita: arrastra para girar, rueda para acercar y clic en un punto para viajar al sitio. En Superficie: mira al Sol o a la Tierra, activa la línea de horizonte, las pendientes, la zona de dispersión del aterrizaje o reubica el sitio con un clic.',
+    'Controles de la vista 3D. En Órbita: arrastra para girar, rueda para acercar y clic en un punto para viajar al sitio. En Superficie: mira al Sol o a la Tierra, activa la línea de horizonte, las pendientes, la elipse de aterrizaje o reubica el sitio con un clic.',
 
   // Guided tour
   'tour.aria': 'Recorrido guiado',
@@ -119,6 +119,9 @@ export const es = {
   'time.duration': 'Duración (días)',
   'time.play': '▶ Reproducir',
   'time.pause': '❚❚ Pausa',
+  'time.lunarDay': '☾ Día lunar',
+  'time.lunarDayTitle':
+    'Reproduce un día lunar completo (29,5 días terrestres) desde el alunizaje: el ciclo entero de luz y sombra, y la oscilación de la Tierra.',
   'time.speed': 'Velocidad',
   'time.jumpSunTitle': 'Saltar al siguiente amanecer u ocaso',
   'time.jumpEarthTitle': 'Saltar a la siguiente salida o puesta de la Tierra',
@@ -212,7 +215,7 @@ export const es = {
   'hw.col.notes': 'Restricción',
   'hw.send': 'Enviar {n} viables a Comparar',
   'hw.note':
-    'Pendiente con el DEM de 20 m (los sitios de referencia se tratan como llanos). La puntuación incluye la ciencia si mueves el control Ingeniería ↔ Ciencia.',
+    'Pendiente con el DEM de 20 m (60 m en los sitios de referencia, que la suaviza). La puntuación incluye la ciencia si mueves el control Ingeniería ↔ Ciencia.',
 
   // Ice access / science
   'ice.title': 'Acceso a hielo (PSR)',
@@ -241,7 +244,7 @@ export const es = {
   'opt.button': 'Sugerir mejor punto',
   'opt.loading': 'Buscando terreno seguro y evaluando la misión en cada punto…',
   'opt.summary': '{safe} puntos con pendiente < 10° · se evaluaron los {n} más altos',
-  'opt.none': 'No hay terreno con pendiente < 10° dentro de la zona de dispersión.',
+  'opt.none': 'No hay terreno con pendiente < 10° dentro de la elipse de aterrizaje.',
   'opt.where': 'a {d} al {dir}',
   'opt.stats': 'pendiente {slope} · luz {sun} · DTE {dte} · noche {night}',
   'opt.go': 'Ir a este punto',
@@ -348,6 +351,11 @@ export const es = {
   'acc.lola': 'LOLA 20 m',
   'acc.lola480': 'LOLA 480 m',
   'acc.spherical': 'Sin relieve',
+  'acc.lolaGlobal': 'LOLA 60 m',
+  'source.lolaGlobal':
+    'LOLA global LDEM_512 ({res} m/px, ±30 km) + LDEM_64 (480 m/px, hasta 300 km) · horizonte topográfico real',
+  'source.globalTile':
+    'LOLA global {res} m/px (tile de {site}, horizonte hasta el borde del tile), calculado en el navegador',
 
   // Horizon chart
   'horizon.scale': 'escala vertical ×{k}',
@@ -418,21 +426,109 @@ export const es = {
   'glossary.dsn.term': 'DSN',
   'glossary.dsn.def':
     'Deep Space Network: las antenas de la NASA en Goldstone, Madrid y Canberra. Para hablar con la Luna, al menos una debe tenerla a la vista.',
-  'glossary.dispersion.term': 'Zona de dispersión',
+  'glossary.dispersion.term': 'Elipse de aterrizaje',
   'glossary.dispersion.def':
-    'Círculo alrededor del sitio donde puede acabar el módulo por la imprecisión del guiado (500 m, 1 km o 2 km de radio).',
+    'Zona donde puede acabar el módulo por la imprecisión del guiado (3σ). Es alargada: el error a lo largo de la trayectoria de aproximación es mayor que el transversal.',
   'glossary.psr.term': 'PSR',
   'glossary.psr.def':
     'Región en sombra permanente: fondos de cráter donde nunca da el Sol y puede conservarse hielo.',
   'glossary.slope.term': 'Pendiente',
   'glossary.slope.def':
-    'Inclinación del terreno calculada sobre el relieve de 20 m. Menos de 10° es seguro para aterrizar; más de 15°, peligroso.',
+    'Inclinación del terreno calculada sobre el relieve de 20 m (60 m en los sitios de referencia). Menos de 10° es seguro para aterrizar; más de 15°, peligroso.',
   'glossary.lola.term': 'LOLA',
   'glossary.lola.def':
     'Lunar Orbiter Laser Altimeter: el altímetro láser del orbitador LRO, de donde sale toda la topografía.',
   'glossary.tplus.term': 'T+',
   'glossary.tplus.def':
     'Tiempo transcurrido desde el alunizaje; todos los escenarios lo comparten.',
+  'challenge.title': 'Retos',
+  'challenge.aria': 'Retos: aprende jugando',
+  'challenge.intro':
+    'Cinco misiones cortas para descubrir por qué es tan difícil alunizar en el polo sur. Cada reto te deja en una situación complicada: resuélvela con los controles de siempre (sitio, fecha, vistas…). Puedes pedir pistas, pero restan puntos.',
+  'challenge.total': 'Puntuación: {score} / {max}',
+  'challenge.best': 'Mejor puntuación: {score}',
+  'challenge.number': 'Reto {n}',
+  'challenge.start': 'Empezar',
+  'challenge.retry': 'Repetir',
+  'challenge.restart': 'Reiniciar',
+  'challenge.all': 'Todos los retos',
+  'challenge.go': 'Ir al simulador',
+  'challenge.goals': 'Objetivos',
+  'challenge.goal.todo': 'pendiente',
+  'challenge.now': '(ahora: {value})',
+  'challenge.hint': 'Pista (−{cost} puntos)',
+  'challenge.how':
+    'Pulsa «Ir al simulador» y usa los paneles: el reto sigue activo abajo a la izquierda y se marca solo cuando lo consigas.',
+  'challenge.progress': '{met} de {total} objetivos cumplidos',
+  'challenge.bar.aria': 'Reto en curso',
+  'challenge.bar.open': 'Ver reto',
+  'challenge.bar.result': 'Ver resultado',
+  'challenge.success.title': '¡Reto superado!',
+  'challenge.success.score': 'Puntuación: {score} / {max}',
+  'challenge.success.hints': '(pistas usadas: {n}; cada una resta {cost})',
+  'challenge.success.learned': 'Qué has aprendido',
+  'challenge.next': 'Siguiente reto',
+  'challenge.finished': 'Era el último reto. ¡Ya piensas como quien planifica una misión lunar!',
+  'challenge.menu': 'Retos',
+  'challenge.welcome': 'Jugar los retos',
+  'challenge.explain': '¿Prefieres aprender jugando? Prueba los 5 retos',
+  'challenge.light.title': 'Encuentra la luz',
+  'challenge.light.brief':
+    'Has alunizado en el fondo del cráter Shackleton: sombra permanente, 0 % de Sol y los paneles no producen nada. Busca otro sitio del polo sur donde el Sol dé al menos el 80 % de una misión de 14 días.',
+  'challenge.light.goal.sun':
+    'Un sitio del polo sur (al sur de 80° S) con Sol ≥ 80 % del tiempo en 14 días',
+  'challenge.light.hint.sun':
+    'No hace falta ir lejos: el borde del mismo cráter está a pocos kilómetros y mucho más arriba. Elígelo en el panel de sitios.',
+  'challenge.light.why':
+    'En el polo sur el Sol apenas se levanta sobre el horizonte, así que el relieve decide: el fondo de un cráter no lo ve jamás y su borde, a pocos kilómetros, casi siempre. Mover el sitio unos kilómetros lo cambia todo.',
+  'challenge.earth.title': 'No pierdas a la Tierra',
+  'challenge.earth.brief':
+    'Estás en el borde de Shackleton y alunizas el 19 de marzo de 2027: durante los 14 días de misión la Tierra queda bajo el horizonte y no hay enlace directo (DTE). Cambia la fecha de alunizaje (o el sitio, sin salir del polo sur) hasta tener enlace al menos el 50 % del tiempo.',
+  'challenge.earth.goal.dte':
+    'Enlace directo con la Tierra ≥ 50 % del tiempo en 14 días, en el polo sur',
+  'challenge.earth.hint.dte':
+    'La Tierra sube y baja con un ciclo de unos 27 días: prueba a mover la fecha de alunizaje unos 10 días.',
+  'challenge.earth.why':
+    'Desde el polo la Tierra siempre roza el horizonte, y la libración de la Luna (unos ±7°) la hace subir y bajar cada 27 días: pueden pasar dos semanas seguidas sin contacto directo. Por eso la fecha importa tanto como el sitio… o hace falta un satélite repetidor.',
+  'challenge.night.title': 'Sobrevive a la noche',
+  'challenge.night.brief':
+    'Misión de 30 días en el macizo Malapert desde el 1 de marzo de 2027: te espera una noche de más de 300 horas y el módulo no aguanta más de 120. Encuentra un sitio y una fecha del polo sur con noches más cortas.',
+  'challenge.night.goal.dark':
+    'La noche más larga dura ≤ 120 h en una misión de 30 días en el polo sur',
+  'challenge.night.goal.verdict': 'El veredicto del sitio no es «Descartado»',
+  'challenge.night.hint.dark':
+    'Las crestas más altas junto al polo casi nunca quedan a oscuras: prueba la Cresta de conexión o el borde de Shackleton, y mueve la fecha si hace falta.',
+  'challenge.night.hint.verdict':
+    'El veredicto también mira la pendiente y el enlace con la Tierra: revisa en el panel de datos qué límite falla.',
+  'challenge.night.why':
+    'En casi toda la Luna la noche dura unos 14 días (más de 300 h) y congela un módulo sin calefacción propia. En unas pocas crestas polares el Sol solo se esconde tras el relieve durante horas o pocos días: son los sitios de «luz casi permanente» que busca Artemis.',
+  'challenge.landing.title': 'Aterriza con margen',
+  'challenge.landing.brief':
+    'Vas a bajar con el módulo pesado sobre el borde de Nobile: terreno demasiado inclinado y un módulo que llega con el propelente justo. Elige un sitio con pendiente segura, ve al paso Aterrizaje y completa un descenso con física que toque suelo con al menos un 20 % de propelente.',
+  'challenge.landing.goal.slope': 'Sitio con pendiente segura (p90 < 15°)',
+  'challenge.landing.goal.margin':
+    'En Aterrizaje: descenso con física y margen de propelente ≥ 20 %',
+  'challenge.landing.goal.touchdown': 'Completa el descenso hasta tocar la superficie',
+  'challenge.landing.hint.slope':
+    'El borde de Nobile tiene pendientes de más de 16°. Mons Mouton o el macizo Malapert son mucho más llanos.',
+  'challenge.landing.hint.margin':
+    'El margen depende del módulo: en la vista Aterrizaje cambia «Módulo» por uno más ligero (clase CLPS o pequeño).',
+  'challenge.landing.hint.touchdown':
+    'En la vista Aterrizaje deja que el descenso llegue al final (puedes acelerarlo). El modelo debe ser «con física».',
+  'challenge.landing.why':
+    'Frenar desde la órbita lunar cuesta cerca de 2 km/s de Δv, y casi todo se paga en propelente. El margen que queda al tocar suelo es lo que permite esquivar una roca o una pendiente en el último momento: sin margen ni terreno llano no hay aterrizaje seguro.',
+  'challenge.ice.title': 'Llega al hielo',
+  'challenge.ice.brief':
+    "El hielo está en zonas de sombra permanente, donde no se puede vivir de paneles solares. Desde la zona de Chang'e-7 el rover no tiene ruta hasta él. Con alunizaje el 15 de marzo de 2027, encuentra un sitio soleado desde el que el rover llegue al hielo sin que su batería baje del 30 %.",
+  'challenge.ice.goal.route':
+    'Sitio fuera de la sombra permanente con ruta transitable hasta el hielo',
+  'challenge.ice.goal.battery': 'El rover llega al hielo con la batería siempre ≥ 30 %',
+  'challenge.ice.hint.route':
+    'Los candidatos de Artemis (bordes y crestas junto al polo) tienen sombra permanente a menos de 2 km: elige uno en el panel de sitios.',
+  'challenge.ice.hint.battery':
+    'Cuanto más corta la ruta y más Sol haya al salir, mejor: prueba Mons Mouton o la Cresta de conexión, o cambia la fecha de alunizaje.',
+  'challenge.ice.why':
+    'Dentro de la sombra permanente no hay Sol: el rover vive solo de su batería, a unos −200 °C. Por eso se aluniza en un punto iluminado cercano y se planifica la travesía (distancia, pendiente y hora de salida) para entrar, medir y llegar con energía de sobra.',
   'explain.sources.title': 'Recursos de la NASA y la CSA que usa LUMEN 3D',
   'explain.sources.horizons':
     'Efemérides DE441: posiciones del Sol y la Tierra vistas desde cada sitio (2026–2030), validación al segundo de arco y geometría de la DSN.',
@@ -487,6 +583,8 @@ export const es = {
   // Surface view HUD
   'hud.macroHint':
     'Arrastra para orbitar · rueda para acercarte al polo · haz clic en un punto para bajar a la superficie',
+  'hud.more': 'Controles',
+  'hud.less': 'Ocultar controles',
   'hud.microHint': 'Arrastra para mirar alrededor · rueda para hacer zoom (el Sol mide 0,5°)',
   'hud.aerialHint':
     'Vista aérea a 3 km (no es lo que ve el lander) · activa «Reubicar con clic» y pulsa en el terreno para reubicar el sitio',
@@ -501,8 +599,12 @@ export const es = {
   'hud.aerialView': 'Vista aérea',
   'hud.landerView': 'Vista del lander',
   'hud.slope': 'Pendientes',
-  'hud.ellipse': 'Dispersión',
-  'hud.ellipseOff': 'sin zona',
+  'hud.ellipse': 'Elipse',
+  'hud.ellipseOff': 'sin elipse',
+  'hud.ellipseAspect': 'Forma de la elipse',
+  'hud.ellipseAspectTitle':
+    'Relación entre el error a lo largo de la trayectoria de aproximación y el transversal. El eje mayor sigue el acimut de aproximación.',
+  'hud.ellipseCircle': 'círculo',
   'hud.pick': 'Reubicar con clic',
   'hud.pickActive': 'Haz clic en el terreno…',
   'hud.pickTitle':
@@ -511,11 +613,80 @@ export const es = {
   'hud.simulateDescent': 'Simular descenso',
 
   // Landing (descent) view
+  // Rover traverse to the ice
+  'rover.aria': 'Recorrido del rover',
+  'rover.loading': 'Calculando el recorrido del rover…',
+  'rover.deploy': 'Desplegar rover',
+  'rover.fullMission': 'Misión completa',
+  'rover.fullMissionTitle':
+    'Reproduce el descenso y, al tocar suelo, el recorrido del rover hasta el hielo.',
+  'rover.goal': 'hielo · {d}',
+  'rover.dist': 'Recorrido',
+  'rover.left': 'Falta',
+  'rover.slope': 'Pendiente',
+  'rover.speed': 'Velocidad',
+  'rover.battery': 'Batería',
+  'rover.power': 'Solar / consumo',
+  'rover.temp': 'Temperatura',
+  'rover.sunOn': 'al Sol',
+  'rover.sunOff': 'en sombra',
+  'rover.psr': 'sombra permanente',
+  'rover.linkOn': 'enlace con la Tierra',
+  'rover.linkOff': 'sin enlace',
+  'rover.state.driving': 'avanzando',
+  'rover.state.stopped': 'detenido',
+  'rover.state.done': 'en el hielo',
+  'rover.profile': 'Perfil de altura de la ruta',
+  'rover.profileCaption':
+    'Ruta de {d}, desnivel {drop}, pendiente máx. {slope}. Franja azul: sombra permanente.',
+  'rover.summary':
+    'Llega en {h}. Batería mínima {soc}; {shadow} en sombra; enlace con la Tierra el {dte} del tiempo.',
+  'rover.fails': 'No llega: la batería baja al {soc} y no puede recargar.',
+  'rover.vehicle': 'Rover',
+  'rover.vehicle.rover': 'micro-rover (40 kg)',
+  'rover.vehicle.csa-rover': 'utilitario CSA (350 kg)',
+  'rover.cam': 'Cámara',
+  'rover.cam.follow': 'seguimiento',
+  'rover.cam.mast': 'mástil',
+  'rover.cam.top': 'cenital',
+  'rover.progress': 'Progreso del recorrido',
+  'rover.backToLander': 'Volver al módulo',
+  'rover.hint':
+    'Arrastra para girar alrededor del rover · rueda para acercarte · la hora de misión avanza con él',
+  'rover.card': 'Rover ({name}): {verdict}',
+  'rover.card.ok': 'llega al hielo en {h} con batería mínima {soc}',
+  'rover.card.fail': 'no llega al hielo (batería {soc})',
+  'rover.card.see': 'Ver el recorrido',
   'landing.aria': 'Guiado de descenso',
   'landing.phase': 'Fase',
   'landing.alt': 'Altura',
   'landing.dist': 'Al objetivo',
   'landing.vspeed': 'V. vertical',
+  'landing.hspeed': 'V. horizontal',
+  'landing.prop': 'Propelente',
+  'landing.dv': 'Δv gastado',
+  'landing.throttle': 'Empuje · inclinación',
+  'landing.mode': 'Modelo',
+  'landing.modeTitle':
+    'Con física: masa puntual con empuje, gravedad lunar y ecuación del cohete, guiada hasta el contacto. Rápido: recorrido ilustrativo de 45 s sin física.',
+  'landing.mode.physics': 'con física',
+  'landing.mode.kinematic': 'rápido',
+  'landing.vehicle': 'Módulo',
+  'landing.vehicleTitle': 'Masa, propelente, empuje e impulso específico. Valores ilustrativos.',
+  'landing.vehicle.clps': 'clase CLPS (700 kg)',
+  'landing.vehicle.small': 'pequeño (200 kg)',
+  'landing.vehicle.heavy': 'pesado (6 t)',
+  'landing.summary':
+    'Contacto a {vz} m/s tras {s} s. Δv de la aproximación simulada: {dv} m/s; con el frenado desde la órbita (~{braking} m/s, no simulado), ≈ {total} m/s. Propelente restante: {left} kg ({margin} % de la carga).',
+  'landing.fail.propellant': 'El módulo se queda sin propelente antes del contacto.',
+  'landing.fail.terrain': 'El relieve bajo la aproximación corta la trayectoria guiada.',
+  'landing.fail.hard-landing': 'El contacto supera la velocidad admisible.',
+  'landing.fail.timeout': 'El guiado no llega a cerrar el descenso.',
+  'landing.fallback': 'Se muestra el recorrido ilustrativo.',
+  'landing.hazard':
+    'El punto objetivo no es terreno seguro. El guiado se desviaría {d} (+{dv} m/s de Δv).',
+  'landing.hazardGo': 'Aterrizar ahí',
+  'landing.noSafe': 'Objetivo con pendiente insegura y sin terreno seguro a menos de 300 m.',
   'landing.phase.braking': 'Frenado',
   'landing.phase.approach': 'Aproximación',
   'landing.phase.terminal': 'Descenso final',
@@ -560,17 +731,20 @@ export const es = {
     'DEM de {res} m/px: la pendiente queda suavizada y subestima la real a escala del lander.',
 
   // Dispersion
-  'dispersion.title': 'Sensibilidad en la zona de dispersión (r = {r})',
-  'dispersion.loading': 'Calculando horizontes de los puntos de la zona…',
+  'dispersion.title': 'Elipse de aterrizaje 3σ ({a} × {b})',
+  'dispersion.loading': 'Calculando horizontes de los puntos de la elipse…',
   'dispersion.spread': 'Puntuación entre {min} y {max} en {n} puntos de aterrizaje posibles.',
   'dispersion.range': 'mín · mediana · máx',
+  'dispersion.expected': 'Puntuación esperada',
+  'dispersion.pGood': 'Prob. de puntuación ≥ {score}',
+  'dispersion.pSafe': 'Prob. de pendiente < {deg}°',
   'dispersion.score': 'Puntuación',
   'dispersion.sun': 'Tiempo con Sol',
   'dispersion.dte': 'Enlace DTE',
   'dispersion.night': 'Noche más larga',
   'dispersion.slope': 'Pendiente',
   'dispersion.note':
-    'Análisis rápido: horizonte a 1° y paso de 30 min por punto. Los marcadores de la vista de superficie muestran cada punto; haz clic en uno para mover el sitio ahí.',
+    'Elipse 3σ con el eje mayor en la dirección de aproximación; cada punto pesa según la probabilidad de caer ahí. Análisis rápido: horizonte a 1° y paso de 30 min por punto. Los marcadores de la vista de superficie muestran cada punto; haz clic en uno para mover el sitio ahí.',
   // Energy / battery
   'energy.title': 'Energía · batería',
   'energy.profile': 'Perfil energético',

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { type DemGrid, lolaProductMeta, pixelToMap } from './dem.ts'
-import { computeDispersion, dispersionOffsets, range } from './dispersion.ts'
+import {
+  computeDispersion,
+  dispersionOffsets,
+  insideEllipse,
+  landingEllipse,
+  range,
+} from './dispersion.ts'
 import { surfaceDistance } from './frames.ts'
 
 /** 200 m/px synthetic polar DEM, ±40 km, height = f(x, y). */
@@ -30,8 +36,35 @@ describe('dispersionOffsets', () => {
     const o = dispersionOffsets(1000, 2, 8)
     expect(o).toHaveLength(17)
     expect(o[0].distM).toBe(0)
-    expect(o.filter((x) => x.distM === 500)).toHaveLength(8)
-    expect(o.filter((x) => x.distM === 1000)).toHaveLength(8)
+    const at = (d: number) => o.filter((x) => Math.abs(x.distM - d) < 1e-6)
+    expect(at(500)).toHaveLength(8)
+    expect(at(1000)).toHaveLength(8)
+  })
+
+  it('weights the points by landing probability: they add up to 1 and fall off outwards', () => {
+    const o = dispersionOffsets(1000, 2, 8)
+    expect(o.reduce((s, x) => s + x.weight, 0)).toBeCloseTo(1, 9)
+    const inner = o[1].weight
+    const outer = o[9].weight
+    expect(inner).toBeGreaterThan(outer * 5)
+    // 3σ boundary: the centre cell (r ≤ 0.25 → 0.75σ) holds 1 − exp(−0.75²/2) ≈ 24.5 %.
+    expect(o[0].weight).toBeCloseTo((1 - Math.exp(-0.28125)) / (1 - Math.exp(-4.5)), 6)
+  })
+
+  it('lays an ellipse along the approach azimuth', () => {
+    const e = landingEllipse(1000, 2, 90)
+    expect(e).toEqual({ semiMajorM: 1000, semiMinorM: 500, orientationDeg: 90 })
+    const o = dispersionOffsets(e.semiMajorM, 2, 8, e.semiMinorM, e.orientationDeg)
+    // Outer ring: 1000 m east/west along the track, 500 m north/south across it.
+    const outer = o.slice(9)
+    const east = outer.reduce((a, b) => (Math.abs(b.azDeg - 90) < Math.abs(a.azDeg - 90) ? b : a))
+    expect(Math.max(...outer.map((x) => x.distM))).toBeLessThanOrEqual(1000 + 1e-6)
+    expect(Math.min(...outer.map((x) => x.distM))).toBeGreaterThanOrEqual(500 - 1e-6)
+    expect(east.distM).toBeGreaterThan(900)
+    for (const x of o) expect(insideEllipse(e, x.distM - 1e-6, x.azDeg)).toBe(true)
+    expect(insideEllipse(e, 900, 90)).toBe(true)
+    expect(insideEllipse(e, 900, 0)).toBe(false)
+    expect(insideEllipse(e, 400, 0)).toBe(true)
   })
 })
 
@@ -74,5 +107,25 @@ describe('computeDispersion', { timeout: 30_000 }, () => {
     expect(r.points.length).toBeGreaterThan(0)
     expect(out.points).toHaveLength(0)
     expect(out.summary.score.min).toBeNaN()
+  })
+})
+
+describe('probability-weighted summary', { timeout: 30_000 }, () => {
+  it('gives expected values and probabilities consistent with the points', () => {
+    // Tilted plane: 5.7° everywhere, so P(slope < 10°) = 1 and the expected slope is that value.
+    const r = computeDispersion([dem((x) => 0.1 * x)], {
+      ...input,
+      rings: 1,
+      perRing: 6,
+      semiMinorM: 500,
+      orientationDeg: 45,
+    })
+    expect(r.points.reduce((s, p) => s + p.weight, 0)).toBeCloseTo(1, 9)
+    expect(r.summary.pSafeSlope).toBeCloseTo(1, 9)
+    expect(r.summary.expected.slopeDeg).toBeCloseTo(5.71, 1)
+    expect(r.summary.expected.score).toBeGreaterThanOrEqual(r.summary.score.min)
+    expect(r.summary.expected.score).toBeLessThanOrEqual(r.summary.score.max)
+    expect(r.summary.pGoodScore).toBeGreaterThanOrEqual(0)
+    expect(r.summary.pGoodScore).toBeLessThanOrEqual(1)
   })
 })

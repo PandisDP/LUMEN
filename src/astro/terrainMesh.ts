@@ -1,5 +1,13 @@
 import { DEG, MOON_RADIUS_M } from './constants.ts'
-import { type DemGrid, sampleDemStack, sampleMap } from './dem.ts'
+import {
+  type DemGrid,
+  projectLatLon,
+  sameProjection,
+  sampleDem,
+  sampleDemStack,
+  sampleMap,
+  unprojectMap,
+} from './dem.ts'
 import { type Site } from './ephemeris.ts'
 import { elevationAngle } from './horizonFromDem.ts'
 import {
@@ -7,14 +15,12 @@ import {
   destination,
   dot,
   enuBasis,
-  mapToSouthPolar,
   selenographicToVector,
-  southPolarToMap,
   sub,
   vectorToSelenographic,
 } from './frames.ts'
 import { type HorizonMask, maskAt } from './horizon.ts'
-import { slopeAtMap } from './slope.ts'
+import { slopeAt, slopeAtMap } from './slope.ts'
 
 /**
  * Scene convention for the surface view (metres, right-handed, Y up):
@@ -68,7 +74,10 @@ export function buildTerrainGeometry(
   // Finest first: a relocated site can sit near the edge of its 20 m tile, so the rest of the
   // patch falls back to the coarse DEM instead of a flat smear.
   const stack: readonly DemGrid[] = Array.isArray(grids) ? grids : [grids as DemGrid]
-  const center = southPolarToMap(site.lat, site.lon)
+  // The patch is a regular grid on the map plane of the finest raster; rasters in another
+  // projection (a local tile over the polar DEM) are sampled by lat/lon instead.
+  const projection = stack[0]?.projection
+  const center = projectLatLon(projection, site.lat, site.lon)
   const basis = enuBasis(site.lat, site.lon)
   const origin = selenographicToVector(site.lat, site.lon, MOON_RADIUS_M + site.heightM)
   const n = segments + 1
@@ -80,18 +89,19 @@ export function buildTerrainGeometry(
     for (let c = 0; c < n; c++) {
       const x = center.x - halfSizeM + c * step
       const y = center.y + halfSizeM - r * step
+      const { lat, lon } = unprojectMap(projection, x, y)
       let h = NaN
       for (const g of stack) {
-        h = sampleMap(g, x, y)
+        const same = sameProjection(g.projection, projection)
+        h = same ? sampleMap(g, x, y) : sampleDem(g, lat, lon)
         if (!Number.isNaN(h)) {
-          const s = slopeAtMap(g, x, y)
+          const s = same ? slopeAtMap(g, x, y) : slopeAt(g, lat, lon)
           slopeDeg[r * n + c] = Number.isNaN(s) ? 0 : s
           break
         }
       }
       if (Number.isNaN(h)) h = fallback
       else fallback = h
-      const { lat, lon } = mapToSouthPolar(x, y)
       const v = sub(selenographicToVector(lat, lon, MOON_RADIUS_M + h), origin)
       const p = enuToScene(dot(v, basis.east), dot(v, basis.north), dot(v, basis.up))
       positions.set(p, (r * n + c) * 3)

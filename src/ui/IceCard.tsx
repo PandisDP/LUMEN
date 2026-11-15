@@ -1,11 +1,40 @@
 import { ICE_RADIUS_M, scienceScore } from '../astro/iceAccess.ts'
 import type { SiteDetail } from '../data/catalog.ts'
 import { useIceAccess } from '../hooks/useScience.ts'
-import { useT } from '../i18n/index.ts'
+import { useRoverTraverse } from '../hooks/useRover.ts'
+import { type MsgKey, useT } from '../i18n/index.ts'
+import { useRoverStore } from '../store/useRoverStore.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
-import { formatDeg, formatDistance } from './format.ts'
+import { formatDeg, formatDistance, formatHours, formatPct } from './format.ts'
 import { LevelTag } from './LevelTag.tsx'
 import { type Level, scienceLevel } from './levels.ts'
+
+/** Whether the selected rover makes it to the ice, and a shortcut to watch the traverse. */
+function RoverLine() {
+  const t = useT()
+  const roverId = useRoverStore((s) => s.roverId)
+  const { data } = useRoverTraverse()
+  if (!data) return null
+  const s = data.summary
+  const see = () => {
+    useRoverStore.getState().setAutoDeploy('skip-descent')
+    useMissionStore.getState().setView('landing')
+  }
+  return (
+    <p className="card__sub">
+      <LevelTag level={!s.reaches ? 'bad' : s.minSocPct < 25 ? 'warn' : 'good'} />{' '}
+      {t('rover.card', {
+        name: t(`rover.vehicle.${roverId}` as MsgKey),
+        verdict: s.reaches
+          ? t('rover.card.ok', { h: formatHours(s.driveH + s.waitH), soc: formatPct(s.minSocPct) })
+          : t('rover.card.fail', { soc: formatPct(s.minSocPct) }),
+      })}{' '}
+      <button type="button" className="linklike" onClick={see}>
+        {t('rover.card.see')}
+      </button>
+    </p>
+  )
+}
 
 /** Rover access to permanently shadowed ground (water ice) from the landing point. */
 export function IceCard({ detail }: { detail?: SiteDetail }) {
@@ -66,6 +95,7 @@ export function IceCard({ detail }: { detail?: SiteDetail }) {
               )}
             </>
           )}
+          {data.reachable && !data.insidePsr && <RoverLine />}
           <p className="hint">{t('ice.note', { deg: rover })}</p>
         </>
       )}

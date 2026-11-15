@@ -31,6 +31,7 @@ export function TimeControls() {
     setSpeed,
     setLinkMargin,
     setRequireDsn,
+    playLunarDay,
   } = useMissionStore.getState()
   const t = useT()
   const showLinkMargin = useShow('linkMargin')
@@ -96,12 +97,20 @@ export function TimeControls() {
           >
             {playing ? t('time.pause') : t('time.play')}
           </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={playLunarDay}
+            title={t('time.lunarDayTitle')}
+          >
+            {t('time.lunarDay')}
+          </button>
           <label className="field field--inline">
             <span className="sr-only">{t('time.speed')}</span>
             <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
               {PLAY_SPEEDS.map((s) => (
                 <option key={s} value={s}>
-                  {s} h/s
+                  {s >= 168 ? `${s / 24} d/s` : `${s} h/s`}
                 </option>
               ))}
             </select>

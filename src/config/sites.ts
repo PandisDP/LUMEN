@@ -24,11 +24,19 @@ export interface SiteSeed {
   snapMode?: 'height' | 'sun'
 }
 
+/**
+ * South of this latitude a site gets its terrain from the LOLA south polar products (20 m);
+ * the rest (the reference sites) from the LOLA global grids (60 m). The 20 m product ends at
+ * 80°S, so IM-1 (80.13°S) cannot have a full polar tile and takes the global path too.
+ */
+export const POLAR_PRODUCT_MAX_LAT = -80.2
+export const usesPolarProduct = (site: { lat: number }) => site.lat <= POLAR_PRODUCT_MAX_LAT
+
 export const SITE_SEEDS: readonly SiteSeed[] = [
   {
     id: 'shackleton-rim',
     name: 'Borde de Shackleton',
-    mission: 'Región candidata Artemis III',
+    mission: 'Región candidata Artemis III (lista de 2022) · zona candidata de LUPEX',
     description:
       'Uno de los puntos mejor iluminados de la Luna: el borde del cráter queda por encima de casi todo el relieve circundante.',
     category: 'south-pole',
@@ -40,7 +48,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
   {
     id: 'connecting-ridge',
     name: 'Cresta de conexión',
-    mission: 'Región candidata Artemis III',
+    mission: 'Región candidata Artemis III (lista de 2022)',
     description: 'Cresta elevada que une los cráteres Shackleton y de Gerlache.',
     category: 'south-pole',
     // Midpoint between the Shackleton and de Gerlache rims; the pipeline picks the best-lit point.
@@ -52,7 +60,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
   {
     id: 'de-gerlache-rim',
     name: 'Borde de de Gerlache',
-    mission: 'Región candidata Artemis III',
+    mission: 'Región candidata Artemis III (2022; de Gerlache Rim 2 sigue en la de 2024)',
     description: 'Borde del cráter de Gerlache, con largos periodos de iluminación.',
     category: 'south-pole',
     lat: -88.71,
@@ -63,7 +71,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
   {
     id: 'malapert-massif',
     name: 'Macizo Malapert',
-    mission: 'Región candidata Artemis III',
+    mission: 'Región candidata Artemis III (listas de 2022 y 2024)',
     description:
       'Montaña de ~5 km orientada hacia la Tierra: excelente visibilidad directa para comunicaciones.',
     category: 'south-pole',
@@ -74,7 +82,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
   {
     id: 'mons-mouton',
     name: 'Mons Mouton',
-    mission: 'IM-2 Athena (Intuitive Machines, CLPS 2025)',
+    mission: "IM-2 Athena (CLPS 2025) · Artemis III 2024 · zona de Griffin-1 y Chang'e-8",
     description: 'Meseta elevada; sitio de alunizaje de la misión IM-2 del programa CLPS.',
     category: 'south-pole',
     lat: -84.79,
@@ -84,7 +92,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
   {
     id: 'nobile-rim',
     name: 'Borde de Nobile',
-    mission: 'Zona objetivo del rover VIPER',
+    mission: 'Zona objetivo del rover VIPER · Nobile Rim 1 (Artemis III 2024)',
     description: 'Región al oeste del cráter Nobile con zonas de sombra permanente cercanas.',
     category: 'south-pole',
     lat: -85.42,
@@ -92,9 +100,20 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     snapRadiusM: 0,
   },
   {
+    id: 'nobile-rim-2',
+    name: 'Nobile Rim 2',
+    mission: 'Región candidata Artemis III (lista de 2024)',
+    description:
+      'Segunda región candidata en el borde de Nobile. Punto tomado de un estudio multicriterio de sitios de Artemis III (84,20°S, 60,70°E); aproximado.',
+    category: 'south-pole',
+    lat: -84.2016,
+    lon: 60.6999,
+    snapRadiusM: 0,
+  },
+  {
     id: 'haworth',
     name: 'Interior de Haworth',
-    mission: 'Región de sombra permanente (PSR)',
+    mission: 'Región de sombra permanente (PSR) · Haworth (Artemis III 2024)',
     description:
       'Fondo de un cráter profundo: el Sol nunca supera sus paredes. Frío extremo y posible hielo.',
     category: 'south-pole',
@@ -140,7 +159,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     name: 'IM-1 Odysseus (Malapert A)',
     mission: 'Intuitive Machines, CLPS 2024',
     description:
-      'Primer alunizaje comercial, a 80°S junto al cráter Malapert A. Volcó al tocar suelo, pero transmitió datos. Horizonte sin relieve.',
+      'Primer alunizaje comercial, a 80°S junto al cráter Malapert A. Volcó al tocar suelo, pero transmitió datos.',
     category: 'reference',
     lat: -80.13,
     lon: 1.44,
@@ -151,7 +170,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     name: 'Luna-25 (sitio previsto)',
     mission: 'Roscosmos, 2023',
     description:
-      'Sitio previsto al norte del cráter Boguslawsky, a 69,5°S; la sonda se estrelló antes del descenso. Horizonte sin relieve.',
+      'Sitio previsto al norte del cráter Boguslawsky, a 69,5°S; la sonda se estrelló antes del descenso.',
     category: 'reference',
     lat: -69.545,
     lon: 43.544,
@@ -161,7 +180,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     id: 'chandrayaan-3',
     name: 'Chandrayaan-3',
     mission: 'ISRO, 2023',
-    description: 'Alunizaje más cercano al polo sur hasta 2023 (69°S). Horizonte sin relieve.',
+    description: 'Alunizaje más cercano al polo sur hasta 2023 (69°S).',
     category: 'reference',
     lat: -69.3733,
     lon: 32.3191,
@@ -183,7 +202,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     name: "Chang'e-6",
     mission: 'CNSA, 2024 (cara oculta)',
     description:
-      'Primeras muestras de la cara oculta, en la cuenca Apolo (41,6°S). Sin Tierra a la vista: enlace vía el relé Queqiao-2. Horizonte sin relieve.',
+      'Primeras muestras de la cara oculta, en la cuenca Apolo (41,6°S). Sin Tierra a la vista: enlace vía el relé Queqiao-2.',
     category: 'reference',
     lat: -41.6385,
     lon: -153.9852,
@@ -194,17 +213,28 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     name: 'Blue Ghost M1',
     mission: 'Firefly Aerospace, CLPS 2025',
     description:
-      'Mare Crisium, 18,6°N. Operó un día lunar completo con la Tierra alta en el cielo. Horizonte sin relieve.',
+      'Mare Crisium, 18,6°N. Operó un día lunar completo con la Tierra alta en el cielo.',
     category: 'reference',
     lat: 18.56,
     lon: 61.81,
     snapRadiusM: 0,
   },
   {
+    id: 'im-3',
+    name: 'IM-3 (Reiner Gamma)',
+    mission: 'Intuitive Machines, CLPS (previsto 2027)',
+    description:
+      'Remolino magnético Reiner Gamma, en Oceanus Procellarum (7,6°N, 58,7°O), objetivo del experimento Lunar Vertex. Mar llano con la Tierra alta en el cielo.',
+    category: 'reference',
+    lat: 7.585,
+    lon: -58.725,
+    snapRadiusM: 0,
+  },
+  {
     id: 'slim',
     name: 'SLIM',
     mission: 'JAXA, 2024',
-    description: 'Alunizaje de precisión cerca del cráter Shioli. Horizonte sin relieve.',
+    description: 'Alunizaje de precisión cerca del cráter Shioli.',
     category: 'reference',
     lat: -13.316,
     lon: 25.251,
@@ -224,7 +254,8 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     id: 'apollo-15',
     name: 'Apolo 15',
     mission: 'NASA, 1971',
-    description: 'Hadley-Apennine. Horizonte sin relieve.',
+    description:
+      'Hadley-Apennine: una bahía de mare cerrada por el frente de los Apeninos (Mons Hadley Delta, Mons Hadley).',
     category: 'reference',
     lat: 26.1322,
     lon: 3.6339,
@@ -234,7 +265,7 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     id: 'apollo-17',
     name: 'Apolo 17',
     mission: 'NASA, 1972',
-    description: 'Taurus-Littrow. Horizonte sin relieve.',
+    description: 'Taurus-Littrow: un valle entre los macizos Norte y Sur, de unos 2 km de altura.',
     category: 'reference',
     lat: 20.1908,
     lon: 30.7717,

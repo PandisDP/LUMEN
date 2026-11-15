@@ -1,4 +1,4 @@
-import { anyStationSeesMoon } from './dsn.ts'
+import { dsnMask } from './dsn.ts'
 import { type EphemerisSeries, type Site, makeObserver, skyFromVectors } from './ephemeris.ts'
 import type { Vec3 } from './frames.ts'
 import { type HorizonMask, discVisibleFraction, maskAt } from './horizon.ts'
@@ -47,6 +47,7 @@ export function evaluateSite(
     earthEl: new Float32Array(count),
     earthFrac: new Float32Array(count),
   }
+  const dsn = requireDsn ? dsnMask(eph.startMs, eph.stepMs, count) : null
   const observer = makeObserver(site)
   const d = eph.data
   for (let i = 0; i < count; i++) {
@@ -64,8 +65,7 @@ export function evaluateSite(
       maskAt(mask, sky.earth.az) + linkMarginDeg,
       sky.earth.radiusDeg,
     )
-    if (requireDsn && out.earthFrac[i] > 0 && !anyStationSeesMoon(eph.startMs + i * eph.stepMs))
-      out.earthFrac[i] = 0
+    if (dsn && !dsn[i]) out.earthFrac[i] = 0
   }
   return out
 }

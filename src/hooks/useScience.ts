@@ -6,13 +6,16 @@ import {
   scienceScore,
 } from '../astro/iceAccess.ts'
 import type { OptimizeResult } from '../astro/optimize.ts'
+import type { RoverId, TraverseResult } from '../astro/traverse.ts'
+import { energyPreset } from '../config/energyProfiles.ts'
 import { type SiteDetail, asset, demRefs } from '../data/catalog.ts'
 import { loadIllum } from '../data/loadDem.ts'
 import { type Scenario, useMissionStore } from '../store/useMissionStore.ts'
-import { runIceAccess, runOptimize } from '../workers/astroClient.ts'
+import { runIceAccess, runOptimize, runTraverse } from '../workers/astroClient.ts'
 import type { DemRef, IllumRef } from '../workers/protocol.ts'
 import { useAsync } from './useAsync.ts'
 import { useScenarioData } from './useScenario.ts'
+import { useLandingEllipse } from './useTerrain.ts'
 
 /**
  * Score shown when the Engineering↔Science control is moved: the engineering score blended
@@ -84,15 +87,17 @@ const optimizeCache = new Map<string, Promise<OptimizeResult>>()
 export function useOptimize(scenario: Scenario, requested: boolean) {
   const { detail, result, loading } = useScenarioData(scenario)
   const radiusM = useMissionStore((s) => s.ellipseRadiusM) || 500
+  const ellipse = useLandingEllipse(scenario)
   const missionDays = useMissionStore((s) => s.missionDays)
   const linkMarginDeg = useMissionStore((s) => s.linkMarginDeg)
+  const requireDsn = useMissionStore((s) => s.requireDsn)
   const scienceWeight = useMissionStore((s) => s.scienceWeight)
   const rover = useMissionStore((s) => s.hardwareLimits.roverMaxSlopeDeg)
   const dems = detail ? demRefs(detail) : []
   const usable = !!detail?.terrain && dems.length > 0
   const key =
     requested && usable && result && !loading
-      ? `opt|${detail!.site.lat}:${detail!.site.lon}|${scenario.startMs}|${missionDays}|${linkMarginDeg}|${radiusM}|${scienceWeight}|${rover}`
+      ? `opt|${detail!.site.lat}:${detail!.site.lon}|${scenario.startMs}|${missionDays}|${linkMarginDeg}|${requireDsn}|${radiusM}|${ellipse?.semiMinorM}|${ellipse?.orientationDeg}|${scienceWeight}|${rover}`
       : null
   const r = useAsync(key, () => {
     let p = optimizeCache.get(key!)
@@ -102,9 +107,12 @@ export function useOptimize(scenario: Scenario, requested: boolean) {
           lat: detail!.site.lat,
           lon: detail!.site.lon,
           radiusM,
+          semiMinorM: ellipse?.semiMinorM,
+          orientationDeg: ellipse?.orientationDeg,
           startMs: scenario.startMs,
           missionDays,
           linkMarginDeg,
+          requireDsn,
           scienceWeight,
           roverMaxSlopeDeg: rover,
         },
@@ -137,4 +145,80 @@ export function useIllumGrid(detail: SiteDetail | undefined) {
   const ref = detail && illumRef(detail)
   const { data } = useAsync(ref ? `illum:${ref.bin}` : null, () => loadIllum(ref!.bin, ref!.meta))
   return ref ? data : undefined
+}
+
+const traverseCache = new Map<string, Promise<TraverseResult>>()
+
+/**
+ * Rover drive from the scenario's landing point to the nearest permanently shadowed ground,
+ * along the ice-access route (worker; only while `enabled`). The scenario's own energy profile
+ * is the lander's, so the rover's budget and vehicle come from the preset `energyId`.
+ * `departMs` is the mission time at which the rover leaves the lander.
+ */
+export function useTraverse(
+  scenario: Scenario,
+  enabled: boolean,
+  energyId: RoverId = 'rover',
+  departMs: number = scenario.startMs,
+) {
+  const { detail } = useScenarioData(scenario)
+  const rover = scenario.hardwareLimits.roverMaxSlopeDeg
+  const { linkMarginDeg, requireDsn } = scenario
+  const ice = useIceAccess(detail, rover)
+  const energy = energyPreset(energyId)?.profile
+  const dems = detail ? demRefs(detail) : []
+  const route = ice.data
+  // useAsync keeps the previous point's route on screen while loading: wait for the current one.
+  const available =
+    !!route &&
+    !!detail &&
+    !ice.loading &&
+    route.reachable &&
+    route.path.length > 0 &&
+    !!energy &&
+    dems.length > 0
+  const key =
+    enabled && available
+      ? `trv|${detail!.site.lat}:${detail!.site.lon}|${rover}|${departMs}|${energyId}|${linkMarginDeg}|${requireDsn}`
+      : null
+  const r = useAsync<TraverseResult>(key, () => {
+    let p = traverseCache.get(key!)
+    if (!p) {
+      p = runTraverse(
+        {
+          lat: detail!.site.lat,
+          lon: detail!.site.lon,
+          path: route!.path,
+          startMs: departMs,
+          energy: energy!,
+          vehicleId: energyId,
+          roverMaxSlopeDeg: rover,
+          linkMarginDeg,
+          requireDsn,
+        },
+        dems,
+        illumRef(detail!),
+      )
+      p.catch(() => traverseCache.delete(key!))
+      if (traverseCache.size > 16) traverseCache.delete(traverseCache.keys().next().value!)
+      traverseCache.set(key!, p)
+    }
+    return p
+  })
+  const i = r.data?.input
+  const fresh =
+    !!i &&
+    !!detail &&
+    i.lat === detail.site.lat &&
+    i.lon === detail.site.lon &&
+    i.startMs === departMs &&
+    i.vehicleId === energyId
+  return {
+    /** A reachable route exists for this point and rover. */
+    available,
+    data: key && fresh ? r.data : undefined,
+    loading: ice.loading || (key !== null && (r.loading || !fresh) && !r.error),
+    error: r.error ?? ice.error,
+    ice,
+  }
 }

@@ -1,3 +1,4 @@
+import { insideEllipse } from './dispersion.ts'
 import { DAY_MS } from './constants.ts'
 import { type DemGrid, demCovers, latLonToPixel, pixelToLatLon } from './dem.ts'
 import { bearingDistance } from './frames.ts'
@@ -17,10 +18,15 @@ import { SLOPE_CAUTION_DEG, SLOPE_SAFE_DEG, slopeAtPixel } from './slope.ts'
 export interface OptimizeInput {
   lat: number
   lon: number
+  /** Semi-major axis of the landing ellipse (or the radius of a circle), m. */
   radiusM: number
+  semiMinorM?: number
+  orientationDeg?: number
   startMs: number
   missionDays: number
   linkMarginDeg?: number
+  /** Count the link only while a DSN complex sees the Moon. */
+  requireDsn?: boolean
   /** Blend with the ice-access score (needs an illumination map). */
   scienceWeight?: number
   roverMaxSlopeDeg?: number
@@ -75,7 +81,7 @@ export function computeOptimize(
 ): OptimizeResult {
   const fine = grids[0]
   const spacingM = input.spacingM ?? 40
-  const stepMs = (input.stepMinutes ?? 30) * 60_000
+  const stepMs = (input.stepMinutes ?? (input.missionDays > 180 ? 60 : 30)) * 60_000
   const count = Math.ceil((input.missionDays * DAY_MS) / stepMs) + 1
   const eph = cachedEphemeris(input.startMs, stepMs, count)
   const toMs = input.startMs + input.missionDays * DAY_MS + 1
@@ -92,7 +98,7 @@ export function computeOptimize(
     const mask = { azStepDeg: horizon.azStepDeg, elevDeg: horizon.elevDeg }
     const site = { lat, lon, heightM: horizon.terrainHeightM }
     const m = computeMetrics(
-      evaluateSite(eph, site, mask, input.linkMarginDeg ?? 0),
+      evaluateSite(eph, site, mask, input.linkMarginDeg ?? 0, input.requireDsn),
       input.startMs,
       toMs,
     )
@@ -120,12 +126,25 @@ export function computeOptimize(
 
   const { c: cc, r: rc } = latLonToPixel(fine, input.lat, input.lon)
   const radPx = input.radiusM / fine.scaleM
+  const ellipse =
+    input.semiMinorM !== undefined && input.semiMinorM < input.radiusM
+      ? {
+          semiMajorM: input.radiusM,
+          semiMinorM: input.semiMinorM,
+          orientationDeg: input.orientationDeg ?? 0,
+        }
+      : null
   const stride = Math.max(1, Math.round(spacingM / fine.scaleM))
   const safe: { c: number; r: number; h: number; s: number }[] = []
   for (let r = Math.ceil(rc - radPx); r <= rc + radPx; r += stride) {
     for (let c = Math.ceil(cc - radPx); c <= cc + radPx; c += stride) {
       if ((c - cc) ** 2 + (r - rc) ** 2 > radPx * radPx) continue
       if (c < 1 || r < 1 || c >= fine.width - 1 || r >= fine.height - 1) continue
+      if (ellipse) {
+        const p = pixelToLatLon(fine, c, r)
+        const b = bearingDistance(input.lat, input.lon, p.lat, p.lon)
+        if (!insideEllipse(ellipse, b.distM, b.azDeg)) continue
+      }
       const s = safeAt(fine, c, r)
       if (s === null) continue
       safe.push({ c, r, h: fine.data[r * fine.width + c], s })

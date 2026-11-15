@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { Range } from '../astro/dispersion.ts'
+import { GOOD_SCORE, type Range } from '../astro/dispersion.ts'
+import { SLOPE_SAFE_DEG } from '../astro/slope.ts'
 import { type SiteDetail, customSiteInfo } from '../data/catalog.ts'
 import { useOptimize } from '../hooks/useScience.ts'
 import { useDispersion, useSlopeStats } from '../hooks/useTerrain.ts'
@@ -52,6 +53,7 @@ const fmtRange = (r: Range, f: (v: number) => string) =>
 export function DispersionCard({ scenario }: { scenario: Scenario }) {
   const t = useT()
   const radiusM = useMissionStore((s) => s.ellipseRadiusM)
+  const aspect = useMissionStore((s) => s.ellipseAspect)
   const { data, loading, error } = useDispersion(scenario)
   if (!radiusM) return null
   const n = data?.points.length ?? 0
@@ -61,7 +63,12 @@ export function DispersionCard({ scenario }: { scenario: Scenario }) {
         <span className="card__icon" aria-hidden>
           ◎
         </span>
-        <span className="card__title">{t('dispersion.title', { r: formatDistance(radiusM) })}</span>
+        <span className="card__title">
+          {t('dispersion.title', {
+            a: formatDistance(radiusM),
+            b: formatDistance(radiusM / aspect),
+          })}
+        </span>
       </div>
       {error && <p className="error">{error.message}</p>}
       {loading && <p className="card__sub">{t('dispersion.loading')}</p>}
@@ -104,6 +111,20 @@ export function DispersionCard({ scenario }: { scenario: Scenario }) {
               </tr>
             </tbody>
           </table>
+          <dl className="stats dispersion__prob">
+            <div>
+              <dt>{t('dispersion.expected')}</dt>
+              <dd>{Math.round(data.summary.expected.score)}</dd>
+            </div>
+            <div>
+              <dt>{t('dispersion.pGood', { score: GOOD_SCORE })}</dt>
+              <dd>{formatPct(data.summary.pGoodScore * 100)}</dd>
+            </div>
+            <div>
+              <dt>{t('dispersion.pSafe', { deg: SLOPE_SAFE_DEG })}</dt>
+              <dd>{formatPct(data.summary.pSafeSlope * 100)}</dd>
+            </div>
+          </dl>
           <p className="hint">{t('dispersion.note')}</p>
         </>
       )}

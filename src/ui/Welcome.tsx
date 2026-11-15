@@ -1,3 +1,4 @@
+import { openChallenges } from '../hooks/useChallengeState.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
 import { AUDIENCES, useUiStore } from '../store/useUiStore.ts'
@@ -77,6 +78,16 @@ export function Welcome() {
             }}
           >
             {t('welcome.tour')}
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => {
+              openChallenges()
+              setStage('explore')
+            }}
+          >
+            {t('challenge.welcome')}
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { computeOptimize } from '../astro/optimize.ts'
 import { loadDem, loadIllum } from '../data/loadDem.ts'
 import { installEphemerisTable } from '../data/loadEphem.ts'
 import { computeDateSweep, computeScenario } from '../astro/scenario.ts'
+import { computeTraverse } from '../astro/traverse.ts'
 import type { AstroRequest, AstroResponse, DemRef } from './protocol.ts'
 
 const loadAll = (dems: readonly DemRef[]) => Promise.all(dems.map((d) => loadDem(d.bin, d.meta)))
@@ -44,6 +45,13 @@ export async function handleRequest(req: AstroRequest): Promise<AstroResponse> {
         loadIllum(req.illum.bin, req.illum.meta),
       ])
       return computeIceAccess(tile, illum, req.input.lat, req.input.lon, req.input)
+    }
+    case 'traverse': {
+      const [grids, illum] = await Promise.all([
+        loadAll(req.dems),
+        req.illum ? loadIllum(req.illum.bin, req.illum.meta) : undefined,
+      ])
+      return computeTraverse(grids, req.input, illum)
     }
   }
 }

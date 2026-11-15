@@ -49,6 +49,25 @@ export function dsnVisibility(date: Date): StationState[] {
 export const anyStationSeesMoon = (timeMs: number) =>
   dsnVisibility(new Date(timeMs)).some((s) => s.visible)
 
+const maskCache = new Map<string, Uint8Array>()
+
+/**
+ * `anyStationSeesMoon` for every sample of a regular series (1 = some complex sees the Moon).
+ * It does not depend on the lunar site, so it is computed once per time grid and shared by all
+ * the sites and scenarios evaluated on it (a year at 1 h is ~26 000 astronomy-engine calls).
+ */
+export function dsnMask(startMs: number, stepMs: number, count: number): Uint8Array {
+  const key = `${startMs}:${stepMs}:${count}`
+  let mask = maskCache.get(key)
+  if (!mask) {
+    mask = new Uint8Array(count)
+    for (let i = 0; i < count; i++) mask[i] = anyStationSeesMoon(startMs + i * stepMs) ? 1 : 0
+    if (maskCache.size > 8) maskCache.delete(maskCache.keys().next().value as string)
+    maskCache.set(key, mask)
+  }
+  return mask
+}
+
 /** The station that would carry the link now: the visible one with the Moon highest. */
 export function primaryStation(states: readonly StationState[]): StationState | undefined {
   let best: StationState | undefined

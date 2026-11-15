@@ -11,6 +11,7 @@ import {
   selectActiveScenario,
   useMissionStore,
 } from '../store/useMissionStore.ts'
+import { useRoverStore } from '../store/useRoverStore.ts'
 import { isAudience, useUiStore } from '../store/useUiStore.ts'
 
 const urlDate = (ms: number) => new Date(ms).toISOString().slice(0, 16) + 'Z'
@@ -109,6 +110,7 @@ function topLevelParams(p: URLSearchParams): Partial<ScenarioParams> {
  * Keeps the active site, landing date and view in the URL so a scenario can be shared:
  *   ?site=shackleton-rim&date=2027-03-01T00:00Z&view=micro&days=14
  *   &view=landing&ap=90 (descent view; ap = approach azimuth, deg, omitted = Sun behind)
+ *   &view=landing&rover=1 (the rover traverse to the ice, skipping the descent)
  *   ?lat=-89.1&lon=-60 (custom coordinates)
  *   &s=shackleton-rim@2027-03-01T00:00Z,shackleton-floor@2027-03-01T00:00Z~d30&a=0&cmp=1 (Compare;
  *     `~…` = settings of that scenario that differ from the top-level ones)
@@ -133,6 +135,8 @@ export function applyUrl(search: string) {
     applySingle(p)
     s.updateScenario(useMissionStore.getState().activeId, shared)
   }
+  // &rover=1 opens the landing view straight on the rover traverse (no descent first).
+  if (p.get('rover') === '1') useRoverStore.getState().setAutoDeploy('skip-descent')
   const view = p.get('view')
   if (view === 'micro' || view === 'macro' || view === 'landing') s.setView(view)
   const ap = p.get('ap')
@@ -175,6 +179,7 @@ export function stateToSearch(): string {
   p.set('days', String(sc.missionDays))
   p.set('view', s.view)
   if (s.approachAz !== null) p.set('ap', String(Math.round(s.approachAz)))
+  if (s.view === 'landing' && s.landerCam === 'rover') p.set('rover', '1')
   p.set('link', String(sc.linkMarginDeg))
   if (sc.requireDsn) p.set('dsn', '1')
   if (s.scenarios.length > 1) {

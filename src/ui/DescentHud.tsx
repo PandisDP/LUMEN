@@ -1,7 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { DESCENT_DURATION_S, panelIllumination, sunAheadApproach } from '../astro/descent.ts'
+import { panelIllumination, sunAheadApproach } from '../astro/descent.ts'
+import { BRAKING_DV_MS, totalDescentDvMs } from '../astro/descentPhysics.ts'
+import { LANDERS } from '../config/landers.ts'
+import { relocateTo } from '../scene/micro/relocate.ts'
+import { useRoverTraverse } from '../hooks/useRover.ts'
+import { useRoverStore } from '../store/useRoverStore.ts'
 import { useInstant } from '../hooks/useScenario.ts'
-import { useT } from '../i18n/index.ts'
+import { type MsgKey, useT } from '../i18n/index.ts'
 import { descentTelemetry } from '../scene/micro/descentTelemetry.ts'
 import { DESCENT_SPEEDS, useDescentStore } from '../store/useDescentStore.ts'
 import { selectActiveScenario, useMissionStore } from '../store/useMissionStore.ts'
@@ -32,7 +37,13 @@ export function DescentHud() {
   const playing = useDescentStore((s) => s.playing)
   const speed = useDescentStore((s) => s.speed)
   const progress = useDescentStore((s) => s.t)
-  const { restart, setPlaying, setSpeed, seekTo } = useDescentStore.getState()
+  const mode = useDescentStore((s) => s.mode)
+  const vehicleId = useDescentStore((s) => s.vehicleId)
+  const flight = useDescentStore((s) => s.flight)
+  const { restart, setPlaying, setSpeed, seekTo, setMode, setVehicle } = useDescentStore.getState()
+  const rover = useRoverTraverse()
+  const physics = flight.flown === 'physics'
+  const sum = flight.summary
 
   const alt = useRef<HTMLElement>(null)
   const dist = useRef<HTMLElement>(null)
@@ -44,6 +55,11 @@ export function DescentHud() {
   const sun = useRef<HTMLParagraphElement>(null)
   const steps = useRef<HTMLOListElement>(null)
   const altBar = useRef<HTMLSpanElement>(null)
+  const hs = useRef<HTMLElement>(null)
+  const prop = useRef<HTMLElement>(null)
+  const propBar = useRef<HTMLSpanElement>(null)
+  const dv = useRef<HTMLElement>(null)
+  const thr = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const paint = () => {
@@ -52,6 +68,21 @@ export function DescentHud() {
       if (dist.current) dist.current.textContent = formatDistance(tm.distM)
       if (vs.current)
         vs.current.textContent = Number.isFinite(tm.vSpeed) ? `${tm.vSpeed.toFixed(0)} m/s` : '—'
+      if (hs.current)
+        hs.current.textContent = Number.isFinite(tm.hSpeed) ? `${tm.hSpeed.toFixed(0)} m/s` : '—'
+      if (prop.current)
+        prop.current.textContent = Number.isFinite(tm.propKg) ? `${tm.propKg.toFixed(0)} kg` : '—'
+      if (propBar.current) {
+        const f = Number.isFinite(tm.propFrac) ? Math.max(0, Math.min(1, tm.propFrac)) : 0
+        propBar.current.style.transform = `scaleX(${f.toFixed(3)})`
+        propBar.current.dataset.low = String(f < 0.15)
+      }
+      if (dv.current)
+        dv.current.textContent = Number.isFinite(tm.dvMs) ? `${tm.dvMs.toFixed(0)} m/s` : '—'
+      if (thr.current)
+        thr.current.textContent = Number.isFinite(tm.throttle)
+          ? `${Math.round(tm.throttle * 100)} % · ${tm.tiltDeg.toFixed(0)}°`
+          : '—'
       if (phase.current) phase.current.textContent = t(`landing.phase.${tm.phase}`)
       if (steps.current) steps.current.dataset.phase = tm.phase
       if (altBar.current) {
@@ -131,6 +162,29 @@ export function DescentHud() {
               <dd ref={phase} className="dhud__phase" />
             </div>
           </dl>
+          {physics && (
+            <dl className="dhud__telemetry dhud__telemetry--engine">
+              <div>
+                <dt>{t('landing.hspeed')}</dt>
+                <dd ref={hs}>—</dd>
+              </div>
+              <div>
+                <dt>{t('landing.prop')}</dt>
+                <dd ref={prop}>—</dd>
+                <span className="dhud__altbar dhud__propbar" aria-hidden>
+                  <span ref={propBar} />
+                </span>
+              </div>
+              <div>
+                <dt>{t('landing.dv')}</dt>
+                <dd ref={dv}>—</dd>
+              </div>
+              <div>
+                <dt>{t('landing.throttle')}</dt>
+                <dd ref={thr}>—</dd>
+              </div>
+            </dl>
+          )}
           <p className="dhud__line">
             <span ref={slope} className="dhud__slope" data-level="none">
               {t('landing.reticle')}:{' '}
@@ -149,6 +203,47 @@ export function DescentHud() {
           ? t('landing.contactLit', { pct: formatPct(sunFrac * 100) })
           : t('landing.contactDark')}
       </p>
+      {mode === 'physics' && sum && !sum.ok && (
+        <p className="dhud__line dhud__warn" role="status">
+          <LevelTag level="bad" /> {t(`landing.fail.${sum.reason ?? 'timeout'}`)}{' '}
+          {t('landing.fallback')}
+        </p>
+      )}
+      {landed && physics && sum && (
+        <p className="dhud__line" role="status">
+          <LevelTag level={sum.propMarginPct >= 10 ? 'good' : 'warn'} />{' '}
+          {t('landing.summary', {
+            dv: sum.dvMs.toFixed(0),
+            total: totalDescentDvMs(sum.dvMs).toFixed(0),
+            braking: BRAKING_DV_MS,
+            left: sum.propLeftKg.toFixed(0),
+            margin: sum.propMarginPct.toFixed(0),
+            vz: Math.abs(sum.touchdownVzMs).toFixed(1),
+            s: sum.durationS.toFixed(0),
+          })}
+        </p>
+      )}
+      {flight.hazard && (
+        <p className="dhud__line dhud__warn" role="status">
+          <LevelTag level="warn" />{' '}
+          {t('landing.hazard', {
+            d: formatDistance(flight.hazard.divertM),
+            dv: Number.isFinite(flight.hazard.extraDvMs) ? flight.hazard.extraDvMs.toFixed(0) : '?',
+          })}{' '}
+          <button
+            type="button"
+            className="linklike"
+            onClick={() => relocateTo(flight.hazard!.lat, flight.hazard!.lon)}
+          >
+            {t('landing.hazardGo')}
+          </button>
+        </p>
+      )}
+      {flight.noSafeGround && (
+        <p className="dhud__line dhud__warn" role="status">
+          <LevelTag level="bad" /> {t('landing.noSafe')}
+        </p>
+      )}
       {landed && panels && (
         <p className="dhud__line">
           {t('landing.panels', { top: formatPct(panels.topPct), side: formatPct(panels.sidePct) })}
@@ -167,6 +262,19 @@ export function DescentHud() {
         <button type="button" className="btn" onClick={again}>
           <IconRestart /> {t('landing.restart')}
         </button>
+        {rover.available && (
+          <button
+            type="button"
+            className="btn"
+            title={t('rover.fullMissionTitle')}
+            onClick={() => {
+              useRoverStore.getState().setAutoDeploy('after-landing')
+              again()
+            }}
+          >
+            {t('rover.fullMission')}
+          </button>
+        )}
         <label className="toggle">
           {t('landing.speed')}
           <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
@@ -177,6 +285,37 @@ export function DescentHud() {
             ))}
           </select>
         </label>
+        <label className="toggle" title={t('landing.modeTitle')}>
+          {t('landing.mode')}
+          <select
+            value={mode}
+            onChange={(e) => {
+              setLanderCam('eye')
+              setMode(e.target.value === 'kinematic' ? 'kinematic' : 'physics')
+            }}
+          >
+            <option value="physics">{t('landing.mode.physics')}</option>
+            <option value="kinematic">{t('landing.mode.kinematic')}</option>
+          </select>
+        </label>
+        {mode === 'physics' && (
+          <label className="toggle" title={t('landing.vehicleTitle')}>
+            {t('landing.vehicle')}
+            <select
+              value={vehicleId}
+              onChange={(e) => {
+                setLanderCam('eye')
+                setVehicle(e.target.value)
+              }}
+            >
+              {LANDERS.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {t(`landing.vehicle.${v.id}` as MsgKey)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="toggle">
           {t('landing.approach')}
           <select
@@ -200,7 +339,7 @@ export function DescentHud() {
         className="dhud__progress"
         type="range"
         min={0}
-        max={DESCENT_DURATION_S}
+        max={flight.durationS}
         step={0.1}
         value={progress}
         aria-label={t('landing.progress')}
@@ -230,6 +369,20 @@ export function DescentHud() {
           <button type="button" className="btn" onClick={() => setView('micro')}>
             {t('landing.toSurface')}
           </button>
+          {rover.available && (
+            <button
+              type="button"
+              className="btn btn--accent"
+              disabled={!rover.data}
+              aria-busy={rover.loading}
+              onClick={() => {
+                useRoverStore.getState().restart()
+                setLanderCam('rover')
+              }}
+            >
+              ❄ {t('rover.deploy')}
+            </button>
+          )}
         </div>
       )}
       <p className="hint">{orbit ? t('landing.orbitHint') : t('landing.hint')}</p>

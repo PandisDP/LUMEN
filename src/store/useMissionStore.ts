@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { DAY_MS } from '../astro/constants.ts'
+import { DAY_MS, SYNODIC_MONTH_DAYS } from '../astro/constants.ts'
 import type { EnergyProfile } from '../astro/energy.ts'
 import { DEFAULT_LIMITS, type HardwareLimits, sanitizeLimits } from '../astro/hardware.ts'
 import { DEFAULT_ENERGY_ID, energyPreset } from '../config/energyProfiles.ts'
@@ -40,20 +40,25 @@ export type ScenarioPatch = Partial<Omit<Scenario, 'id'>>
 
 export type View = 'macro' | 'micro' | 'landing'
 /** After touchdown: through the lander's eye, or orbiting around the craft. */
-export type LanderCam = 'eye' | 'orbit'
+/** After touchdown: the lander's eye, an orbit around it, or the rover traverse to the ice. */
+export type LanderCam = 'eye' | 'orbit' | 'rover'
 export type BottomPanel = 'timeline' | 'horizon' | 'dates' | 'seasons' | 'map'
 
 export const MAX_SCENARIOS = 4
 export const SCENARIO_COLORS = ['#ffc94d', '#4da6ff', '#ff6b9a', '#7ee081'] as const
 export const SCENARIO_LABELS = ['A', 'B', 'C', 'D'] as const
-export const MISSION_DAYS = { min: 1, max: 60, default: 14 } as const
+/** Up to a year on the surface (longer windows are sampled more coarsely: scenarioStepMinutes). */
+export const MISSION_DAYS = { min: 1, max: 365, default: 14 } as const
 /** Playback speeds, in simulated hours per real second. */
-export const PLAY_SPEEDS = [1, 6, 24, 72] as const
+/** Mission hours per real second (168 = a week, 720 = a month per second, for long missions). */
+export const PLAY_SPEEDS = [1, 6, 24, 72, 168, 720] as const
 export const FOV = { min: 2, max: 75, default: 60 } as const
 /** Minimum Earth elevation over the terrain for a DTE link (antenna multipath margin), deg. */
 export const LINK_MARGIN = { min: 0, max: 10, default: 3 } as const
 /** Landing-dispersion radii offered in the UI (m); 0 disables the ellipse analysis. */
 export const ELLIPSE_RADII = [0, 500, 1000, 2000] as const
+/** Along-track / cross-track ratio of the landing ellipse (1 = circle). */
+export const ELLIPSE_ASPECTS = [1, 2, 3] as const
 /** Camera height of the aerial (map-like) surface view, m. */
 export const AERIAL_HEIGHT_M = 3_000
 
@@ -158,7 +163,9 @@ export interface MissionState extends ScenarioParams {
   look: LookRequest | null
   /** Colour the terrain by slope (landing safety layer). */
   showSlope: boolean
+  /** Semi-major axis (3σ, along the approach track) of the landing ellipse; 0 = off. */
   ellipseRadiusM: number
+  ellipseAspect: number
   /** Surface view from above instead of the lander's eye. */
   aerial: boolean
   /** Next click on the terrain relocates the site. */
@@ -195,6 +202,8 @@ export interface MissionState extends ScenarioParams {
   setExplainOpen: (open: boolean) => void
   togglePanels: () => void
   togglePlay: () => void
+  /** Rewinds and plays one synodic day (29.5 d) from the landing: the full light/dark cycle. */
+  playLunarDay: () => void
   setSpeed: (speed: number) => void
   setShowMask: (show: boolean) => void
   setShowPaths: (show: boolean) => void
@@ -203,6 +212,7 @@ export interface MissionState extends ScenarioParams {
   setRequireDsn: (on: boolean) => void
   setShowSlope: (show: boolean) => void
   setEllipseRadius: (m: number) => void
+  setEllipseAspect: (aspect: number) => void
   setAerial: (aerial: boolean) => void
   setPickMode: (on: boolean) => void
   setEnergyPreset: (id: string) => void
@@ -246,6 +256,7 @@ const initialState = () => {
     look: null as LookRequest | null,
     showSlope: false,
     ellipseRadiusM: 500 as number,
+    ellipseAspect: 2 as number,
     aerial: false,
     pickMode: false,
     approachAz: null as number | null,
@@ -394,6 +405,11 @@ export const useMissionStore = create<MissionState>()((set, get) => {
         const atEnd = s.offsetH >= maxMissionDays(s) * 24
         return { playing: !s.playing, offsetH: !s.playing && atEnd ? 0 : s.offsetH }
       }),
+    playLunarDay: () => {
+      const days = Math.ceil(SYNODIC_MONTH_DAYS)
+      if (get().missionDays < days) updateActive({ missionDays: days })
+      set({ offsetH: 0, speed: 24, playing: true })
+    },
     setSpeed: (speed) => {
       if ((PLAY_SPEEDS as readonly number[]).includes(speed)) set({ speed })
     },
@@ -415,6 +431,9 @@ export const useMissionStore = create<MissionState>()((set, get) => {
     setShowSlope: (showSlope) => set({ showSlope }),
     setEllipseRadius: (m) => {
       if ((ELLIPSE_RADII as readonly number[]).includes(m)) set({ ellipseRadiusM: m })
+    },
+    setEllipseAspect: (a) => {
+      if ((ELLIPSE_ASPECTS as readonly number[]).includes(a)) set({ ellipseAspect: a })
     },
     setAerial: (aerial) => set({ aerial }),
     setPickMode: (pickMode) => set({ pickMode }),

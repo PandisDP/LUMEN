@@ -129,6 +129,19 @@
     40280,
     -9860
    ]
+  },
+  "nobile-rim-2": {
+   "source": "LROC QuickMap · LRO WAC 100 m (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/nobile-rim-2/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    143220,
+    75900,
+    163700,
+    96380
+   ]
   }
  },
  "globe": {

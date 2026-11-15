@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { maskAt } from '../astro/horizon.ts'
 import { SLOPE_CAUTION_DEG, SLOPE_SAFE_DEG } from '../astro/slope.ts'
 import { CUSTOM_DEM_MAX_LAT } from '../data/catalog.ts'
@@ -6,14 +7,21 @@ import { useInstant } from '../hooks/useScenario.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { SLOPE_COLORS } from '../scene/micro/slopeColors.ts'
 import { ILLUM_COLORS } from '../scene/micro/illumColors.ts'
-import { ELLIPSE_RADII, selectActiveScenario, useMissionStore } from '../store/useMissionStore.ts'
+import {
+  ELLIPSE_ASPECTS,
+  ELLIPSE_RADII,
+  selectActiveScenario,
+  useMissionStore,
+} from '../store/useMissionStore.ts'
 import { useDescentStore } from '../store/useDescentStore.ts'
 import { type MacroFrame, useViewStore } from '../store/useViewStore.ts'
 import { DescentHud } from './DescentHud.tsx'
+import { RoverHud } from './RoverHud.tsx'
 import { HelpButton } from './HelpButton.tsx'
 import { CompassTape } from './CompassTape.tsx'
 import { formatDistance, formatLatLon } from './format.ts'
 import { isPolar } from './locator.ts'
+import { Countdown } from './MetricsPanel.tsx'
 import { MoonLocator } from './MoonLocator.tsx'
 import {
   IconEarth,
@@ -93,6 +101,9 @@ function PoleBadge({ lat, lon }: { lat?: number; lon?: number }) {
 
 /** Compass and camera shortcuts for the surface view; framing buttons for the orbital view. */
 export function ViewHud() {
+  // Small screens only (see .viewhud__more): whether the folded control rows are shown.
+  const [more, setMore] = useState(false)
+
   const t = useT()
   const view = useMissionStore((s) => s.view)
   const showMask = useMissionStore((s) => s.showMask)
@@ -101,6 +112,7 @@ export function ViewHud() {
   const aerial = useMissionStore((s) => s.aerial)
   const pickMode = useMissionStore((s) => s.pickMode)
   const ellipseRadiusM = useMissionStore((s) => s.ellipseRadiusM)
+  const ellipseAspect = useMissionStore((s) => s.ellipseAspect)
   const showIllum = useMissionStore((s) => s.showIllum)
   const showNac = useMissionStore((s) => s.showNac)
   const scenario = useMissionStore(selectActiveScenario)
@@ -114,13 +126,15 @@ export function ViewHud() {
     setAerial,
     setPickMode,
     setEllipseRadius,
+    setEllipseAspect,
     setView,
   } = useMissionStore.getState()
   const landerCam = useMissionStore((s) => s.landerCam)
   const landed = useDescentStore((s) => s.landed)
   const { az, el, fov, macroFrame, setMacroFrame } = useViewStore()
   const { instant, detail } = useInstant(scenario)
-  const hasTerrain = Boolean(detail && detail.site.lat <= CUSTOM_DEM_MAX_LAT)
+  // Polar cap (480 m DEM everywhere) or a site with its own tile (reference sites, 60 m).
+  const hasTerrain = Boolean(detail && (detail.terrain || detail.site.lat <= CUSTOM_DEM_MAX_LAT))
   const hasIllum = Boolean(detail?.illum)
   const nacRef = useImageryIndex()?.sites[terrainTileId(detail?.terrain?.file) ?? '']
 
@@ -164,8 +178,8 @@ export function ViewHud() {
     return (
       <div className="viewhud" data-tour="viewhud">
         {/* The compass follows the lander's eye; meaningless while orbiting the craft. */}
-        {!(landed && landerCam === 'orbit') && compass}
-        <DescentHud />
+        {!(landed && landerCam !== 'eye') && compass}
+        {landed && landerCam === 'rover' ? <RoverHud /> : <DescentHud />}
       </div>
     )
   }
@@ -184,12 +198,45 @@ export function ViewHud() {
   }
 
   return (
-    <div className="viewhud" data-tour="viewhud">
+    <div className={`viewhud${more ? ' viewhud--more' : ''}`} data-tour="viewhud">
       <PoleBadge lat={detail?.site.lat} lon={detail?.site.lon} />
       <div className="viewhud__row">
         {compass}
         <HelpButton topic="hud" />
+        {/* Small screens: the control rows fold away so the scene stays visible. */}
+        <button
+          type="button"
+          className="btn viewhud__more"
+          aria-expanded={more}
+          onClick={() => setMore(!more)}
+        >
+          {more ? t('hud.less') : t('hud.more')}
+        </button>
       </div>
+      {instant && (
+        <div className="viewhud__countdowns">
+          <span data-on={instant.sunUp}>
+            ☀{' '}
+            <Countdown
+              on={instant.sunUp}
+              nextMs={instant.sun.nextChangeMs}
+              now={instant.timeMs}
+              onKey="ev.sunset"
+              offKey="ev.sunrise"
+            />
+          </span>
+          <span data-on={instant.earthUp}>
+            ⊕{' '}
+            <Countdown
+              on={instant.earthUp}
+              nextMs={instant.earth.nextChangeMs}
+              now={instant.timeMs}
+              onKey="ev.earthset"
+              offKey="ev.earthrise"
+            />
+          </span>
+        </div>
+      )}
       <div className="viewhud__buttons">
         <button
           type="button"
@@ -306,6 +353,20 @@ export function ViewHud() {
                 </option>
               ))}
             </select>
+            {ellipseRadiusM > 0 && (
+              <select
+                value={ellipseAspect}
+                aria-label={t('hud.ellipseAspect')}
+                title={t('hud.ellipseAspectTitle')}
+                onChange={(e) => setEllipseAspect(Number(e.target.value))}
+              >
+                {ELLIPSE_ASPECTS.map((a) => (
+                  <option key={a} value={a}>
+                    {a === 1 ? t('hud.ellipseCircle') : `${a}:1`}
+                  </option>
+                ))}
+              </select>
+            )}
           </label>
           <button
             type="button"

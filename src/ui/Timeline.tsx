@@ -305,7 +305,7 @@ export function Timeline({
     // Day ticks.
     const spanMs = (n - 1) * series.stepMs
     const days = spanMs / DAY_MS
-    const every = days > 30 ? 7 : days > 10 ? 2 : 1
+    const every = days > 200 ? 30 : days > 90 ? 14 : days > 30 ? 7 : days > 10 ? 2 : 1
     ctx.fillStyle = TEXT
     ctx.strokeStyle = GRID
     ctx.textBaseline = 'alphabetic'

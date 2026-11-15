@@ -33,8 +33,7 @@ export const en: Record<keyof typeof es, string> = {
   'audience.planner': 'Planner',
   'audience.educator': 'Educator',
   'audience.public': 'Public',
-  'audience.planner.desc':
-    'Everything: DSN, thermal, landing dispersion zone, hardware filter and export.',
+  'audience.planner.desc': 'Everything: DSN, thermal, landing ellipse, hardware filter and export.',
   'audience.educator.desc':
     'The physics of the place: Sun, Earth, horizon, illumination and ice, without the engineering detail.',
   'audience.public.desc': 'The essentials: is there Sun? can you see Earth? and why that matters.',
@@ -63,7 +62,7 @@ export const en: Record<keyof typeof es, string> = {
   'help.charts':
     'Move mission time with the slider or press Play. “Timeline” shows Sun, Earth and battery over the days; “360° horizon” draws the terrain with the paths; “Alternative dates” scores every landing day over the next 12 months.',
   'help.hud':
-    '3D view controls. In Orbit: drag to rotate, scroll to zoom and click a dot to fly to the site. On the Surface: look at the Sun or the Earth, toggle the horizon line, slopes, landing dispersion zone, or relocate the site with a click.',
+    '3D view controls. In Orbit: drag to rotate, scroll to zoom and click a dot to fly to the site. On the Surface: look at the Sun or the Earth, toggle the horizon line, slopes, landing ellipse, or relocate the site with a click.',
 
   // Guided tour
   'tour.aria': 'Guided tour',
@@ -120,6 +119,9 @@ export const en: Record<keyof typeof es, string> = {
   'time.duration': 'Duration (days)',
   'time.play': '▶ Play',
   'time.pause': '❚❚ Pause',
+  'time.lunarDay': '☾ Lunar day',
+  'time.lunarDayTitle':
+    'Plays one full lunar day (29.5 Earth days) from the landing: the whole cycle of light and shadow, and the swing of the Earth.',
   'time.speed': 'Speed',
   'time.jumpSunTitle': 'Jump to the next sunrise or sunset',
   'time.jumpEarthTitle': 'Jump to the next Earthrise or Earthset',
@@ -212,7 +214,7 @@ export const en: Record<keyof typeof es, string> = {
   'hw.col.notes': 'Constraint',
   'hw.send': 'Send {n} viable to Compare',
   'hw.note':
-    'Slope from the 20 m DEM (reference sites count as level). The score includes science if you move the Engineering ↔ Science control.',
+    'Slope from the 20 m DEM (60 m at the reference sites, which smooths it). The score includes science if you move the Engineering ↔ Science control.',
 
   // Ice access / science
   'ice.title': 'Ice access (PSR)',
@@ -240,7 +242,7 @@ export const en: Record<keyof typeof es, string> = {
   'opt.button': 'Suggest a better point',
   'opt.loading': 'Looking for safe ground and evaluating the mission at each point…',
   'opt.summary': '{safe} points with slope < 10° · the {n} highest were evaluated',
-  'opt.none': 'No ground below 10° of slope inside the dispersion zone.',
+  'opt.none': 'No ground below 10° of slope inside the landing ellipse.',
   'opt.where': '{d} to the {dir}',
   'opt.stats': 'slope {slope} · light {sun} · DTE {dte} · night {night}',
   'opt.go': 'Go to this point',
@@ -346,6 +348,11 @@ export const en: Record<keyof typeof es, string> = {
   'acc.lola': 'LOLA 20 m',
   'acc.lola480': 'LOLA 480 m',
   'acc.spherical': 'No relief',
+  'acc.lolaGlobal': 'LOLA 60 m',
+  'source.lolaGlobal':
+    'LOLA global LDEM_512 ({res} m/px, ±30 km) + LDEM_64 (480 m/px, up to 300 km) · real terrain horizon',
+  'source.globalTile':
+    'LOLA global {res} m/px ({site} tile, horizon up to the tile edge), computed in the browser',
 
   // Horizon chart
   'horizon.scale': 'vertical scale ×{k}',
@@ -416,20 +423,107 @@ export const en: Record<keyof typeof es, string> = {
   'glossary.dsn.term': 'DSN',
   'glossary.dsn.def':
     'Deep Space Network: NASA’s antennas at Goldstone, Madrid and Canberra. To talk to the Moon at least one must have it in view.',
-  'glossary.dispersion.term': 'Dispersion zone',
+  'glossary.dispersion.term': 'Landing ellipse',
   'glossary.dispersion.def':
-    'Circle around the site where the lander may end up because of guidance error (500 m, 1 km or 2 km radius).',
+    'Area where the lander may end up because of guidance error (3σ). It is elongated: the error along the approach track is larger than the cross-track one.',
   'glossary.psr.term': 'PSR',
   'glossary.psr.def':
     'Permanently shadowed region: crater floors the Sun never reaches, where ice can survive.',
   'glossary.slope.term': 'Slope',
   'glossary.slope.def':
-    'Tilt of the ground computed on the 20 m terrain. Under 10° is safe to land on; over 15° is hazardous.',
+    'Tilt of the ground computed on the 20 m terrain (60 m at the reference sites). Under 10° is safe to land on; over 15° is hazardous.',
   'glossary.lola.term': 'LOLA',
   'glossary.lola.def':
     'Lunar Orbiter Laser Altimeter: the laser altimeter on the LRO orbiter, the source of all the topography.',
   'glossary.tplus.term': 'T+',
   'glossary.tplus.def': 'Time elapsed since touchdown; shared by every scenario.',
+  'challenge.title': 'Challenges',
+  'challenge.aria': 'Challenges: learn by playing',
+  'challenge.intro':
+    'Five short missions to find out why landing at the lunar south pole is so hard. Each challenge drops you into a tricky situation: solve it with the usual controls (site, date, views…). You can ask for hints, but they cost points.',
+  'challenge.total': 'Score: {score} / {max}',
+  'challenge.best': 'Best score: {score}',
+  'challenge.number': 'Challenge {n}',
+  'challenge.start': 'Start',
+  'challenge.retry': 'Play again',
+  'challenge.restart': 'Restart',
+  'challenge.all': 'All challenges',
+  'challenge.go': 'Go to the simulator',
+  'challenge.goals': 'Goals',
+  'challenge.goal.todo': 'pending',
+  'challenge.now': '(now: {value})',
+  'challenge.hint': 'Hint (−{cost} points)',
+  'challenge.how':
+    'Press “Go to the simulator” and use the panels: the challenge stays active at the bottom left and ticks itself off when you make it.',
+  'challenge.progress': '{met} of {total} goals met',
+  'challenge.bar.aria': 'Challenge in progress',
+  'challenge.bar.open': 'View challenge',
+  'challenge.bar.result': 'View result',
+  'challenge.success.title': 'Challenge complete!',
+  'challenge.success.score': 'Score: {score} / {max}',
+  'challenge.success.hints': '(hints used: {n}; each one costs {cost})',
+  'challenge.success.learned': 'What you learned',
+  'challenge.next': 'Next challenge',
+  'challenge.finished': 'That was the last challenge. You now think like a lunar mission planner!',
+  'challenge.menu': 'Challenges',
+  'challenge.welcome': 'Play the challenges',
+  'challenge.explain': 'Rather learn by playing? Try the 5 challenges',
+  'challenge.light.title': 'Find the light',
+  'challenge.light.brief':
+    'You have landed on the floor of Shackleton crater: permanent shadow, 0 % Sun and the panels produce nothing. Find another south-pole site where the Sun shines for at least 80 % of a 14-day mission.',
+  'challenge.light.goal.sun':
+    'A south-pole site (south of 80° S) with Sun ≥ 80 % of the time over 14 days',
+  'challenge.light.hint.sun':
+    'No need to go far: the rim of the same crater is a few kilometres away and much higher up. Pick it in the sites panel.',
+  'challenge.light.why':
+    'At the south pole the Sun barely clears the horizon, so the terrain decides: a crater floor never sees it, while its rim, a few kilometres away, almost always does. Moving the site a few kilometres changes everything.',
+  'challenge.earth.title': 'Don’t lose the Earth',
+  'challenge.earth.brief':
+    'You are on the Shackleton rim, landing on 19 March 2027: for the whole 14-day mission the Earth stays below the horizon and there is no direct-to-Earth (DTE) link. Change the landing date (or the site, staying at the south pole) until you have a link at least 50 % of the time.',
+  'challenge.earth.goal.dte':
+    'Direct-to-Earth link ≥ 50 % of the time over 14 days, at the south pole',
+  'challenge.earth.hint.dte':
+    'The Earth rises and sets on a cycle of about 27 days: try moving the landing date by about 10 days.',
+  'challenge.earth.why':
+    'Seen from the pole the Earth always hugs the horizon, and the Moon’s libration (about ±7°) makes it rise and set every 27 days: two weeks in a row can go by without direct contact. That is why the date matters as much as the site… or a relay satellite is needed.',
+  'challenge.night.title': 'Survive the night',
+  'challenge.night.brief':
+    'A 30-day mission on the Malapert massif from 1 March 2027: a night of more than 300 hours awaits and the lander cannot take more than 120. Find a south-pole site and date with shorter nights.',
+  'challenge.night.goal.dark':
+    'The longest night lasts ≤ 120 h in a 30-day mission at the south pole',
+  'challenge.night.goal.verdict': 'The site’s verdict is not “Ruled out”',
+  'challenge.night.hint.dark':
+    'The highest ridges next to the pole are almost never in the dark: try the Connecting ridge or the Shackleton rim, and move the date if needed.',
+  'challenge.night.hint.verdict':
+    'The verdict also looks at the slope and the Earth link: check in the data panel which limit fails.',
+  'challenge.night.why':
+    'On most of the Moon the night lasts about 14 days (more than 300 h) and freezes a lander with no heating of its own. On a few polar ridges the Sun only hides behind the terrain for hours or a few days: these are the “near-permanent light” sites Artemis is after.',
+  'challenge.landing.title': 'Land with margin',
+  'challenge.landing.brief':
+    'You are about to come down with the heavy lander on the Nobile rim: ground that is too steep and a lander that arrives with barely any propellant. Choose a site with a safe slope, go to the Landing step and complete a physics descent that touches down with at least 20 % propellant.',
+  'challenge.landing.goal.slope': 'A site with a safe slope (p90 < 15°)',
+  'challenge.landing.goal.margin': 'In Landing: physics descent with propellant margin ≥ 20 %',
+  'challenge.landing.goal.touchdown': 'Complete the descent down to the surface',
+  'challenge.landing.hint.slope':
+    'The Nobile rim has slopes above 16°. Mons Mouton or the Malapert massif are much flatter.',
+  'challenge.landing.hint.margin':
+    'The margin depends on the lander: in the Landing view switch “Lander” to a lighter one (CLPS class or small).',
+  'challenge.landing.hint.touchdown':
+    'In the Landing view let the descent run to the end (you can speed it up). The model must be “with physics”.',
+  'challenge.landing.why':
+    'Braking from lunar orbit costs close to 2 km/s of Δv, and almost all of it is paid in propellant. The margin left at touchdown is what lets you dodge a rock or a slope at the last moment: with no margin and no flat ground there is no safe landing.',
+  'challenge.ice.title': 'Reach the ice',
+  'challenge.ice.brief':
+    'The ice lies in permanently shadowed regions, where you cannot live off solar panels. From the Chang’e-7 area the rover has no route to it. Landing on 15 March 2027, find a sunlit site from which the rover reaches the ice without its battery dropping below 30 %.',
+  'challenge.ice.goal.route':
+    'A site outside the permanent shadow with a drivable route to the ice',
+  'challenge.ice.goal.battery': 'The rover reaches the ice with its battery always ≥ 30 %',
+  'challenge.ice.hint.route':
+    'The Artemis candidates (rims and ridges next to the pole) have permanent shadow within 2 km: pick one in the sites panel.',
+  'challenge.ice.hint.battery':
+    'The shorter the route and the more Sun at departure, the better: try Mons Mouton or the Connecting ridge, or change the landing date.',
+  'challenge.ice.why':
+    'Inside the permanent shadow there is no Sun: the rover lives on its battery alone, at about −200 °C. That is why you land on a nearby sunlit spot and plan the traverse (distance, slope and departure time) to drive in, measure and arrive with energy to spare.',
   'explain.sources.title': 'NASA and CSA resources used by LUMEN 3D',
   'explain.sources.horizons':
     'DE441 ephemerides: Sun and Earth positions seen from each site (2026–2030), arcsecond-level validation and DSN geometry.',
@@ -483,6 +577,8 @@ export const en: Record<keyof typeof es, string> = {
 
   // Surface view HUD
   'hud.macroHint': 'Drag to orbit · scroll to zoom into the pole · click a site to land on it',
+  'hud.more': 'Controls',
+  'hud.less': 'Hide controls',
   'hud.microHint': 'Drag to look around · scroll to zoom (the Sun is 0.5° wide)',
   'hud.aerialHint':
     'Aerial view from 3 km (not what the lander sees) · turn on “Click to relocate” and click the terrain to move the site',
@@ -497,8 +593,12 @@ export const en: Record<keyof typeof es, string> = {
   'hud.aerialView': 'Aerial view',
   'hud.landerView': 'Lander view',
   'hud.slope': 'Slopes',
-  'hud.ellipse': 'Dispersion',
-  'hud.ellipseOff': 'no zone',
+  'hud.ellipse': 'Ellipse',
+  'hud.ellipseOff': 'no ellipse',
+  'hud.ellipseAspect': 'Ellipse shape',
+  'hud.ellipseAspectTitle':
+    'Ratio of the error along the approach track to the cross-track one. The major axis follows the approach azimuth.',
+  'hud.ellipseCircle': 'circle',
   'hud.pick': 'Click to relocate',
   'hud.pickActive': 'Click the terrain…',
   'hud.pickTitle':
@@ -507,11 +607,78 @@ export const en: Record<keyof typeof es, string> = {
   'hud.simulateDescent': 'Simulate descent',
 
   // Landing (descent) view
+  // Rover traverse to the ice
+  'rover.aria': 'Rover traverse',
+  'rover.loading': 'Computing the rover traverse…',
+  'rover.deploy': 'Deploy rover',
+  'rover.fullMission': 'Full mission',
+  'rover.fullMissionTitle': 'Plays the descent and, on touchdown, the rover traverse to the ice.',
+  'rover.goal': 'ice · {d}',
+  'rover.dist': 'Driven',
+  'rover.left': 'To go',
+  'rover.slope': 'Slope',
+  'rover.speed': 'Speed',
+  'rover.battery': 'Battery',
+  'rover.power': 'Solar / load',
+  'rover.temp': 'Temperature',
+  'rover.sunOn': 'in sunlight',
+  'rover.sunOff': 'in shadow',
+  'rover.psr': 'permanent shadow',
+  'rover.linkOn': 'link to Earth',
+  'rover.linkOff': 'no link',
+  'rover.state.driving': 'driving',
+  'rover.state.stopped': 'stopped',
+  'rover.state.done': 'at the ice',
+  'rover.profile': 'Elevation profile of the route',
+  'rover.profileCaption':
+    'Route of {d}, relief {drop}, max. slope {slope}. Blue band: permanent shadow.',
+  'rover.summary':
+    'Arrives in {h}. Lowest battery {soc}; {shadow} in shadow; link to Earth {dte} of the time.',
+  'rover.fails': 'It does not arrive: the battery drops to {soc} and cannot recharge.',
+  'rover.vehicle': 'Rover',
+  'rover.vehicle.rover': 'micro-rover (40 kg)',
+  'rover.vehicle.csa-rover': 'CSA utility rover (350 kg)',
+  'rover.cam': 'Camera',
+  'rover.cam.follow': 'follow',
+  'rover.cam.mast': 'mast',
+  'rover.cam.top': 'top-down',
+  'rover.progress': 'Traverse progress',
+  'rover.backToLander': 'Back to the lander',
+  'rover.hint': 'Drag to orbit the rover · scroll to zoom · mission time advances with it',
+  'rover.card': 'Rover ({name}): {verdict}',
+  'rover.card.ok': 'reaches the ice in {h} with a lowest battery of {soc}',
+  'rover.card.fail': 'does not reach the ice (battery {soc})',
+  'rover.card.see': 'See the traverse',
   'landing.aria': 'Descent guidance',
   'landing.phase': 'Phase',
   'landing.alt': 'Altitude',
   'landing.dist': 'To target',
   'landing.vspeed': 'V. speed',
+  'landing.hspeed': 'H. speed',
+  'landing.prop': 'Propellant',
+  'landing.dv': 'Δv spent',
+  'landing.throttle': 'Thrust · tilt',
+  'landing.mode': 'Model',
+  'landing.modeTitle':
+    'With physics: point mass with thrust, lunar gravity and the rocket equation, guided to touchdown. Quick: a 45 s illustrative fly-down without physics.',
+  'landing.mode.physics': 'with physics',
+  'landing.mode.kinematic': 'quick',
+  'landing.vehicle': 'Lander',
+  'landing.vehicleTitle': 'Mass, propellant, thrust and specific impulse. Illustrative values.',
+  'landing.vehicle.clps': 'CLPS class (700 kg)',
+  'landing.vehicle.small': 'small (200 kg)',
+  'landing.vehicle.heavy': 'heavy (6 t)',
+  'landing.summary':
+    'Touchdown at {vz} m/s after {s} s. Δv of the simulated approach: {dv} m/s; with the braking burn from orbit (~{braking} m/s, not simulated), ≈ {total} m/s. Propellant left: {left} kg ({margin} % of the load).',
+  'landing.fail.propellant': 'The lander runs out of propellant before touchdown.',
+  'landing.fail.terrain': 'Terrain under the approach cuts the guided trajectory.',
+  'landing.fail.hard-landing': 'Touchdown exceeds the allowed speed.',
+  'landing.fail.timeout': 'The guidance does not close the descent.',
+  'landing.fallback': 'Showing the illustrative fly-down.',
+  'landing.hazard':
+    'The target is not safe ground. The guidance would divert {d} (+{dv} m/s of Δv).',
+  'landing.hazardGo': 'Land there',
+  'landing.noSafe': 'Target on an unsafe slope with no safe ground within 300 m.',
   'landing.phase.braking': 'Braking',
   'landing.phase.approach': 'Approach',
   'landing.phase.terminal': 'Terminal descent',
@@ -555,17 +722,20 @@ export const en: Record<keyof typeof es, string> = {
     '{res} m/px DEM: slopes are smoothed and underestimate the real one at lander scale.',
 
   // Dispersion
-  'dispersion.title': 'Sensitivity in the dispersion zone (r = {r})',
-  'dispersion.loading': 'Computing horizons for the zone points…',
+  'dispersion.title': '3σ landing ellipse ({a} × {b})',
+  'dispersion.loading': 'Computing horizons for the ellipse points…',
   'dispersion.spread': 'Score between {min} and {max} across {n} possible touchdown points.',
   'dispersion.range': 'min · median · max',
+  'dispersion.expected': 'Expected score',
+  'dispersion.pGood': 'Prob. of score ≥ {score}',
+  'dispersion.pSafe': 'Prob. of slope < {deg}°',
   'dispersion.score': 'Score',
   'dispersion.sun': 'Time in sunlight',
   'dispersion.dte': 'DTE link',
   'dispersion.night': 'Longest night',
   'dispersion.slope': 'Slope',
   'dispersion.note':
-    'Quick analysis: 1° horizon and 30-min step per point. Markers in the surface view show each point; click one to move the site there.',
+    '3σ ellipse with the major axis along the approach; each point is weighted by the probability of landing there. Quick analysis: 1° horizon and 30-min step per point. Markers in the surface view show each point; click one to move the site there.',
   // Energy / battery
   'energy.title': 'Power · battery',
   'energy.profile': 'Power profile',

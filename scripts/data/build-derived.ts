@@ -6,9 +6,11 @@
  *   npm run data:derived -- --no-illum   # slopes (and ice access from existing maps) only
  *   npm run data:derived -- --force      # recompute illumination maps that already exist
  *
- * Inputs:  public/data/terrain/<id>.bin (20 m tiles), public/data/dem/south_480m.*
- * Outputs: index.json gains, per polar site, slopeCenterDeg / slopeP90Deg (500 m radius) and
- *          `ice` (rover access to the nearest PSR, src/astro/iceAccess.ts);
+ * Inputs:  public/data/terrain/<id>.bin (20 m polar tiles, 60 m tiles of the reference
+ *          sites), public/data/dem/south_480m.*
+ * Outputs: index.json gains, per site with a tile, slopeCenterDeg / slopeP90Deg (500 m radius)
+ *          and, for the polar ones only, `ice` (rover access to the nearest PSR,
+ *          src/astro/iceAccess.ts);
  *          public/data/illum/<id>.bin illumination map (src/astro/illumination.ts), with its
  *          metadata under `illum` in sites/<id>.json.
  *
@@ -77,6 +79,12 @@ async function main() {
     patch.slopeCenterDeg = round(s.center, 2)
     patch.slopeP90Deg = round(s.p90, 2)
     log(`${id}: slope ${s.center.toFixed(1)}° (p90 ${s.p90.toFixed(1)}° in ${SLOPE_RADIUS_M} m)`)
+    // Tiles of the global products (reference sites, own projection): slopes only. The
+    // illumination/PSR maps need the polar far field and only make sense near the pole.
+    if (site.terrain.meta.projection) {
+      updates.set(id, patch)
+      continue
+    }
 
     let illum: IllumGrid | null = null
     const file = `illum/${id}.bin`

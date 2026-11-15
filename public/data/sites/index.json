@@ -114,6 +114,25 @@
   }
  },
  {
+  "id": "nobile-rim-2",
+  "lat": -84.20128,
+  "lon": 60.69811,
+  "heightM": 1122.5,
+  "accuracy": "lola",
+  "maskMaxDeg": 7.16,
+  "hasTerrain": true,
+  "slopeCenterDeg": 2.87,
+  "slopeP90Deg": 9.43,
+  "ice": {
+   "straightM": 444,
+   "routeM": 468,
+   "maxSlopeDeg": 10.4,
+   "reachable": true,
+   "insidePsr": false,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
   "id": "haworth",
   "lat": -87.44974,
   "lon": -5.00664,
@@ -193,90 +212,121 @@
   "id": "im-1",
   "lat": -80.13,
   "lon": 1.44,
-  "heightM": 0,
-  "accuracy": "spherical",
-  "maskMaxDeg": -0.09,
-  "hasTerrain": false
+  "heightM": 2595.5,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 10.68,
+  "hasTerrain": true,
+  "slopeCenterDeg": 12.41,
+  "slopeP90Deg": 18.19
  },
  {
   "id": "luna-25",
   "lat": -69.545,
   "lon": 43.544,
-  "heightM": 0,
-  "accuracy": "spherical",
-  "maskMaxDeg": -0.09,
-  "hasTerrain": false
+  "heightM": 308,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 6.88,
+  "hasTerrain": true,
+  "slopeCenterDeg": 2.65,
+  "slopeP90Deg": 3.7
  },
  {
   "id": "chandrayaan-3",
   "lat": -69.3733,
   "lon": 32.3191,
-  "heightM": 0,
-  "accuracy": "spherical",
-  "maskMaxDeg": -0.09,
-  "hasTerrain": false
+  "heightM": 529,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 2.47,
+  "hasTerrain": true,
+  "slopeCenterDeg": 0.94,
+  "slopeP90Deg": 2.79
  },
  {
   "id": "change-4",
   "lat": -45.4446,
   "lon": 177.5991,
-  "heightM": 0,
-  "accuracy": "spherical",
-  "maskMaxDeg": -0.09,
-  "hasTerrain": false
+  "heightM": -5925.5,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 2.94,
+  "hasTerrain": true,
+  "slopeCenterDeg": 0.27,
+  "slopeP90Deg": 0.68
  },
  {
   "id": "change-6",
   "lat": -41.6385,
   "lon": -153.9852,
-  "heightM": 0,
-  "accuracy": "spherical",
-  "maskMaxDeg": -0.09,
-  "hasTerrain": false
+  "heightM": -5254,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 3.53,
+  "hasTerrain": true,
+  "slopeCenterDeg": 0.24,
+  "slopeP90Deg": 0.51
  },
  {
   "id": "blue-ghost-m1",
   "lat": 18.56,
   "lon": 61.81,
-  "heightM": 0,
-  "accuracy": "spherical",
-  "maskMaxDeg": -0.09,
-  "hasTerrain": false
+  "heightM": -3651,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 2.32,
+  "hasTerrain": true,
+  "slopeCenterDeg": 0.38,
+  "slopeP90Deg": 1.25
+ },
+ {
+  "id": "im-3",
+  "lat": 7.585,
+  "lon": -58.725,
+  "heightM": -1765.5,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 0.79,
+  "hasTerrain": true,
+  "slopeCenterDeg": 2.04,
+  "slopeP90Deg": 2.03
  },
  {
   "id": "slim",
   "lat": -13.316,
   "lon": 25.251,
-  "heightM": 0,
-  "accuracy": "spherical",
-  "maskMaxDeg": -0.09,
-  "hasTerrain": false
+  "heightM": -916.5,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 9.65,
+  "hasTerrain": true,
+  "slopeCenterDeg": 8.32,
+  "slopeP90Deg": 9.87
  },
  {
   "id": "apollo-11",
   "lat": 0.6741,
   "lon": 23.473,
-  "heightM": 0,
-  "accuracy": "spherical",
-  "maskMaxDeg": -0.09,
-  "hasTerrain": false
+  "heightM": -1933.5,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 1.58,
+  "hasTerrain": true,
+  "slopeCenterDeg": 0.45,
+  "slopeP90Deg": 2.01
  },
  {
   "id": "apollo-15",
   "lat": 26.1322,
   "lon": 3.6339,
-  "heightM": 0,
-  "accuracy": "spherical",
-  "maskMaxDeg": -0.09,
-  "hasTerrain": false
+  "heightM": -1926.5,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 13.58,
+  "hasTerrain": true,
+  "slopeCenterDeg": 0.68,
+  "slopeP90Deg": 2.36
  },
  {
   "id": "apollo-17",
   "lat": 20.1908,
   "lon": 30.7717,
-  "heightM": 0,
-  "accuracy": "spherical",
-  "maskMaxDeg": -0.09,
-  "hasTerrain": false
+  "heightM": -2627.5,
+  "accuracy": "lola-global",
+  "maskMaxDeg": 14.18,
+  "hasTerrain": true,
+  "slopeCenterDeg": 1.15,
+  "slopeP90Deg": 2.52
  }
 ]
