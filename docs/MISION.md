@@ -34,7 +34,7 @@ el paso siguiente: que el sistema **busque** el escenario en lugar de que el usu
 | Efemérides             | Posición de Sol y Tierra en el marco lunar, distancia Tierra‑Luna                                       | JPL Horizons DE441 2026–2030 (`src/astro/ephemTable.ts`, `bodyFixedEphemeris`)                                                                                           |
 | `H`                    | Límites de hardware: pendiente máx., noche máx., DTE mín., pendiente del rover                          | `src/astro/hardware.ts` (`HardwareLimits`, `DEFAULT_LIMITS`)                                                                                                             |
 | `E`                    | Perfil energético: tipo de panel, potencia pico, batería, consumos                                      | `src/config/energyProfiles.ts`, `src/astro/energy.ts`                                                                                                                    |
-| `D`                    | Duración de la misión en superficie (días)                                                              | `MISSION_DAYS` en `useMissionStore.ts` (1–60, defecto 14)                                                                                                                |
+| `D`                    | Duración de la misión en superficie (días)                                                              | `MISSION_DAYS` en `useMissionStore.ts` (1–365, defecto 14)                                                                                                               |
 | `N_luz`                | Días de **luz continua** requeridos desde el aterrizaje                                                 | Nuevo parámetro; defecto **15**                                                                                                                                          |
 | `C = {c_i}`            | Clases de trayectoria Tierra → Luna                                                                     | Nueva tabla (§ 2.1)                                                                                                                                                      |
 | `θ_enlace`             | Margen mínimo de la Tierra sobre el relieve para el enlace DTE                                          | `LINK_MARGIN` (0–10°, defecto 3°)                                                                                                                                        |
@@ -396,6 +396,18 @@ de la Tierra puede eliminar días de enlace. Las dificultades concretas:
 
 La elección de clase es el primer gran trade‑off tiempo ↔ Δv de la misión, y por eso es una
 variable de decisión y no un dato.
+
+### Lo que LUMEN ya calcula del descenso y del rover
+
+Desde la versión con simulación (`src/astro/descentPhysics.ts`, `traverse.ts`) dos de los datos
+de este documento dejan de ser supuestos y pasan a calcularse por sitio:
+
+- **Δv de la aproximación final**: ~300 m/s desde 3,5 km de altura y 170 m/s (módulo tipo CLPS,
+  guiado ZEM/ZEV), más ~24 m/s si hay desvío de 300 m a terreno seguro. Sumado al frenado desde
+  una órbita de 100 km (~1 700 m/s, no simulado) da el ≈ 2 000 m/s de descenso usado en `f₃`.
+- **`f₂` con energía**: la distancia transitable al objetivo se acompaña del resultado del
+  recorrido (si el rover llega, batería mínima, horas en sombra, enlace). La restricción g6 puede
+  endurecerse a «llega con batería ≥ X %».
 
 ### Referencias
 
