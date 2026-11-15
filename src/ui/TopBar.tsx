@@ -1,8 +1,9 @@
 import { LANGS, type MsgKey, useLangStore, useT } from '../i18n/index.ts'
 import { AUDIENCES, useUiStore } from '../store/useUiStore.ts'
-import { IconHelp } from './icons.tsx'
+import { IconHelp, IconMoon, IconSun } from './icons.tsx'
 import { MoreMenu } from './MoreMenu.tsx'
 import { StepBar } from './StepBar.tsx'
+import { useThemeStore } from './theme.ts'
 
 function LangToggle() {
   const t = useT()
@@ -45,6 +46,19 @@ export function AudienceToggle() {
   )
 }
 
+/** Dark ⇄ light for the interface; the 3D scene stays dark. */
+export function ThemeToggle() {
+  const t = useT()
+  const theme = useThemeStore((s) => s.theme)
+  const toggle = useThemeStore((s) => s.toggle)
+  const label = t(theme === 'dark' ? 'topbar.themeLight' : 'topbar.themeDark')
+  return (
+    <button type="button" className="icon-btn" onClick={toggle} aria-label={label} title={label}>
+      {theme === 'dark' ? <IconSun /> : <IconMoon />}
+    </button>
+  )
+}
+
 /**
  * Brand, the four steps of the decision and the guide. Everything secondary lives in "⋯ More";
  * the export is at the end of the process (step 4), not here.
@@ -84,6 +98,7 @@ export function TopBar() {
           </>
         )}
         {(exploring || planning) && <AudienceToggle />}
+        <ThemeToggle />
         <LangToggle />
       </div>
     </header>

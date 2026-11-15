@@ -98,7 +98,8 @@ export default function App() {
 
   return (
     <div className={cls}>
-      <div className="stage" data-tour="stage">
+      {/* The scene is space: it and everything floating on it stay dark in both themes. */}
+      <div className="stage dark" data-tour="stage">
         {/* zIndex 0: the 3D labels (drei <Html>) get their own stacking context, below the HUD. */}
         <Canvas
           shadows

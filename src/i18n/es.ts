@@ -26,6 +26,8 @@ export const es = {
   'topbar.guideTitle': 'Recorrido guiado por la interfaz',
   'topbar.tools': 'Herramientas',
   'topbar.audience': 'Modo',
+  'topbar.themeLight': 'Cambiar a tema claro',
+  'topbar.themeDark': 'Cambiar a tema oscuro',
 
   // Audience mode (what is shown, never what is computed)
   'audience.planner': 'Planificador',

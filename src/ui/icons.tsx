@@ -179,3 +179,9 @@ export const IconFilter = () => (
     <path d="M4 5h16l-6 7.5V19l-4 1.5v-8Z" />
   </Icon>
 )
+
+export const IconMoon = () => (
+  <Icon>
+    <path d="M20 14.2A8.3 8.3 0 0 1 9.8 4a8.3 8.3 0 1 0 10.2 10.2Z" />
+  </Icon>
+)

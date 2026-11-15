@@ -28,6 +28,8 @@ export const en: Record<keyof typeof es, string> = {
   'topbar.guideTitle': 'Guided tour of the interface',
   'topbar.tools': 'Tools',
   'topbar.audience': 'Mode',
+  'topbar.themeLight': 'Switch to light theme',
+  'topbar.themeDark': 'Switch to dark theme',
 
   // Audience mode (what is shown, never what is computed)
   'audience.planner': 'Planner',
