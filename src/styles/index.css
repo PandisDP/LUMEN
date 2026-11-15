@@ -133,6 +133,12 @@ select {
   justify-items: center;
   gap: 6px;
   pointer-events: none;
+  /* Above the 3D labels (the canvas wrapper is its own stacking context at z-index 0). */
+  z-index: 1;
+}
+
+.viewhud__more {
+  display: none;
 }
 
 .viewhud > * {
@@ -2744,4 +2750,24 @@ body.picking .stage canvas {
   font-size: 13px;
   line-height: 1.45;
   color: var(--muted);
+}
+
+/* Phones: the HUD keeps the compass and one button; the control rows open on demand. */
+@media (max-width: 640px) {
+  .viewhud .viewhud__more {
+    display: inline-flex;
+  }
+
+  .viewhud:not(.viewhud--more) > .viewhud__buttons,
+  .viewhud:not(.viewhud--more) > .legend,
+  .viewhud > .hint,
+  .viewhud .polebadge .hint {
+    display: none;
+  }
+
+  .viewhud__buttons {
+    justify-content: flex-start;
+    max-height: 38vh;
+    overflow: auto;
+  }
 }

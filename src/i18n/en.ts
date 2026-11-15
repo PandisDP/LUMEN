@@ -483,6 +483,8 @@ export const en: Record<keyof typeof es, string> = {
 
   // Surface view HUD
   'hud.macroHint': 'Drag to orbit · scroll to zoom into the pole · click a site to land on it',
+  'hud.more': 'Controls',
+  'hud.less': 'Hide controls',
   'hud.microHint': 'Drag to look around · scroll to zoom (the Sun is 0.5° wide)',
   'hud.aerialHint':
     'Aerial view from 3 km (not what the lander sees) · turn on “Click to relocate” and click the terrain to move the site',

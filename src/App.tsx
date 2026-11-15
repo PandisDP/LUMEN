@@ -91,7 +91,13 @@ export default function App() {
   return (
     <div className={cls}>
       <div className="stage" data-tour="stage">
-        <Canvas shadows gl={{ logarithmicDepthBuffer: true, antialias: true }} dpr={[1, 2]}>
+        {/* zIndex 0: the 3D labels (drei <Html>) get their own stacking context, below the HUD. */}
+        <Canvas
+          shadows
+          gl={{ logarithmicDepthBuffer: true, antialias: true }}
+          dpr={[1, 2]}
+          style={{ zIndex: 0 }}
+        >
           <Suspense fallback={null}>{ready && <Experience />}</Suspense>
         </Canvas>
         {/* Short fade when switching between orbit and surface. */}

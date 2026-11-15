@@ -487,6 +487,8 @@ export const es = {
   // Surface view HUD
   'hud.macroHint':
     'Arrastra para orbitar · rueda para acercarte al polo · haz clic en un punto para bajar a la superficie',
+  'hud.more': 'Controles',
+  'hud.less': 'Ocultar controles',
   'hud.microHint': 'Arrastra para mirar alrededor · rueda para hacer zoom (el Sol mide 0,5°)',
   'hud.aerialHint':
     'Vista aérea a 3 km (no es lo que ve el lander) · activa «Reubicar con clic» y pulsa en el terreno para reubicar el sitio',

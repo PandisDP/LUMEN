@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { maskAt } from '../astro/horizon.ts'
 import { SLOPE_CAUTION_DEG, SLOPE_SAFE_DEG } from '../astro/slope.ts'
 import { CUSTOM_DEM_MAX_LAT } from '../data/catalog.ts'
@@ -93,6 +94,9 @@ function PoleBadge({ lat, lon }: { lat?: number; lon?: number }) {
 
 /** Compass and camera shortcuts for the surface view; framing buttons for the orbital view. */
 export function ViewHud() {
+  // Small screens only (see .viewhud__more): whether the folded control rows are shown.
+  const [more, setMore] = useState(false)
+
   const t = useT()
   const view = useMissionStore((s) => s.view)
   const showMask = useMissionStore((s) => s.showMask)
@@ -184,11 +188,20 @@ export function ViewHud() {
   }
 
   return (
-    <div className="viewhud" data-tour="viewhud">
+    <div className={`viewhud${more ? ' viewhud--more' : ''}`} data-tour="viewhud">
       <PoleBadge lat={detail?.site.lat} lon={detail?.site.lon} />
       <div className="viewhud__row">
         {compass}
         <HelpButton topic="hud" />
+        {/* Small screens: the control rows fold away so the scene stays visible. */}
+        <button
+          type="button"
+          className="btn viewhud__more"
+          aria-expanded={more}
+          onClick={() => setMore(!more)}
+        >
+          {more ? t('hud.less') : t('hud.more')}
+        </button>
       </div>
       <div className="viewhud__buttons">
         <button
