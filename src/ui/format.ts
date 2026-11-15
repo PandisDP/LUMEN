@@ -2,7 +2,7 @@ import { DAY_MS, HOUR_MS } from '../astro/constants.ts'
 import { type Lang, getLang, t } from '../i18n/index.ts'
 
 /** Formatters follow the UI language; components re-render on change through useT(). */
-const LOCALES: Record<Lang, string> = { es: 'es-MX', en: 'en-US' }
+const LOCALES: Record<Lang, string> = { es: 'es-MX', en: 'en-US', qu: 'es-PE' }
 
 const dateFmts = new Map<Lang, Intl.DateTimeFormat>()
 const dayFmts = new Map<Lang, Intl.DateTimeFormat>()
@@ -63,12 +63,13 @@ export const formatDistance = (m: number) =>
 const CARDINALS: Record<Lang, string[]> = {
   es: ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'],
   en: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'],
+  qu: ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'],
 }
 export const cardinals = () => CARDINALS[getLang()]
 export const cardinal = (az: number) => cardinals()[Math.round((((az % 360) + 360) % 360) / 45) % 8]
 
 export const formatLatLon = (lat: number, lon: number) => {
-  const west = getLang() === 'es' ? 'O' : 'W'
+  const west = getLang() === 'en' ? 'W' : 'O'
   return `${Math.abs(lat).toFixed(3)}°${lat < 0 ? 'S' : 'N'}, ${Math.abs(lon).toFixed(3)}°${lon < 0 ? west : 'E'}`
 }
 

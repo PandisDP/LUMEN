@@ -1,4 +1,4 @@
-import { LANGS, type MsgKey, useLangStore, useT } from '../i18n/index.ts'
+import { LANG_NAMES, LANGS, type MsgKey, useLangStore, useT } from '../i18n/index.ts'
 import { AUDIENCES, useUiStore } from '../store/useUiStore.ts'
 import { IconHelp, IconMoon, IconSun } from './icons.tsx'
 import { MoreMenu } from './MoreMenu.tsx'
@@ -12,7 +12,14 @@ function LangToggle() {
   return (
     <nav className="segmented segmented--small" aria-label={t('topbar.lang')}>
       {LANGS.map((l) => (
-        <button key={l} type="button" lang={l} aria-pressed={lang === l} onClick={() => setLang(l)}>
+        <button
+          key={l}
+          type="button"
+          lang={l}
+          title={LANG_NAMES[l]}
+          aria-pressed={lang === l}
+          onClick={() => setLang(l)}
+        >
           {l.toUpperCase()}
         </button>
       ))}
