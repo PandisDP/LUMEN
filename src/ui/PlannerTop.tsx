@@ -5,8 +5,13 @@ import { PLAN_ERROR } from '../hooks/usePlanner.ts'
 import { type MsgKey, useLang, useT } from '../i18n/index.ts'
 import { usePlannerStore } from '../store/usePlannerStore.ts'
 import { formatDistance, formatHours, formatLatLon, formatPct } from './format.ts'
+import { Busy } from './kit/Busy.tsx'
+import { Killa } from './Killa.tsx'
+import { Empty } from './kit/Empty.tsx'
+import { Notice } from './kit/Notice.tsx'
 import { LevelTag } from './LevelTag.tsx'
 import { scoreLevel } from './levels.ts'
+import { usePlanFixActions } from './plannerFixes.ts'
 import { launchPlan } from './plannerInputs.ts'
 import {
   VIOLATION_FIX,
@@ -119,10 +124,17 @@ function TopCard({ result, day, rank }: { result: PlanResult; day: PlanDay; rank
 function NoSolution({ result }: { result: PlanResult }) {
   const t = useT()
   const bars = violationHistogram(result.days)
+  const fixes = usePlanFixActions(result)
   const main = bars[0]
   return (
-    <div className="ptop__state ptop__state--none" role="status" aria-live="polite">
-      <h4>{t('plan.none.title')}</h4>
+    <Notice
+      tone="warning"
+      role="status"
+      title={t('plan.none.title')}
+      headingLevel={4}
+      action={fixes}
+      className="ptop__none"
+    >
       {main ? (
         <>
           <p>
@@ -149,7 +161,8 @@ function NoSolution({ result }: { result: PlanResult }) {
       ) : (
         <p>{t('plan.none.unknown')}</p>
       )}
-    </div>
+      {fixes.length > 0 && <p className="notice__next">{t('plan.fixbtn.then')}</p>}
+    </Notice>
   )
 }
 
@@ -164,6 +177,7 @@ export function PlannerTop() {
   const summary = result ? planSummary(result) : null
   const running = status === 'running'
   const settled = !!result && !running && status !== 'error'
+  const fixes = usePlanFixActions(result)
   const valid = result
     ? picked.filter((ms) => result.days.some((d) => d.dayMs === ms && d.best))
     : []
@@ -172,28 +186,21 @@ export function PlannerTop() {
     <div className="ptop">
       <h4 className="ptop__title">{t('plan.top.title', { n: PLAN_TOP })}</h4>
       {status === 'error' && (
-        <div className="ptop__state ptop__state--error" role="alert">
-          <p>
-            {error && ERROR_KEY[error]
-              ? t(ERROR_KEY[error])
-              : t('plan.error', { msg: error ?? '' })}
-          </p>
-          <button type="button" className="btn btn--small" onClick={launchPlan}>
-            {t('plan.retry')}
-          </button>
-        </div>
+        <Notice tone="error" action={{ label: t('plan.retry'), onClick: launchPlan }}>
+          {error && ERROR_KEY[error] ? t(ERROR_KEY[error]) : t('plan.error', { msg: error ?? '' })}
+        </Notice>
       )}
       {!result && status !== 'error' && (
-        <div className="ptop__state">
+        <>
           {running ? (
-            <p>{t('plan.top.starting')}</p>
+            <Busy>{t('plan.top.starting')}</Busy>
           ) : (
-            <>
+            <Empty title={t('plan.empty.title')} mascot={<Killa size={72} />}>
               <p>{t('plan.empty.1')}</p>
               <p>{t('plan.empty.2', { n: PLAN_TOP })}</p>
-            </>
+            </Empty>
           )}
-        </div>
+        </>
       )}
       {result && running && (
         <p className="ptop__note" role="status">
@@ -214,13 +221,15 @@ export function PlannerTop() {
         </ol>
       )}
       {settled && summary && summary.solved > 0 && summary.solved < PLAN_TOP && (
-        <p className="ptop__note">{t('plan.top.few', { n: summary.solved })}</p>
+        <Notice tone="note" action={fixes.slice(0, 2)} className="ptop__few">
+          {t('plan.top.few', { n: summary.solved })}
+        </Notice>
       )}
       {result && top.length > 0 && (
         <div className="ptop__send">
           <button
             type="button"
-            className="btn btn--accent"
+            className="btn btn--primary"
             disabled={valid.length < 2}
             onClick={() => comparePlanDays(result, valid)}
           >

@@ -1,5 +1,9 @@
 import { useT } from '../i18n/index.ts'
+import { DARK_CHART_THEME as MAP, alpha } from './chartTheme.ts'
 import { isPolar, nearSideXY, polarXY } from './locator.ts'
+
+/** The Moon disc is imagery, dark in both themes: marks on it use the dark ink. */
+const GRATICULE = alpha(MAP.ink, 0.18)
 
 export interface LocatorPoint {
   lat: number
@@ -40,7 +44,7 @@ export function MoonLocator({
             <stop offset="1" stopColor="#3b3d45" />
           </radialGradient>
         </defs>
-        <circle cx="50" cy="50" r={R} fill="url(#locator-moon)" stroke="rgb(148 184 255 / .35)" />
+        <circle cx="50" cy="50" r={R} fill="url(#locator-moon)" stroke="hsl(var(--border))" />
         {polar ? (
           <>
             {[-82, -84, -86, -88].map((lat) => (
@@ -50,16 +54,16 @@ export function MoonLocator({
                 cy="50"
                 r={polarXY(lat, 0)[1] * -R}
                 fill="none"
-                stroke="rgb(255 255 255 / .18)"
+                stroke={GRATICULE}
                 strokeWidth=".6"
               />
             ))}
-            <line x1="50" y1="6" x2="50" y2="94" stroke="rgb(255 255 255 / .12)" strokeWidth=".5" />
-            <line x1="6" y1="50" x2="94" y2="50" stroke="rgb(255 255 255 / .12)" strokeWidth=".5" />
+            <line x1="50" y1="6" x2="50" y2="94" stroke={alpha(MAP.ink, 0.12)} strokeWidth=".5" />
+            <line x1="6" y1="50" x2="94" y2="50" stroke={alpha(MAP.ink, 0.12)} strokeWidth=".5" />
             <text x="50" y="13" className="locator__tick">
               ⊕ 0°
             </text>
-            <path d="M47 47 L53 53 M53 47 L47 53" stroke="#fff" strokeWidth="1" opacity=".7" />
+            <path d="M47 47 L53 53 M53 47 L47 53" stroke={MAP.ink} strokeWidth="1" opacity=".7" />
           </>
         ) : (
           <ellipse
@@ -68,25 +72,20 @@ export function MoonLocator({
             rx={R}
             ry={R * 0.08}
             fill="none"
-            stroke="rgb(255 255 255 / .18)"
+            stroke={GRATICULE}
             strokeWidth=".6"
           />
         )}
         {points.map((p, i) => {
           const [x, y] = xy(p)
+          // `style`, not the attribute: the colour may be a CSS variable (scenario colours).
+          const fill = p.color ?? 'var(--series-1)'
           return (
             <g key={i}>
-              <circle cx={x} cy={y} r="5.5" fill={p.color ?? '#ffc94d'} opacity=".25" />
-              <circle
-                cx={x}
-                cy={y}
-                r="3"
-                fill={p.color ?? '#ffc94d'}
-                stroke="#000"
-                strokeWidth=".6"
-              />
+              <circle cx={x} cy={y} r="5.5" style={{ fill }} opacity=".25" />
+              <circle cx={x} cy={y} r="3" style={{ fill }} stroke={MAP.ink} strokeWidth=".6" />
               {p.label && (
-                <text x={x + 5} y={y - 4} className="locator__label" fill={p.color ?? '#ffc94d'}>
+                <text x={x + 5} y={y - 4} className="locator__label" fill={MAP.ink}>
                   {p.label}
                 </text>
               )}

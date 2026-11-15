@@ -13,6 +13,7 @@ import {
 import { openChallenges, startChallenge, useChallengeState } from '../hooks/useChallengeState.ts'
 import { useT } from '../i18n/index.ts'
 import { useUiStore } from '../store/useUiStore.ts'
+import { Killa } from './Killa.tsx'
 import { LevelTag } from './LevelTag.tsx'
 
 const numberOf = (c: Challenge) => CHALLENGES.indexOf(c) + 1
@@ -54,7 +55,7 @@ function ChallengeList() {
               </p>
               <h3>{t(c.titleKey)}</h3>
               <p>{t(c.briefKey)}</p>
-              <button type="button" className="btn btn--accent" onClick={() => startChallenge(c)}>
+              <button type="button" className="btn btn--primary" onClick={() => startChallenge(c)}>
                 {t(best === undefined ? 'challenge.start' : 'challenge.retry')}
                 <span className="sr-only">: {t(c.titleKey)}</span>
               </button>
@@ -146,7 +147,7 @@ function ActiveChallenge({ challenge, open }: { challenge: Challenge; open: bool
           </button>
           <button
             type="button"
-            className="btn btn--accent"
+            className={solved && next ? 'btn' : 'btn btn--accent'}
             onClick={() => setChallengesOpen(false)}
           >
             {t(solved ? 'common.close' : 'challenge.go')}
@@ -158,7 +159,8 @@ function ActiveChallenge({ challenge, open }: { challenge: Challenge; open: bool
       {solved && (
         <article className="challenges__success" aria-labelledby="challenge-success">
           <h3 id="challenge-success">
-            <LevelTag level="good" /> {t('challenge.success.title')}
+            <Killa state="ok" size={40} className="killa--inline" /> <LevelTag level="good" />{' '}
+            {t('challenge.success.title')}
           </h3>
           <p className="challenges__score">
             {t('challenge.success.score', { score: result, max: MAX_CHALLENGE_SCORE })}

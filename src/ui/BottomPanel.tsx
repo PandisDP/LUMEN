@@ -14,6 +14,7 @@ import { HorizonChart } from './HorizonChart.tsx'
 import { PolarMap } from './PolarMap.tsx'
 import { SeasonChart } from './SeasonChart.tsx'
 import { IconClock } from './icons.tsx'
+import { Busy } from './kit/Busy.tsx'
 import { TimeControls } from './TimeControls.tsx'
 import { Timeline } from './Timeline.tsx'
 
@@ -102,7 +103,7 @@ export function BottomPanel() {
               hibernateBelowPct={hibernateBelowPct}
             />
           ) : (
-            <p className="hint">{t('bottom.computing')}</p>
+            <Busy>{t('bottom.computing')}</Busy>
           ))}
         {tab === 'horizon' &&
           (detail ? (
@@ -113,7 +114,7 @@ export function BottomPanel() {
               showPaths={showPaths}
             />
           ) : (
-            <p className="hint">{t('bottom.loadingHorizon')}</p>
+            <Busy>{t('bottom.loadingHorizon')}</Busy>
           ))}
         {tab === 'dates' && <DateSweep />}
         {tab === 'seasons' && <SeasonChart />}

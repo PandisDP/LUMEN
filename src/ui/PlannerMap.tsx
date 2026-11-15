@@ -11,15 +11,18 @@ import { useSiteText } from '../i18n/sites.ts'
 import { ILLUM_COLORS } from '../scene/micro/illumColors.ts'
 import { findSite, useMissionStore } from '../store/useMissionStore.ts'
 import { usePlannerStore } from '../store/usePlannerStore.ts'
+import { DARK_CHART_THEME as MAP, alpha, chartFont, levelInk } from './chartTheme.ts'
 import { formatDistance, formatLatLon, formatPct } from './format.ts'
+import { scoreLevel } from './levels.ts'
+import { Busy } from './kit/Busy.tsx'
+import { Notice } from './kit/Notice.tsx'
 import { usePlanTiles } from './plannerInputs.ts'
-import { formatPlanDate, rankByDay, scoreStroke, topDays } from './plannerView.ts'
+import { formatPlanDate, rankByDay, topDays } from './plannerView.ts'
 
 const hexRgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
 const PSR_RGB = hexRgb(ILLUM_COLORS.psr)
 const LIT_RGB = hexRgb(ILLUM_COLORS.bright)
-const ACCENT = '#5aaeff'
-const AMBER = '#ffc94d'
+// The map is terrain imagery, dark in both themes: its marks use the dark palette (MAP).
 const HIT_PX = 11
 /** The view fits the search radius with this much air around it. */
 const FIT = 1.6
@@ -174,7 +177,7 @@ export function PlannerMap() {
   useEffect(() => {
     const ctx = context2d(ref.current, width, height, dpr)
     if (!ctx || !view || !meta) return
-    ctx.fillStyle = '#060b18'
+    ctx.fillStyle = MAP.background
     ctx.fillRect(0, 0, width, height)
     ctx.imageSmoothingEnabled = true
     if (hill) {
@@ -197,17 +200,17 @@ export function PlannerMap() {
       const p = latLonToPixel(meta, lat, lon)
       return [view.x(p.c), view.y(p.r)]
     }
-    const halo = (text: string, x: number, y: number, fill = '#fff') => {
+    const halo = (text: string, x: number, y: number) => {
       ctx.lineWidth = 3
-      ctx.strokeStyle = 'rgb(2 4 12 / 0.85)'
+      ctx.strokeStyle = alpha(MAP.background, 0.85)
       ctx.strokeText(text, x, y)
-      ctx.fillStyle = fill
+      ctx.fillStyle = MAP.ink
       ctx.fillText(text, x, y)
     }
 
     // Candidate landing points.
     if (shown) {
-      ctx.fillStyle = 'rgb(255 255 255 / 0.75)'
+      ctx.fillStyle = alpha(MAP.ink, 0.75)
       for (const c of shown.candidates) {
         const [x, y] = xy(c.lat, c.lon)
         ctx.beginPath()
@@ -221,7 +224,7 @@ export function PlannerMap() {
       const [tx, ty] = xy(target.lat, target.lon)
       ctx.setLineDash([6, 5])
       ctx.lineWidth = 1.5
-      ctx.strokeStyle = ACCENT
+      ctx.strokeStyle = MAP.primary
       ctx.beginPath()
       ctx.arc(tx, ty, (radiusM / meta.scaleM) * view.k, 0, 2 * Math.PI)
       ctx.stroke()
@@ -234,7 +237,7 @@ export function PlannerMap() {
       const [ix, iy] = xy(shown.ice.lat, shown.ice.lon)
       ctx.setLineDash([5, 4])
       ctx.lineWidth = 2
-      ctx.strokeStyle = '#fff'
+      ctx.strokeStyle = MAP.route
       ctx.beginPath()
       ctx.moveTo(sel.x, sel.y)
       ctx.lineTo(ix, iy)
@@ -247,8 +250,8 @@ export function PlannerMap() {
     ctx.textBaseline = 'middle'
     if (shown) {
       const [ix, iy] = xy(shown.ice.lat, shown.ice.lon)
-      ctx.fillStyle = '#bfe0ff'
-      ctx.strokeStyle = '#0b1324'
+      ctx.fillStyle = MAP.route
+      ctx.strokeStyle = MAP.background
       ctx.lineWidth = 1.5
       ctx.beginPath()
       ctx.arc(ix, iy, 3.5, 0, 2 * Math.PI)
@@ -257,33 +260,34 @@ export function PlannerMap() {
     }
     if (target) {
       const [tx, ty] = xy(target.lat, target.lon)
-      ctx.font = '600 20px Inter, system-ui, sans-serif'
-      halo('❄', tx, ty, '#dff1ff')
+      ctx.font = chartFont(20, 'sans', 600)
+      halo('❄', tx, ty)
     }
 
     // Best point of each shortlisted day (numbered). Days often share a point: the best rank
     // is drawn over the others, and the selected day over all.
-    ctx.font = '700 11px Inter, system-ui, sans-serif'
+    ctx.font = chartFont(11, 'mono', 500)
     const order = (m: (typeof marks)[number]) =>
       m.day.dayMs === selectedDayMs ? 99 : -(m.rank ?? 9)
     for (const m of [...marks].sort((a, b) => order(a) - order(b))) {
       const on = m.day.dayMs === selectedDayMs
       const radius = on ? 11 : 9
       if (on) {
-        ctx.strokeStyle = '#fff'
+        ctx.strokeStyle = MAP.ink
         ctx.lineWidth = 2
         ctx.beginPath()
         ctx.arc(m.x, m.y, radius + 4, 0, 2 * Math.PI)
         ctx.stroke()
       }
-      ctx.fillStyle = m.rank ? AMBER : '#0b1324'
-      ctx.strokeStyle = m.rank ? '#1a1200' : scoreStroke(m.day.best!.score)
+      // Shortlisted days: a filled badge with the rank; the rest hollow, ringed by their level.
+      ctx.fillStyle = m.rank ? MAP.fillExcess : MAP.card
+      ctx.strokeStyle = m.rank ? MAP.background : levelInk(MAP, scoreLevel(m.day.best!.score))
       ctx.lineWidth = 1.5
       ctx.beginPath()
       ctx.arc(m.x, m.y, radius, 0, 2 * Math.PI)
       ctx.fill()
       ctx.stroke()
-      ctx.fillStyle = m.rank ? '#1a1200' : '#fff'
+      ctx.fillStyle = m.rank ? MAP.tooltipFg : MAP.ink
       ctx.fillText(m.rank ? String(m.rank) : '•', m.x, m.y + 0.5)
     }
 
@@ -291,7 +295,7 @@ export function PlannerMap() {
     if (sel && shown) {
       const iy = xy(shown.ice.lat, shown.ice.lon)[1]
       const below = sel.y > iy ? 1 : -1
-      ctx.font = '600 11px Inter, system-ui, sans-serif'
+      ctx.font = chartFont(11, 'mono', 500)
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       halo(formatDistance(sel.day.best!.routeM), sel.x, sel.y + below * 26)
@@ -301,13 +305,13 @@ export function PlannerMap() {
     const mPerPx = meta.scaleM / view.k
     const len = SCALE_STEPS_M.findLast((s) => s / mPerPx <= width * 0.3) ?? SCALE_STEPS_M[0]
     const bar = len / mPerPx
-    ctx.strokeStyle = '#fff'
+    ctx.strokeStyle = MAP.ink
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(12, height - 14)
     ctx.lineTo(12 + bar, height - 14)
     ctx.stroke()
-    ctx.font = '600 11px Inter, system-ui, sans-serif'
+    ctx.font = chartFont(11, 'mono', 500)
     ctx.textAlign = 'left'
     ctx.textBaseline = 'bottom'
     halo(formatDistance(len), 12, height - 18)
@@ -385,9 +389,23 @@ export function PlannerMap() {
           onMouseLeave={() => setHover(null)}
           onClick={onClick}
         />
-        {empty && <p className="pmap__msg">{t('plan.map.noTile')}</p>}
-        {!empty && !loaded && <p className="pmap__msg">{t('plan.map.loading')}</p>}
-        {grids.error && !loaded && <p className="pmap__msg error">{grids.error.message}</p>}
+        {empty && (
+          <div className="pmap__msg">
+            <Notice tone="note">{t('plan.map.noTile')}</Notice>
+          </div>
+        )}
+        {!empty && !loaded && !grids.error && (
+          <div className="pmap__msg">
+            <Busy>{t('plan.map.loading')}</Busy>
+          </div>
+        )}
+        {grids.error && !loaded && (
+          <div className="pmap__msg">
+            <Notice tone="error" action={{ label: t('kit.retry'), onClick: grids.retry }}>
+              {t('plan.map.error', { msg: grids.error.message })}
+            </Notice>
+          </div>
+        )}
         {hover && (
           <div
             className="pmap__tip"

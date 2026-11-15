@@ -3,7 +3,9 @@ import { DAY_MS } from '../astro/constants.ts'
 import type { PlanDay, PlanResult } from '../astro/plannerTypes.ts'
 import { useLang, useT } from '../i18n/index.ts'
 import { usePlannerStore } from '../store/usePlannerStore.ts'
+import { LEVEL_GLYPH } from './bands.ts'
 import { formatDistance, formatHours, formatPct } from './format.ts'
+import { scoreLevel } from './levels.ts'
 import {
   VIOLATION_KEY,
   calendarLayout,
@@ -181,6 +183,11 @@ export function PlannerCalendar({ fromMs, days, result }: Props) {
                   <span className="pcal__score" aria-hidden>
                     {day?.best ? Math.round(day.best.score) : state === 'none' ? '✕' : '·'}
                   </span>
+                  {day?.best && (
+                    <span className="pcal__glyph" aria-hidden>
+                      {LEVEL_GLYPH[scoreLevel(day.best.score)]}
+                    </span>
+                  )}
                   {r && (
                     <span className="pcal__rank" aria-hidden>
                       {r}
@@ -204,15 +211,15 @@ export function PlannerCalendar({ fromMs, days, result }: Props) {
       </div>
       <ul className="pcal__legend" aria-label={t('plan.cal.legend')}>
         <li>
-          <i style={{ background: scoreColor(20) }} />
+          <i style={{ background: scoreColor(20) }}>{LEVEL_GLYPH.bad}</i>
           {t('plan.cal.legendBad')}
         </li>
         <li>
-          <i style={{ background: scoreColor(48) }} />
+          <i style={{ background: scoreColor(48) }}>{LEVEL_GLYPH.warn}</i>
           {t('plan.cal.legendWarn')}
         </li>
         <li>
-          <i style={{ background: scoreColor(80) }} />
+          <i style={{ background: scoreColor(80) }}>{LEVEL_GLYPH.good}</i>
           {t('plan.cal.legendGood')}
         </li>
         <li>

@@ -6,20 +6,14 @@ import { VISIBLE_THRESHOLD } from '../astro/metrics.ts'
 import type { SiteSeries } from '../astro/series.ts'
 import { context2d, useCanvasSize } from '../hooks/useCanvas.ts'
 import { useLang, useT } from '../i18n/index.ts'
+import { alpha, chartFont, useChartTheme } from './chartTheme.ts'
 import { formatDateTime, formatDay, formatPct } from './format.ts'
 
-/**
- * Palette shared by the charts. Sun / Earth / both are told apart by colour *and* fill
- * (solid / hatched / cross-hatched) plus in-bar labels, so the chart still reads without
- * colour vision; the "both" colour is Okabe-Ito reddish purple, far from the yellow Sun.
+/*
+ * Sun / Earth / both are told apart by colour *and* fill (solid / hatched / cross-hatched) plus
+ * in-bar labels, so the chart still reads without colour vision. Colours come from the tokens
+ * (chartTheme.ts): Sun = series-4, Earth = series-6, both = series-1, battery = series-5.
  */
-export const SUN_COLOR = '#ffc94d'
-export const EARTH_COLOR = '#4da6ff'
-export const BOTH_COLOR = '#cc79a7'
-export const BATTERY_COLOR = '#e6edf7'
-export const DEPLETED_COLOR = '#ff6b6b'
-const GRID = 'rgba(154, 168, 189, 0.25)'
-const TEXT = '#9aa8bd'
 
 type Fill = 'solid' | 'hatch' | 'cross'
 
@@ -95,6 +89,7 @@ export function Timeline({
   const { ref, width, height, dpr } = useCanvasSize()
   const t = useT()
   const lang = useLang()
+  const theme = useChartTheme()
 
   const summary = useMemo(() => {
     const n = series.count
@@ -129,7 +124,12 @@ export function Timeline({
     const n = series.count
     const x = (i: number) => LABEL_W + (i / Math.max(1, n - 1)) * plotW
     const laneH = compact ? Math.max(10, (height - 14) / (battery ? 3 : 2) - 3) : 12
-    ctx.font = '11px system-ui, sans-serif'
+    const LABEL_FONT = chartFont(11)
+    const NUM_FONT = chartFont(10, 'mono')
+    const TEXT = theme.inkMuted
+    const GRID = alpha(theme.grid, 0.9)
+    const LANE = alpha(theme.inkMuted, 0.1)
+    ctx.font = LABEL_FONT
     ctx.textBaseline = 'middle'
     let y = 0
 
@@ -143,7 +143,7 @@ export function Timeline({
       fill: Fill,
       inBar: string,
     ) => {
-      ctx.fillStyle = 'rgba(255,255,255,0.04)'
+      ctx.fillStyle = LANE
       ctx.fillRect(LABEL_W, y, plotW, laneH)
       ctx.fillStyle = pattern(ctx, color, fill)
       for (let i = 0; i < n - 1; i++) {
@@ -154,20 +154,19 @@ export function Timeline({
       }
       ctx.globalAlpha = 1
       // In-bar labels on runs wide enough to hold them.
-      ctx.fillStyle = '#000'
-      ctx.font = 'bold 10px system-ui, sans-serif'
+      ctx.font = chartFont(10, 'sans', 600)
       const w = ctx.measureText(inBar).width + 8
       for (const [a, b] of runs(n, (i) => value(i) >= VISIBLE_THRESHOLD)) {
         if (x(b) - x(a) < w + 4 || laneH < 10) continue
         const cx = (x(a) + x(b)) / 2
-        ctx.fillStyle = 'rgba(255,255,255,0.85)'
+        ctx.fillStyle = alpha(theme.card, 0.9)
         ctx.fillRect(cx - w / 2, y + 1, w, laneH - 2)
-        ctx.fillStyle = '#000'
+        ctx.fillStyle = theme.ink
         ctx.textAlign = 'center'
         ctx.fillText(inBar, cx, y + laneH / 2)
         ctx.textAlign = 'left'
       }
-      ctx.font = '11px system-ui, sans-serif'
+      ctx.font = LABEL_FONT
       ctx.fillStyle = TEXT
       ctx.fillText(name, 4, y + laneH / 2)
       y += laneH + 3
@@ -177,14 +176,14 @@ export function Timeline({
     lane(
       `${prefix}${t('timeline.sun')}`,
       (i) => series.sunFrac[i],
-      SUN_COLOR,
+      theme.sun,
       'solid',
       t('timeline.sun'),
     )
     lane(
       `${prefix}${compact ? 'DTE' : t('timeline.earth')}`,
       (i) => (dteOn(i) ? 1 : 0),
-      EARTH_COLOR,
+      theme.earth,
       'hatch',
       'DTE',
     )
@@ -192,7 +191,7 @@ export function Timeline({
       lane(
         t('timeline.both'),
         (i) => (sunOn(i) && dteOn(i) ? 1 : 0),
-        BOTH_COLOR,
+        theme.both,
         'cross',
         t('timeline.both'),
       )
@@ -201,15 +200,15 @@ export function Timeline({
     // Battery: state-of-charge line, survival threshold and the "out of power" stretches.
     if (battery) {
       const bh = compact ? laneH : 18
-      ctx.fillStyle = 'rgba(255,255,255,0.04)'
+      ctx.fillStyle = LANE
       ctx.fillRect(LABEL_W, y, plotW, bh)
       const by = (pct: number) => y + bh - 1 - (pct / 100) * (bh - 2)
-      ctx.fillStyle = pattern(ctx, DEPLETED_COLOR, 'hatch')
+      ctx.fillStyle = pattern(ctx, theme.fillDeficit, 'hatch')
       for (const [a, b] of runs(n, (i) => battery.socPct[i] <= 0.01 && !battery.active[i])) {
         ctx.fillRect(x(a), y, Math.max(2, x(b) - x(a)), bh)
       }
       if (hibernateBelowPct != null) {
-        ctx.strokeStyle = 'rgba(255,201,77,0.6)'
+        ctx.strokeStyle = alpha(theme.inkMuted, 0.8)
         ctx.setLineDash([3, 3])
         ctx.beginPath()
         ctx.moveTo(LABEL_W, by(hibernateBelowPct))
@@ -217,8 +216,8 @@ export function Timeline({
         ctx.stroke()
         ctx.setLineDash([])
       }
-      ctx.strokeStyle = BATTERY_COLOR
-      ctx.lineWidth = 1.5
+      ctx.strokeStyle = theme.battery
+      ctx.lineWidth = 2
       ctx.beginPath()
       for (let i = 0; i < n; i++) {
         if (i === 0) ctx.moveTo(x(i), by(battery.socPct[i]))
@@ -229,22 +228,22 @@ export function Timeline({
       if (battery.depletedAtMs != null) {
         const px =
           LABEL_W + ((battery.depletedAtMs - series.startMs) / ((n - 1) * series.stepMs)) * plotW
-        ctx.fillStyle = DEPLETED_COLOR
+        ctx.fillStyle = theme.fillDeficit
         ctx.beginPath()
         ctx.moveTo(px, y + bh)
         ctx.lineTo(px - 5, y + bh + 6)
         ctx.lineTo(px + 5, y + bh + 6)
         ctx.fill()
         if (!compact) {
-          ctx.font = 'bold 10px system-ui, sans-serif'
+          ctx.font = chartFont(10, 'sans', 600)
           const txt = `⚠ ${t('timeline.depleted')}`
           const tw = ctx.measureText(txt).width
           const tx = Math.min(px + 4, width - tw - 6)
-          ctx.fillStyle = 'rgba(0,0,0,0.75)'
-          ctx.fillRect(tx - 2, y + 2, tw + 4, bh - 4)
-          ctx.fillStyle = '#ffb3b3'
+          ctx.fillStyle = theme.tooltip
+          ctx.fillRect(tx - 3, y + 2, tw + 6, bh - 4)
+          ctx.fillStyle = theme.tooltipFg
           ctx.fillText(txt, tx, y + bh / 2)
-          ctx.font = '11px system-ui, sans-serif'
+          ctx.font = LABEL_FONT
         }
       }
       ctx.fillStyle = TEXT
@@ -266,7 +265,7 @@ export function Timeline({
         ctx.lineTo(width, cy(d))
       }
       ctx.stroke()
-      ctx.strokeStyle = 'rgba(230,237,247,0.6)'
+      ctx.strokeStyle = alpha(theme.inkMuted, 0.9)
       ctx.setLineDash([4, 3])
       ctx.beginPath()
       ctx.moveTo(LABEL_W, cy(0))
@@ -275,11 +274,13 @@ export function Timeline({
       ctx.setLineDash([])
       ctx.fillStyle = TEXT
       ctx.fillText(t('timeline.horizon'), 4, cy(0))
+      ctx.font = NUM_FONT
       ctx.fillText(`+${RANGE}°`, 4, cy(RANGE) + 6)
       ctx.fillText(`−${RANGE}°`, 4, cy(-RANGE) - 6)
+      ctx.font = LABEL_FONT
       const line = (el: Float32Array, az: Float32Array, color: string, dash: number[]) => {
         ctx.strokeStyle = color
-        ctx.lineWidth = 1.5
+        ctx.lineWidth = 2
         ctx.setLineDash(dash)
         ctx.beginPath()
         for (let i = 0; i < n; i++) {
@@ -291,14 +292,28 @@ export function Timeline({
         ctx.setLineDash([])
         ctx.lineWidth = 1
       }
-      line(series.sunEl, series.sunAz, SUN_COLOR, [])
-      line(series.earthEl, series.earthAz, EARTH_COLOR, [6, 3])
-      // Direct labels at the right edge instead of a colour-only legend.
+      line(series.sunEl, series.sunAz, theme.sun, [])
+      line(series.earthEl, series.earthAz, theme.earth, [6, 3])
+      // Legend at the right edge: a sample of each line (colour and dash) with its name in ink.
       ctx.textAlign = 'right'
-      ctx.fillStyle = SUN_COLOR
-      ctx.fillText(`— ${t('timeline.sun')}`, width - 4, top + 8)
-      ctx.fillStyle = EARTH_COLOR
-      ctx.fillText(`- - ${t('timeline.earth')}`, width - 4, top + 20)
+      const key = (name: string, color: string, dash: number[], ky: number) => {
+        const tw = ctx.measureText(name).width
+        ctx.fillStyle = alpha(theme.card, 0.85)
+        ctx.fillRect(width - tw - 34, ky - 6, tw + 32, 12)
+        ctx.fillStyle = theme.ink
+        ctx.fillText(name, width - 4, ky)
+        ctx.strokeStyle = color
+        ctx.lineWidth = 2
+        ctx.setLineDash(dash)
+        ctx.beginPath()
+        ctx.moveTo(width - tw - 30, ky)
+        ctx.lineTo(width - tw - 10, ky)
+        ctx.stroke()
+        ctx.setLineDash([])
+        ctx.lineWidth = 1
+      }
+      key(t('timeline.sun'), theme.sun, [], top + 8)
+      key(t('timeline.earth'), theme.earth, [6, 3], top + 22)
       ctx.textAlign = 'left'
     }
 
@@ -308,6 +323,7 @@ export function Timeline({
     const every = days > 200 ? 30 : days > 90 ? 14 : days > 30 ? 7 : days > 10 ? 2 : 1
     ctx.fillStyle = TEXT
     ctx.strokeStyle = GRID
+    ctx.font = NUM_FONT
     ctx.textBaseline = 'alphabetic'
     for (let d = 0; d <= days; d += every) {
       const px = LABEL_W + ((d * DAY_MS) / spanMs) * plotW
@@ -321,7 +337,7 @@ export function Timeline({
 
     // Cursor.
     const cx = LABEL_W + ((offsetH * HOUR_MS) / spanMs) * plotW
-    ctx.strokeStyle = '#ffffff'
+    ctx.strokeStyle = theme.ink
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.moveTo(cx, 0)
@@ -342,6 +358,7 @@ export function Timeline({
     hibernateBelowPct,
     t,
     lang,
+    theme,
   ])
 
   const seek = (e: PointerEvent<HTMLCanvasElement>) => {

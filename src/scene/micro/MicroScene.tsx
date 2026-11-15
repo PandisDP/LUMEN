@@ -54,6 +54,7 @@ import { useIllumGrid } from '../../hooks/useScience.ts'
 import { planarUv, setRegolithSunElevation, useRegolithMaterial } from './regolith.ts'
 import { EarthGlobe } from '../macro/Earth.tsx'
 import { SunGlare } from '../SunGlare.tsx'
+import { SCENE_COLORS } from '../sceneColors.ts'
 
 /** Distances in the surface scene (metres). Sky objects sit beyond the horizon ring. */
 const SKY_DIST = 90_000
@@ -269,7 +270,7 @@ function SkyPaths({ series, detail }: { series: SiteSeries; detail: SiteDetail }
         <>
           <Line
             points={lines.sun}
-            color="#ffc94d"
+            color={SCENE_COLORS.sun}
             lineWidth={1.5}
             transparent
             opacity={0.55}
@@ -279,7 +280,7 @@ function SkyPaths({ series, detail }: { series: SiteSeries; detail: SiteDetail }
           />
           <Line
             points={lines.earth}
-            color="#4da6ff"
+            color={SCENE_COLORS.earth}
             lineWidth={1.5}
             transparent
             opacity={0.55}
@@ -290,7 +291,13 @@ function SkyPaths({ series, detail }: { series: SiteSeries; detail: SiteDetail }
         </>
       )}
       {showMask && (
-        <Line points={lines.mask} color="#53e3ff" lineWidth={1.2} transparent opacity={0.8} />
+        <Line
+          points={lines.mask}
+          color={SCENE_COLORS.accent}
+          lineWidth={1.2}
+          transparent
+          opacity={0.8}
+        />
       )}
     </>
   )

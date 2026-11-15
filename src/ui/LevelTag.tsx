@@ -1,7 +1,6 @@
 import { useT } from '../i18n/index.ts'
+import { LEVEL_GLYPH } from './bands.ts'
 import type { Level } from './levels.ts'
-
-const ICONS: Record<Level, string> = { good: '✓', warn: '!', bad: '✕' }
 
 /**
  * Shape + text companion to the traffic-light colours, so a level never relies on colour
@@ -12,7 +11,7 @@ export function LevelTag({ level }: { level: Level | undefined }) {
   if (!level) return null
   return (
     <span className="lvl" data-level={level} title={t(`level.${level}`)}>
-      <span aria-hidden>{ICONS[level]}</span>
+      <span aria-hidden>{LEVEL_GLYPH[level]}</span>
       <span className="sr-only">{t(`level.${level}`)}</span>
     </span>
   )

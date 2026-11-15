@@ -209,6 +209,16 @@ Las capas de visualización de QuickMap y Moon Trek tienen una escala de grises 
 - Las animaciones de interfaz respetan `prefers-reduced-motion`.
 - Prettier (sin `;`, comillas simples, 100 columnas) y ESLint con las reglas de React Hooks.
 
+### Estilos y tema
+
+- Los colores, radios, sombras y tiempos son tokens en `src/styles/tokens.css`; ningún otro
+  archivo define colores. Ver [docs/DISENO.md](docs/DISENO.md).
+- El tema se cambia con la clase `.dark` en `<html>` (`src/ui/theme.ts`). La escena 3D lleva su
+  propio `.dark` y no cambia a claro.
+- Las gráficas en canvas leen la paleta con `useChartTheme()` (`src/ui/chartTheme.ts`) y la
+  escena usa `SCENE_COLORS` (`src/scene/sceneColors.ts`).
+- Avisos, vacíos y esperas usan `src/ui/kit/` (`Notice`, `Empty`, `Busy`, `Stat`).
+
 ## 8. Tests
 
 | Qué                                  | Cómo                                                                                                                                                                                       |

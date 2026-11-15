@@ -23,7 +23,8 @@ import {
   problemChanged,
   rangeEndMs,
   rankByDay,
-  scoreHue,
+  scoreColor,
+  scoreStroke,
   sortDays,
   toDateInput,
   topDays,
@@ -107,12 +108,20 @@ describe('colours and levels', () => {
     const r = fixtureResult([20, 48, 80, 'short-light'])
     expect(r.days.map((d) => dayState(d))).toEqual(['bad', 'warn', 'good', 'none'])
     expect(dayState(undefined)).toBe('pending')
-    // Red below 35, amber to 60, green above; monotonic within and across the bands.
-    for (let s = 1; s <= 100; s++) expect(scoreHue(s)).toBeGreaterThanOrEqual(scoreHue(s - 1))
-    expect(scoreHue(34)).toBeLessThan(30)
-    expect(scoreHue(35)).toBeGreaterThan(30)
-    expect(scoreHue(59)).toBeLessThan(70)
-    expect(scoreHue(60)).toBeGreaterThan(90)
+    // Three steps on the scoreLevel thresholds (35 / 60), from the band tokens: no custom ramp.
+    const fills = [0, 34, 35, 59, 60, 100].map(scoreColor)
+    expect(fills[0]).toBe('hsl(var(--band-deficit-fill))')
+    expect(fills[1]).toBe(fills[0])
+    expect(fills[2]).toBe('hsl(var(--band-excess-fill))')
+    expect(fills[3]).toBe(fills[2])
+    expect(fills[4]).toBe('hsl(var(--band-ok-fill))')
+    expect(fills[5]).toBe(fills[4])
+    expect([20, 48, 80].map(scoreStroke)).toEqual([
+      'hsl(var(--band-deficit))',
+      'hsl(var(--band-excess))',
+      'hsl(var(--band-ok))',
+    ])
+    expect(new Set(Array.from({ length: 101 }, (_, s) => scoreColor(s))).size).toBe(3)
     expect(scoreLevel(60)).toBe('good')
   })
 })

@@ -70,7 +70,7 @@ export function ExplainPanel() {
         </button>
       </header>
       <p className="explain__challenges">
-        <button type="button" className="btn btn--accent" onClick={openChallenges}>
+        <button type="button" className="btn btn--primary" onClick={openChallenges}>
           {t('challenge.explain')} →
         </button>
       </p>

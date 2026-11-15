@@ -17,6 +17,7 @@ import { Starfield } from '../Starfield.tsx'
 import { Earth } from './Earth.tsx'
 import { Sun } from './Sun.tsx'
 import { bodyToScene, globeGeometry, polarCapGeometry, surfacePoint } from './macroGeometry.ts'
+import { SCENE_COLORS } from '../sceneColors.ts'
 
 /** Relief exaggeration in the orbital view (the true 10 km of relief is 0.6 % of the radius). */
 export const MACRO_EXAGGERATION = 2.5
@@ -52,7 +53,7 @@ function PoleMarker() {
     <>
       <Line
         points={ring}
-        color="#9be7ff"
+        color={SCENE_COLORS.accent}
         lineWidth={1}
         transparent
         opacity={0.45}
@@ -63,7 +64,7 @@ function PoleMarker() {
       <group position={SOUTH_POLE.clone().multiplyScalar(1.012)}>
         <mesh>
           <sphereGeometry args={[0.004, 12, 12]} />
-          <meshBasicMaterial color="#9be7ff" toneMapped={false} />
+          <meshBasicMaterial color={SCENE_COLORS.accent} toneMapped={false} />
         </mesh>
         <Html
           center
@@ -145,7 +146,9 @@ function SiteMarkers({ onPick }: { onPick: (id: string, pos: Vector3) => void })
             >
               <sphereGeometry args={[active ? 0.006 : 0.004, 16, 16]} />
               <meshBasicMaterial
-                color={active ? '#ffc94d' : polar ? '#4da6ff' : '#9aa8bd'}
+                color={
+                  active ? SCENE_COLORS.accent : polar ? SCENE_COLORS.ink : SCENE_COLORS.inkMuted
+                }
                 toneMapped={false}
               />
             </mesh>

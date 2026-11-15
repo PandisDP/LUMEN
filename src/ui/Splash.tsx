@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useT } from '../i18n/index.ts'
+import { Killa } from './Killa.tsx'
 
 /** Minimum time the logo stays on screen, ms (shorter with reduced motion). */
 export const SPLASH_MIN_MS = 1800
@@ -43,7 +44,7 @@ function LogoMark() {
 }
 
 /**
- * Start screen: only the logo, shown until the site catalogue is loaded and a minimum time has
+ * Start screen: the logo and Killa waiting, shown until the site catalogue is loaded and a minimum time has
  * passed; then it fades out and calls `onDone`. Click, Enter, Space or Escape skip it.
  */
 export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }) {
@@ -92,8 +93,11 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
         <span className="splash__word">
           LUMEN <span>3D</span>
         </span>
+        <p className="splash__wait">
+          <Killa state="thinking" size={48} />
+          {t('splash.loading')}
+        </p>
       </div>
-      <span className="sr-only">{t('splash.loading')}</span>
     </div>
   )
 }

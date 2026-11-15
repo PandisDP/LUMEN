@@ -86,7 +86,7 @@ export function StepHint() {
       {current < DECIDE_STEP && (
         <button
           type="button"
-          className="btn btn--primary btn--small"
+          className="btn btn--accent btn--small"
           onClick={() => goToStep(current + 1)}
         >
           {t('step.next', { name: t(STEPS[current + 1].title) })} →

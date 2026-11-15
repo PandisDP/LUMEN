@@ -9,6 +9,7 @@ import { useLang, useT } from '../i18n/index.ts'
 import { useSiteText } from '../i18n/sites.ts'
 import { findSite, selectActiveScenario, useMissionStore } from '../store/useMissionStore.ts'
 import { useUiStore } from '../store/useUiStore.ts'
+import { Killa, type KillaState } from './Killa.tsx'
 import { MoonLocator } from './MoonLocator.tsx'
 import { DECIDE_STEP, goToStep } from './steps.ts'
 import { useTopSites } from '../hooks/useTopSites.ts'
@@ -72,12 +73,16 @@ export function AssistantFab() {
   const [messages, setMessages] = useState<Message[]>([])
   const [question, setQuestion] = useState('')
   const [thinking, setThinking] = useState(false)
+  const [failed, setFailed] = useState(false)
 
   // Preload as soon as the ranking is ready, so opening the widget is instant.
   useEffect(() => {
     if (!ctx) return
     let cancelled = false
-    assistant.suggest(ctx).then((s) => !cancelled && setSuggestions(s))
+    assistant.suggest(ctx).then(
+      (s) => !cancelled && setSuggestions(s),
+      () => !cancelled && setSuggestions([]),
+    )
     return () => {
       cancelled = true
     }
@@ -103,9 +108,13 @@ export function AssistantFab() {
     setQuestion('')
     setMessages((m) => [...m, { from: 'user', text: q }])
     setThinking(true)
+    setFailed(false)
     try {
       const answer = await assistant.ask(q, ctx)
       setMessages((m) => [...m, { from: 'bot', text: answer }])
+    } catch {
+      setFailed(true)
+      setMessages((m) => [...m, { from: 'bot', text: t('killa.askFailed') }])
     } finally {
       setThinking(false)
     }
@@ -122,28 +131,29 @@ export function AssistantFab() {
         data-tour="assistant"
         aria-label={t('assistant.open')}
       >
-        <span className="fab__icon" aria-hidden>
-          ✦
-        </span>
+        <Killa size={28} />
         <span className="fab__label">{t('assistant.cta')}</span>
         {suggestions && <span className="fab__dot" aria-hidden />}
       </button>
     )
   }
 
+  // Killa's face follows what the assistant is doing: waiting, problem, recommendation ready.
+  const noOptions = suggestions?.length === 0
+  const mood: KillaState =
+    thinking || !suggestions ? 'thinking' : failed || noOptions ? 'alert' : 'ok'
+
   return (
     <section className="assistant" aria-label={t('assistant.title')} data-tour="assistant">
       <header className="assistant__head">
-        <span className="fab__icon" aria-hidden>
-          ✦
-        </span>
+        <Killa state={mood} size={44} />
         <div>
-          <h2>{t('assistant.title')}</h2>
-          <p className="hint">{t('assistant.sub')}</p>
+          <h2>Killa</h2>
+          <p className="hint">{t('killa.role')}</p>
         </div>
         <button
           type="button"
-          className="btn btn--ghost btn--small"
+          className="icon-btn"
           onClick={() => setOpen(false)}
           aria-label={t('common.close')}
         >
@@ -151,6 +161,13 @@ export function AssistantFab() {
         </button>
       </header>
 
+      {noOptions ? (
+        <p className="assistant__alert" role="status">
+          {t('killa.noOptions')}
+        </p>
+      ) : (
+        <p className="hint assistant__sub">{t('assistant.sub')}</p>
+      )}
       <ol className="assistant__list" aria-busy={!suggestions}>
         {suggestions
           ? suggestions.map((s) => {
@@ -179,7 +196,7 @@ export function AssistantFab() {
       </ol>
       <button
         type="button"
-        className="btn btn--accent assistant__compare"
+        className="btn btn--primary assistant__compare"
         disabled={!suggestions?.length}
         onClick={compareAll}
       >

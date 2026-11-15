@@ -7,6 +7,7 @@ import { useInstant } from '../hooks/useScenario.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { SLOPE_COLORS } from '../scene/micro/slopeColors.ts'
 import { ILLUM_COLORS } from '../scene/micro/illumColors.ts'
+import { SCENE_COLORS } from '../scene/sceneColors.ts'
 import {
   ELLIPSE_ASPECTS,
   ELLIPSE_RADII,
@@ -59,12 +60,12 @@ function SlopeLegend() {
 
 function IllumLegend() {
   const t = useT()
-  const stripes = `repeating-linear-gradient(45deg, ${ILLUM_COLORS.psr} 0 3px, #1c4080 3px 6px)`
+  const stripes = `repeating-linear-gradient(45deg, ${ILLUM_COLORS.psr} 0 3px, color-mix(in srgb, ${ILLUM_COLORS.psr} 60%, black) 3px 6px)`
   const items = [
     ['psr', stripes, t('illum.legend.psr')],
     ['dim', ILLUM_COLORS.dim, t('illum.legend.dim')],
     ['bright', ILLUM_COLORS.bright, t('illum.legend.bright')],
-    ['route', '#7fd4ff', t('illum.legend.route')],
+    ['route', SCENE_COLORS.route, t('illum.legend.route')],
   ] as const
   return (
     <ul className="legend" aria-label={t('illum.legend.title')}>

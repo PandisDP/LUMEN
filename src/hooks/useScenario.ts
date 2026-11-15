@@ -43,6 +43,8 @@ export function useScenarioData(scenario: Scenario) {
     result: result.data,
     loading: detail.loading || result.loading,
     error: detail.error ?? result.error,
+    /** Tries again whatever failed: the site's files, or the evaluation. */
+    retry: detail.error ? detail.retry : result.retry,
   }
 }
 

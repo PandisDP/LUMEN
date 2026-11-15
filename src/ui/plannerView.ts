@@ -8,6 +8,7 @@ import {
   type PlanViolation,
 } from '../astro/plannerTypes.ts'
 import type { MsgKey } from '../i18n/index.ts'
+import { LEVEL_FILL_VAR, LEVEL_INK_VAR } from './chartTheme.ts'
 import { type Level, scoreLevel } from './levels.ts'
 
 /**
@@ -78,20 +79,13 @@ export type DayState = Level | 'none' | 'pending'
 export const dayState = (day: PlanDay | undefined): DayState =>
   !day ? 'pending' : day.best ? scoreLevel(day.best.score) : 'none'
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * Math.min(1, Math.max(0, t))
-
 /**
- * Continuous ramp behind the calendar cells, anchored on the scoreLevel thresholds: red below
- * 35, amber up to 60, green above. Dark enough for white text on top (the score is printed).
+ * Colour of a score, in the three steps of scoreLevel (60 / 35): band-ok, band-excess (the
+ * system's warning is blue) and band-deficit. CSS expressions, so they follow the theme; the
+ * fills are mid-tones that hold white text (the score is printed on the calendar cells).
  */
-export function scoreHue(score: number): number {
-  const s = Math.min(100, Math.max(0, score))
-  if (s < 35) return lerp(0, 28, s / 35)
-  if (s < 60) return lerp(36, 62, (s - 35) / 25)
-  return lerp(96, 140, (s - 60) / 40)
-}
-export const scoreColor = (score: number) => `hsl(${Math.round(scoreHue(score))} 58% 27%)`
-export const scoreStroke = (score: number) => `hsl(${Math.round(scoreHue(score))} 70% 58%)`
+export const scoreColor = (score: number) => LEVEL_FILL_VAR[scoreLevel(score)]
+export const scoreStroke = (score: number) => LEVEL_INK_VAR[scoreLevel(score)]
 
 // ---------------------------------------------------------------- ranking & summary
 

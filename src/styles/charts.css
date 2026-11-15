@@ -1,0 +1,12 @@
+/* Legend keys of the canvas charts: a line sample instead of the square swatch. */
+.season__legend i.chart-key-line {
+  width: 14px;
+  height: 2px;
+  vertical-align: 3px;
+  border-radius: 1px;
+  background: hsl(var(--foreground));
+}
+
+.season__legend i.chart-key-line--thin {
+  height: 1.5px;
+}

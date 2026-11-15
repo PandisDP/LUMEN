@@ -275,6 +275,26 @@ describe('Planner: edge states', () => {
     expect(screen.queryByRole('button', { name: /Enviar a Comparar/ })).toBeNull()
   })
 
+  it('the no-solution notice brings the fixes as buttons that only change the inputs', () => {
+    const result = fixtureResult(['short-light', 'short-light', 'night', 'short-light'])
+    show(result)
+    render(<Planner />)
+    const before = usePlannerStore.getState()
+    const lower = screen.getByRole('button', {
+      name: `Bajar la luz mínima a ${before.minSunDays - 5} días`,
+    })
+    const widen = screen.getByRole('button', { name: /^Ampliar el rango a \d+ días$/ })
+    fireEvent.click(lower)
+    fireEvent.click(widen)
+    const after = usePlannerStore.getState()
+    expect(after.minSunDays).toBe(before.minSunDays - 5)
+    expect(after.days).toBe(Math.min(90, before.days + 30))
+    // Nothing was launched: the same result is still on screen, now marked as out of date.
+    expect(after.status).toBe(before.status)
+    expect(after.result).toBe(result)
+    expect(screen.getAllByText('Calculados con otros datos').length).toBeGreaterThan(0)
+  })
+
   it('while running it shows the progress, Cancel and the days that already arrived', () => {
     const partial = fixtureResult([40, 'night', 88], {}, 10)
     show(partial)

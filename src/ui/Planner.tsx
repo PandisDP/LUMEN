@@ -3,6 +3,7 @@ import { useLang, useT } from '../i18n/index.ts'
 import { usePlannerStore } from '../store/usePlannerStore.ts'
 import { PlannerCalendar } from './PlannerCalendar.tsx'
 import { PlannerForm } from './PlannerForm.tsx'
+import { Empty } from './kit/Empty.tsx'
 import { effectiveFromMs, usePlanProblem } from './plannerInputs.ts'
 import { PlannerMap } from './PlannerMap.tsx'
 import { PlannerTable } from './PlannerTable.tsx'
@@ -114,7 +115,7 @@ export function Planner() {
           {result ? (
             <PlannerTable result={result} />
           ) : (
-            <p className="planner__empty">{t('plan.when.empty')}</p>
+            <Empty title={t('plan.when.emptyTitle')}>{t('plan.when.empty')}</Empty>
           )}
         </Zone>
         <Zone id="where" n={3} title={t('plan.zone.where')} aside={staleBadge}>

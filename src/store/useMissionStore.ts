@@ -64,7 +64,17 @@ export type LanderCam = 'eye' | 'orbit' | 'rover'
 export type BottomPanel = 'timeline' | 'horizon' | 'dates' | 'seasons' | 'map'
 
 export const MAX_SCENARIOS = 4
-export const SCENARIO_COLORS = ['#ffc94d', '#4da6ff', '#ff6b9a', '#7ee081'] as const
+/**
+ * Scenario colours A–D as CSS expressions (series 1, 2, 3, 7 of the design tokens): for inline
+ * styles and the `--c` variable, so they follow the theme. A canvas needs a resolved colour:
+ * `scenarioColor` in ui/chartTheme.ts.
+ */
+export const SCENARIO_COLORS = [
+  'var(--series-1)',
+  'var(--series-2)',
+  'var(--series-3)',
+  'var(--series-7)',
+] as const
 export const SCENARIO_LABELS = ['A', 'B', 'C', 'D'] as const
 /** Up to a year on the surface (longer windows are sampled more coarsely: scenarioStepMinutes). */
 export const MISSION_DAYS = { min: 1, max: 365, default: 14 } as const

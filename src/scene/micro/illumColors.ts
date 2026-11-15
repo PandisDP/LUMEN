@@ -2,14 +2,19 @@ import { southPolarToMap } from '../../astro/frames.ts'
 import { ILLUM_NODATA, type IllumGrid, illumPct } from '../../astro/illumination.ts'
 import { mapToPixel } from '../../astro/dem.ts'
 import type { Site } from '../../astro/ephemeris.ts'
+import { SCENE_COLORS } from '../sceneColors.ts'
 
 /**
- * Yearly illumination layer. Permanently shadowed ground is blue with diagonal stripes (so it
- * reads without colour); lit ground goes from dark grey (rarely lit) to warm yellow (almost
- * always lit). Same vertex order as buildTerrainGeometry, with a baked hillshade like the
- * slope layer.
+ * Yearly illumination layer. Permanently shadowed ground is blue (series-6) with diagonal stripes
+ * (so it reads without colour); lit ground goes from neutral dark grey (rarely lit) to the Sun's
+ * amber (series-4, almost always lit). Same vertex order as buildTerrainGeometry, with a baked
+ * hillshade like the slope layer.
  */
-export const ILLUM_COLORS = { psr: '#2f6bd8', dim: '#3a3a3a', bright: '#ffd23f' } as const
+export const ILLUM_COLORS = {
+  psr: SCENE_COLORS.earth,
+  dim: '#3a3a3a',
+  bright: SCENE_COLORS.sun,
+} as const
 
 const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
 const PSR = rgb(ILLUM_COLORS.psr)

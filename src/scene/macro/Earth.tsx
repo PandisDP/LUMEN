@@ -17,6 +17,7 @@ import { DSN_STATIONS, dsnVisibility } from '../../astro/dsn.ts'
 import { earthSpin } from './macroGeometry.ts'
 import { asset } from '../../data/catalog.ts'
 import { useT } from '../../i18n/index.ts'
+import { SCENE_COLORS } from '../sceneColors.ts'
 
 const DAY_MS = 24 * HOUR_MS
 
@@ -245,7 +246,10 @@ function DsnMarkers({ radius, timeMs }: { radius: number; timeMs: number }) {
             ]}
           >
             <sphereGeometry args={[radius * (on ? 0.06 : 0.035), 12, 12]} />
-            <meshBasicMaterial color={on ? '#ffd23f' : '#5a6475'} toneMapped={false} />
+            <meshBasicMaterial
+              color={on ? SCENE_COLORS.ok : SCENE_COLORS.stopped}
+              toneMapped={false}
+            />
           </mesh>
         )
       })}

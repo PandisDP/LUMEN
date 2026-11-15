@@ -6,6 +6,8 @@ import { type MsgKey, useT } from '../i18n/index.ts'
 import { useRoverStore } from '../store/useRoverStore.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
 import { formatDeg, formatDistance, formatHours, formatPct } from './format.ts'
+import { Busy } from './kit/Busy.tsx'
+import { Notice } from './kit/Notice.tsx'
 import { LevelTag } from './LevelTag.tsx'
 import { type Level, scienceLevel } from './levels.ts'
 
@@ -39,7 +41,7 @@ function RoverLine() {
 /** Rover access to permanently shadowed ground (water ice) from the landing point. */
 export function IceCard({ detail }: { detail?: SiteDetail }) {
   const t = useT()
-  const { available, data, loading, error, rover } = useIceAccess(detail)
+  const { available, data, loading, error, retry, rover } = useIceAccess(detail)
   if (!available) return null
   const sci = data ? scienceScore(data, rover) : undefined
   const level: Level | undefined = sci === undefined ? undefined : scienceLevel(sci)
@@ -61,8 +63,12 @@ export function IceCard({ detail }: { detail?: SiteDetail }) {
           </span>
         )}
       </div>
-      {error && <p className="error">{error.message}</p>}
-      {!data && <p className="card__sub">{t('common.computing')}</p>}
+      {error && (
+        <Notice tone="error" action={{ label: t('kit.retry'), onClick: retry }}>
+          {t('metrics.error', { msg: error.message })}
+        </Notice>
+      )}
+      {!data && !error && <Busy>{t('common.computing')}</Busy>}
       {data && (
         <>
           <p className="card__big">
@@ -73,9 +79,9 @@ export function IceCard({ detail }: { detail?: SiteDetail }) {
           {data.insidePsr ? (
             <p className="card__sub">{t('ice.inside')}</p>
           ) : data.straightM === null ? (
-            <p className="card__sub">
+            <Notice tone="note">
               {t('ice.noneInRadius', { r: formatDistance(ICE_RADIUS_M) })}
-            </p>
+            </Notice>
           ) : (
             <>
               <p className="card__sub">

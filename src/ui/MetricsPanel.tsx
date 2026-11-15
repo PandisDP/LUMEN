@@ -16,6 +16,8 @@ import { ThermalCard } from './ThermalCard.tsx'
 import { IceCard, ScienceWeight } from './IceCard.tsx'
 import { scienceScore } from '../astro/iceAccess.ts'
 import { useIceAccess } from '../hooks/useScience.ts'
+import { Busy } from './kit/Busy.tsx'
+import { Notice } from './kit/Notice.tsx'
 import { LevelTag } from './LevelTag.tsx'
 import { type Level, dteLevel, energyLevel, nightLevel } from './levels.ts'
 import { useShow } from './audience.ts'
@@ -184,7 +186,7 @@ function Stat({ label, value, level }: { label: string; value: string; level?: L
       <dt>{label}</dt>
       <dd>
         {value}
-        {level && level !== 'good' && (
+        {level && (
           <>
             {' '}
             <LevelTag level={level} />
@@ -278,7 +280,7 @@ export function MetricsPanel() {
   const sourceText = useSourceText()
   const scenario = useMissionStore(selectActiveScenario)
   const missionDays = useMissionStore((s) => s.missionDays)
-  const { info, detail, instant, result, loading, error, timeMs } = useInstant(scenario)
+  const { info, detail, instant, result, loading, error, retry, timeMs } = useInstant(scenario)
   const battery = useBattery(result?.series)
   const thermal = useThermal(result?.series)
   const ice = useIceAccess(detail)
@@ -306,14 +308,18 @@ export function MetricsPanel() {
       <p className="panel__label">{t('metrics.now')}</p>
       <h2 className="panel__title">{siteText(info)?.name ?? '…'}</h2>
       {detail && <p className="hint">{sourceText(detail)}</p>}
-      {error && <p className="error">{t('metrics.error', { msg: error.message })}</p>}
+      {error && (
+        <Notice tone="error" action={{ label: t('kit.retry'), onClick: retry }}>
+          {t('metrics.error', { msg: error.message })}
+        </Notice>
+      )}
       {instant ? (
         <>
           <SunCard i={instant} detail={detail} />
           <EarthCard i={instant} detail={detail} />
         </>
       ) : (
-        <p className="hint">{t('common.computing')}</p>
+        !error && <Busy>{t('common.computing')}</Busy>
       )}
       {show.thermal && (
         <ThermalCard

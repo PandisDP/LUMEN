@@ -7,17 +7,22 @@ import { selectActiveScenario, useMissionStore } from '../store/useMissionStore.
 import { getLang, type Lang, useT } from '../i18n/index.ts'
 import { useSiteText } from '../i18n/sites.ts'
 import { runDateSweep } from '../workers/astroClient.ts'
+import { alpha, chartFont, useChartTheme } from './chartTheme.ts'
 import { formatDeg, formatPct } from './format.ts'
+import { Busy } from './kit/Busy.tsx'
+import { Notice } from './kit/Notice.tsx'
 
 /** The DE441 table covers 2026–2030; later dates fall back to the analytic model. */
 const FROM_MS = Date.UTC(2026, 0, 1)
 const SWEEP_DAYS = 1826 // through 2030-12-31
 
-const COLOR_ENERGY = '#ffc94d'
-const COLOR_DTE = '#4da6ff'
-const COLOR_SUN_EL = '#e9eef8'
-const COLOR_AXIS = '#9aa8bd'
-const PAD = { left: 38, right: 38, top: 8, bottom: 22 }
+/**
+ * One Y axis (%): energy bars and the DTE line. The maximum Sun elevation is another measure, so
+ * it gets its own lane under the plot (a small profile plus the values in degrees), not a second
+ * axis. `bottom` holds that lane and the year labels.
+ */
+const PAD = { left: 42, right: 10, top: 8, bottom: 50 }
+const LANE_H = 12
 
 const LOCALES: Record<Lang, string> = { es: 'es-MX', en: 'en-US' }
 const monthName = (m: MonthStat) =>
@@ -41,6 +46,7 @@ function SeasonCanvas({
 }) {
   const { ref, width, height, dpr } = useCanvasSize()
   const t = useT()
+  const theme = useChartTheme()
 
   useEffect(() => {
     const ctx = context2d(ref.current, width, height, dpr)
@@ -53,86 +59,104 @@ function SeasonCanvas({
     const plotH = y1 - y0
     if (plotW <= 0 || plotH <= 0) return
     const bw = plotW / months.length
-
-    // Left axis: Sun elevation. Half-degree steps around the observed range, always showing 0.
-    let elMin = 0
-    let elMax = 0
-    for (const m of months) {
-      if (m.maxSunEl < elMin) elMin = m.maxSunEl
-      if (m.maxSunEl > elMax) elMax = m.maxSunEl
-    }
-    const lo = Math.floor(elMin * 2) / 2
-    const hi = Math.max(lo + 0.5, Math.ceil(elMax * 2) / 2)
-    const yEl = (deg: number) => y1 - ((deg - lo) / (hi - lo)) * plotH
     const yPct = (pct: number) => y1 - (pct / 100) * plotH
+    const NUM = chartFont(10, 'mono')
+    const LABEL = chartFont(10)
 
-    ctx.font = '10px system-ui, sans-serif'
+    // The single axis: gridlines and ticks at 0 %, 50 %, 100 %.
+    ctx.font = NUM
     ctx.textBaseline = 'middle'
-
-    // Horizontal gridlines at 0 %, 50 %, 100 %.
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)'
-    ctx.fillStyle = COLOR_AXIS
-    ctx.textAlign = 'left'
+    ctx.textAlign = 'right'
+    ctx.strokeStyle = alpha(theme.grid, 0.9)
+    ctx.fillStyle = theme.inkMuted
     for (const p of [0, 50, 100]) {
       const y = yPct(p)
       ctx.beginPath()
       ctx.moveTo(x0, y)
       ctx.lineTo(x1, y)
       ctx.stroke()
-      ctx.fillText(`${p} %`, x1 + 4, y)
+      ctx.fillText(`${p} %`, x0 - 5, y)
     }
-    // Left ticks: lo, 0, hi.
-    ctx.textAlign = 'right'
-    ctx.fillStyle = COLOR_SUN_EL
-    for (const deg of new Set([lo, 0, hi])) {
-      ctx.fillText(`${deg.toFixed(1)}°`, x0 - 4, yEl(deg))
-    }
-    // Horizon line (0°).
-    ctx.strokeStyle = 'rgba(233,238,248,0.25)'
-    ctx.setLineDash([3, 3])
-    ctx.beginPath()
-    ctx.moveTo(x0, yEl(0))
-    ctx.lineTo(x1, yEl(0))
-    ctx.stroke()
-    ctx.setLineDash([])
 
-    // Energy bars: brighter when most landing days are sunlit at touchdown.
+    // Energy bars: stronger when most landing days are sunlit at touchdown.
+    const barW = Math.max(1, bw - 2)
+    const radius = Math.min(4, barW / 2)
+    ctx.fillStyle = theme.sun
     months.forEach((m, i) => {
       const h = y1 - yPct(m.energyPct)
-      ctx.fillStyle = COLOR_ENERGY
-      ctx.globalAlpha = 0.3 + 0.6 * m.sunAtLandingFrac
-      ctx.fillRect(x0 + i * bw + 1, y1 - h, Math.max(1, bw - 2), h)
+      if (h <= 0) return
+      ctx.globalAlpha = 0.35 + 0.65 * m.sunAtLandingFrac
+      ctx.beginPath()
+      if (typeof ctx.roundRect === 'function')
+        ctx.roundRect(x0 + i * bw + 1, y1 - h, barW, h, [radius, radius, 0, 0])
+      else ctx.rect(x0 + i * bw + 1, y1 - h, barW, h)
+      ctx.fill()
     })
     ctx.globalAlpha = 1
 
-    const line = (color: string, y: (m: MonthStat) => number, w: number) => {
-      ctx.strokeStyle = color
-      ctx.lineWidth = w
-      ctx.beginPath()
-      months.forEach((m, i) => {
-        const x = x0 + (i + 0.5) * bw
-        if (i === 0) ctx.moveTo(x, y(m))
-        else ctx.lineTo(x, y(m))
-      })
-      ctx.stroke()
-    }
-    line(COLOR_DTE, (m) => yPct(m.dtePct), 1.5)
-    line(COLOR_SUN_EL, (m) => yEl(m.maxSunEl), 2)
+    // DTE line.
+    ctx.strokeStyle = theme.earth
+    ctx.lineWidth = 2
+    ctx.lineJoin = 'round'
+    ctx.beginPath()
+    months.forEach((m, i) => {
+      const x = x0 + (i + 0.5) * bw
+      if (i === 0) ctx.moveTo(x, yPct(m.dtePct))
+      else ctx.lineTo(x, yPct(m.dtePct))
+    })
+    ctx.stroke()
     ctx.lineWidth = 1
+
+    // Lane under the axis: maximum Sun elevation of each month, as a profile and as values.
+    let lo = 0
+    let hi = 0
+    for (const m of months) {
+      if (m.maxSunEl < lo) lo = m.maxSunEl
+      if (m.maxSunEl > hi) hi = m.maxSunEl
+    }
+    if (hi - lo < 0.5) hi = lo + 0.5
+    const laneTop = y1 + 6
+    const yEl = (deg: number) => laneTop + LANE_H - ((deg - lo) / (hi - lo)) * LANE_H
+    ctx.fillStyle = alpha(theme.inkMuted, 0.1)
+    ctx.fillRect(x0, laneTop - 2, plotW, LANE_H + 4)
+    ctx.strokeStyle = theme.ink
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    months.forEach((m, i) => {
+      const x = x0 + (i + 0.5) * bw
+      if (i === 0) ctx.moveTo(x, yEl(m.maxSunEl))
+      else ctx.lineTo(x, yEl(m.maxSunEl))
+    })
+    ctx.stroke()
+    ctx.lineWidth = 1
+    ctx.font = LABEL
+    ctx.fillStyle = theme.inkMuted
+    ctx.textAlign = 'right'
+    ctx.fillText(`${t('timeline.sun')} °`, x0 - 5, laneTop + LANE_H / 2)
+    // Values: as many as fit without touching (every k-th month).
+    ctx.font = NUM
+    ctx.textAlign = 'center'
+    ctx.fillStyle = theme.ink
+    const valueW = ctx.measureText('−0.0').width + 6
+    const every = Math.max(1, Math.ceil(valueW / bw))
+    months.forEach((m, i) => {
+      if (i % every !== 0) return
+      ctx.fillText(m.maxSunEl.toFixed(1), x0 + (i + 0.5) * bw, laneTop + LANE_H + 10)
+    })
 
     // Year separators and labels.
     ctx.textAlign = 'left'
     ctx.textBaseline = 'alphabetic'
-    ctx.fillStyle = COLOR_AXIS
+    ctx.fillStyle = theme.inkMuted
+    ctx.strokeStyle = alpha(theme.inkMuted, 0.35)
     months.forEach((m, i) => {
       if (m.month !== 0 && i !== 0) return
       const x = x0 + i * bw
-      ctx.strokeStyle = 'rgba(255,255,255,0.18)'
       ctx.beginPath()
       ctx.moveTo(x, y0)
-      ctx.lineTo(x, y1 + 4)
+      ctx.lineTo(x, height - 2)
       ctx.stroke()
-      ctx.fillText(String(m.year), x + 3, height - 6)
+      ctx.fillText(String(m.year), x + 3, height - 3)
     })
 
     // Month holding the active landing date.
@@ -141,12 +165,12 @@ function SeasonCanvas({
       return d.getUTCFullYear() === m.year && d.getUTCMonth() === m.month
     })
     if (sel >= 0) {
-      ctx.strokeStyle = '#fff'
+      ctx.strokeStyle = theme.ink
       ctx.lineWidth = 2
-      ctx.strokeRect(x0 + sel * bw, y0, Math.max(2, bw), plotH)
+      ctx.strokeRect(x0 + sel * bw, y0, Math.max(2, bw), laneTop + LANE_H + 2 - y0)
       ctx.lineWidth = 1
     }
-  }, [ref, width, height, dpr, months, selectedMs])
+  }, [ref, width, height, dpr, months, selectedMs, theme, t])
 
   const pick = (e: PointerEvent<HTMLCanvasElement>) => {
     if (!months.length) return
@@ -209,7 +233,7 @@ export function SeasonChart() {
         {t('season.hint', { days: missionDays, site: siteText(info)?.name ?? '…' })}
       </p>
       {!detail ? (
-        <p className="hint">{t('season.noDetail')}</p>
+        <Notice tone="note">{t('season.noDetail')}</Notice>
       ) : months.length ? (
         <>
           <div className="season__chart">
@@ -217,13 +241,14 @@ export function SeasonChart() {
           </div>
           <div className="season__legend">
             <span>
-              <i style={{ background: COLOR_ENERGY }} /> {t('season.legend.energy')}
+              <i style={{ background: 'var(--series-4)' }} /> {t('season.legend.energy')}
             </span>
             <span>
-              <i style={{ background: COLOR_DTE }} /> {t('season.legend.dte')}
+              <i className="chart-key-line" style={{ background: 'var(--series-6)' }} />{' '}
+              {t('season.legend.dte')}
             </span>
             <span>
-              <i style={{ background: COLOR_SUN_EL }} /> {t('season.legend.sunEl')}
+              <i className="chart-key-line chart-key-line--thin" /> {t('season.legend.sunEl')}
             </span>
           </div>
           <p className="season__text">
@@ -245,7 +270,7 @@ export function SeasonChart() {
           </p>
         </>
       ) : (
-        <p className="hint">{t('season.computing')}</p>
+        <Busy>{t('season.computing')}</Busy>
       )}
     </div>
   )

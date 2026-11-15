@@ -67,6 +67,13 @@ Responde al reto de NASA Space Apps sobre iluminación y comunicaciones en el po
 | Aprender la interfaz                          | **Guía**: recorrido de 12 pasos (← → y Esc); botón **?** en cada panel y en el HUD con su explicación; [guía completa](docs/GUIA.md)                                                                                                                                                                                                                |
 | Organizar la pantalla                         | Paneles plegables (minimizados muestran un resumen); teclas **1 / 2 / 3** para el izquierdo, el derecho y el inferior; **Ocultar paneles** deja solo la escena                                                                                                                                                                                      |
 
+## Diseño
+
+La interfaz sigue el sistema visual de la familia Genius Mining AI: tema oscuro por defecto y
+claro como alternativa (botón de sol o luna en la barra superior), un solo botón de acción por
+vista, estados siempre con glifo y texto, y la mascota Killa en el asistente y las esperas. El
+reparto de color, los tokens y las piezas están en [docs/DISENO.md](docs/DISENO.md).
+
 ## Recursos de la NASA y la CSA
 
 El reto pide usar cuatro recursos. Así los usa LUMEN 3D (detalle técnico en [ARCHITECTURE.md § 6](ARCHITECTURE.md#6-integración-de-los-recursos-externos)):

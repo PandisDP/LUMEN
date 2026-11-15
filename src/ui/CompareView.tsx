@@ -75,7 +75,7 @@ function Cell({ label, value, level }: { label: string; value: string; level?: L
       <dt>{label}</dt>
       <dd>
         {value}
-        {level && level !== 'good' && (
+        {level && (
           <>
             {' '}
             <LevelTag level={level} />
@@ -295,17 +295,24 @@ function ScenarioColumn({
           <dd>
             {m ? m.score : '…'}
             <small>/100</small>
+            {m && <LevelTag level={scoreLevel(m.score)} />}
           </dd>
           {m && <Delta value={m.score} base={base?.score} better="up" />}
         </div>
         <div data-level={m ? energyLevel(m.energyPct) : undefined}>
           <dt>☀ {t('row.energy')}</dt>
-          <dd>{m ? formatPct(m.energyPct) : '…'}</dd>
+          <dd>
+            {m ? formatPct(m.energyPct) : '…'}
+            {m && <LevelTag level={energyLevel(m.energyPct)} />}
+          </dd>
           {m && <Delta value={m.energyPct} base={base?.energyPct} better="up" unit=" %" />}
         </div>
         <div data-level={m ? nightLevel(m.longestDarkH) : undefined}>
           <dt>☾ {t('row.night')}</dt>
-          <dd>{m ? formatNight(m.longestDarkH) : '…'}</dd>
+          <dd>
+            {m ? formatNight(m.longestDarkH) : '…'}
+            {m && <LevelTag level={nightLevel(m.longestDarkH)} />}
+          </dd>
           {m && <Delta value={m.longestDarkH} base={base?.longestDarkH} better="down" unit=" h" />}
         </div>
       </dl>
@@ -449,7 +456,7 @@ export function CompareView() {
           {scenarios.length < MAX_SCENARIOS && (
             <button
               type="button"
-              className="btn btn--accent"
+              className="btn btn--primary"
               onClick={() => setEditor({ id: null })}
             >
               {t('compare.new')}

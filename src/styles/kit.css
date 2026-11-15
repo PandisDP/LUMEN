@@ -1,0 +1,387 @@
+/* Kit pieces of the design system: Notice, Empty, Stat, band states. */
+
+/* ---------- Notice: glyph + tint + text, and the button that fixes it ---------- */
+.notice {
+  --notice-ink: var(--muted-foreground);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 4px;
+  align-items: start;
+  margin: 8px 0;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: left;
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted) / 0.5);
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-card, 14px);
+}
+
+.notice > * {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.notice > .notice__glyph {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: hsl(var(--notice-ink));
+  border: 1.5px solid currentcolor;
+  border-radius: 50%;
+}
+
+.notice[data-tone='warning'] {
+  --notice-ink: var(--band-excess);
+  background: hsl(var(--band-excess-fill) / 0.1);
+  border-color: hsl(var(--band-excess-fill) / 0.4);
+}
+
+.notice[data-tone='error'] {
+  --notice-ink: var(--band-deficit);
+  background: hsl(var(--destructive) / 0.07);
+  border-color: hsl(var(--destructive) / 0.35);
+}
+
+.notice[data-tone='success'] {
+  --notice-ink: var(--band-ok);
+  background: hsl(var(--band-ok-fill) / 0.1);
+  border-color: hsl(var(--band-ok-fill) / 0.4);
+}
+
+.notice__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.notice__body {
+  overflow-wrap: anywhere;
+}
+
+.notice__body > p {
+  margin: 0 0 6px;
+}
+
+.notice__body > :last-child {
+  margin-bottom: 0;
+}
+
+.notice__actions,
+.empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.notice__actions .btn,
+.empty__actions .btn {
+  height: auto;
+  min-height: var(--control-h-compact, 28px);
+  padding-block: 4px;
+  white-space: normal;
+  text-align: left;
+  background-color: hsl(var(--card));
+}
+
+.notice__body > .notice__next {
+  margin-top: 12px;
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Inside a card (ice, metrics) the notice is a quieter, tighter block. */
+.card .notice,
+.pmap__msg .notice {
+  margin: 6px 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: var(--radius-md);
+}
+
+/* ---------- Empty: what is missing and the button that solves it ---------- */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 20px 18px;
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--muted) / 0.35);
+  border: 1px dashed hsl(var(--input));
+  border-radius: var(--radius-card, 14px);
+}
+
+.empty__mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  line-height: 1;
+  color: hsl(var(--primary));
+  background: hsl(var(--accent));
+  border-radius: 50%;
+}
+
+.empty__title {
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lead, 15px);
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.empty__hint {
+  max-width: 52ch;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.empty__hint > p {
+  margin: 0 0 6px;
+}
+
+.empty__hint > p:last-child {
+  margin-bottom: 0;
+}
+
+.empty__actions {
+  justify-content: center;
+}
+
+/* ---------- Busy: "computing…" ---------- */
+.busy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: hsl(var(--muted-foreground));
+}
+
+.busy__dots {
+  display: inline-flex;
+  flex: none;
+  gap: 3px;
+}
+
+.busy__dots i {
+  width: 5px;
+  height: 5px;
+  background: hsl(var(--primary));
+  border-radius: 50%;
+  animation: busy-dot 1.2s var(--ease-out, ease-out) infinite;
+}
+
+.busy__dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.busy__dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes busy-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .busy__dots i {
+    animation: none;
+    opacity: 0.7;
+  }
+}
+
+/* The card that is still being ranked already pulses as a whole. */
+.top__facts--loading .busy {
+  margin: 0;
+  font-size: inherit;
+}
+
+.pmap__msg .busy {
+  padding: 6px 12px;
+  background: hsl(var(--card) / 0.85);
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--pill, 999px);
+}
+
+.pmap__msg .notice {
+  max-width: 320px;
+  background-color: hsl(var(--card));
+  pointer-events: auto;
+}
+
+/* ---------- Stat: a headline figure ---------- */
+.kstat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kstat__label {
+  font-size: var(--text-micro, 11px);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.kstat__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-display);
+  font-size: var(--text-title, 20px);
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.kstat__value small {
+  font-family: inherit;
+  font-size: 0.55em;
+  font-weight: 400;
+  color: hsl(var(--muted-foreground));
+}
+
+.kstat__value .lvl {
+  align-self: center;
+  font-size: 0.5em;
+}
+
+.kstat[data-level='good'] .kstat__value {
+  color: hsl(var(--band-ok));
+}
+
+.kstat[data-level='warn'] .kstat__value {
+  color: hsl(var(--band-excess));
+}
+
+.kstat[data-level='bad'] .kstat__value {
+  color: hsl(var(--band-deficit));
+}
+
+.kstat__delta {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: hsl(var(--muted-foreground));
+}
+
+.kstat__delta[data-good='true'] {
+  color: hsl(var(--band-ok));
+}
+
+.kstat__delta[data-good='false'] {
+  color: hsl(var(--band-deficit));
+}
+
+/* ---------- Band glyphs where colour used to stand alone ---------- */
+/* The level mark inherits the ink of the figure it accompanies. */
+.fact .lvl,
+.top__score .lvl,
+.shift__cell .lvl,
+.big3 dd .lvl,
+.sweep-score .lvl {
+  margin-left: 3px;
+  vertical-align: 0.08em;
+  font-size: 0.62em;
+}
+
+.top__score .lvl {
+  vertical-align: 0.2em;
+  font-size: 0.5em;
+}
+
+.fact[data-level='good'] .lvl {
+  color: hsl(var(--band-ok));
+}
+
+.fact[data-level='warn'] .lvl {
+  color: hsl(var(--band-excess));
+}
+
+.fact[data-level='bad'] .lvl {
+  color: hsl(var(--band-deficit));
+}
+
+.big3 dd .lvl {
+  vertical-align: 0.25em;
+  font-size: 0.5em;
+}
+
+.sweep-score[data-level='good'] {
+  color: hsl(var(--band-ok));
+}
+
+.sweep-score[data-level='warn'] {
+  color: hsl(var(--band-excess));
+}
+
+.sweep-score[data-level='bad'] {
+  color: hsl(var(--band-deficit));
+}
+
+.dmark__glyph {
+  margin-left: 3px;
+  font-size: 0.8em;
+}
+
+.pcal__glyph {
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  font-size: 9px;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.pcal__legend i {
+  color: #fff;
+  font-size: 8px;
+}
+
+.pcal__legend i.pcal__legend-none {
+  color: hsl(var(--band-deficit));
+  font-size: 10px;
+}
+
+.pcal__legend i.pcal__legend-rank {
+  font-size: 10px;
+}
+
+/* ---------- Planner: no solution, few solutions ---------- */
+.ptop__none .ptop__bars {
+  margin-top: 10px;
+}
+
+.ptop .notice,
+.ptop .empty,
+.ptop > .busy {
+  margin: 8px 0;
+}
