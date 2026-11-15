@@ -201,7 +201,7 @@ export const scene: QuDict = {
   'welcome.kicker': 'Killapa uray polonman misión',
   'welcome.title': "Aswan allin uraykuna k'itita akllay",
   'welcome.sub':
-    "Maypi uraykunaykita akllay, Intipa k'anchayninpas Tiqsimuyuwan rimaypas kananpaq. 4 pasopi qhawanki.",
+    "Maypi uraykunaykita akllay, Intipa k'anchayninpas Tiqsimuyuwan rimaypas kananpaq. {n} pasopi qhawanki.",
   'welcome.start': 'Qallariy',
   'welcome.tour': 'Pusasqa puriyta qhaway',
   'choose.kicker': 'Ñawpaq paso',

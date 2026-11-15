@@ -2,7 +2,7 @@ import { openChallenges } from '../hooks/useChallengeState.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
 import { AUDIENCES, chooseStage, useUiStore } from '../store/useUiStore.ts'
-import { IconCompare, IconLander, IconMountain, IconOrbit } from './icons.tsx'
+import { IconCompare, IconLander, IconMountain, IconOrbit, IconTarget } from './icons.tsx'
 import { STEPS } from './steps.ts'
 import { TopSites } from './TopSites.tsx'
 
@@ -33,10 +33,12 @@ function AudiencePicker() {
   )
 }
 
-/** First screen after the splash: the goal in one sentence and the four steps. */
+/** First screen after the splash: the goal in one sentence and the steps (planners start with "Plan"). */
 export function Welcome() {
   const t = useT()
   const setStage = useUiStore((s) => s.setStage)
+  const planner = useUiStore((s) => s.audience === 'planner')
+  const shift = planner ? 2 : 1
   const startTour = useUiStore((s) => s.startTour)
 
   return (
@@ -46,13 +48,20 @@ export function Welcome() {
         <h1 id="intro-title" className="intro__title">
           {t('welcome.title')}
         </h1>
-        <p className="intro__sub">{t('welcome.sub')}</p>
+        <p className="intro__sub">{t('welcome.sub', { n: STEPS.length + shift - 1 })}</p>
         <ol className="intro__steps">
+          {planner && (
+            <li>
+              <span className="intro__num">1</span>
+              <IconTarget />
+              <span>{t('step.plan')}</span>
+            </li>
+          )}
           {STEPS.map((step, i) => {
             const Icon = ICONS[i]
             return (
               <li key={step.id}>
-                <span className="intro__num">{i + 1}</span>
+                <span className="intro__num">{i + shift}</span>
                 <Icon />
                 <span>{t(step.title)}</span>
               </li>

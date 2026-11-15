@@ -78,9 +78,9 @@ export const es = {
   'tour.welcome.title': 'Bienvenido a Killa Landing',
   'tour.welcome.body':
     'Una sola pregunta: si aterrizas aquí y en esta fecha, ¿tendrás Sol para la energía y la Tierra a la vista para comunicarte?',
-  'tour.steps.title': '4 pasos',
+  'tour.steps.title': 'Los pasos',
   'tour.steps.body':
-    'Órbita → Superficie → Aterrizaje → Decidir. Avanza con «Ir a…» o salta a cualquier paso.',
+    'Órbita → Superficie → Aterrizaje → Decidir; en modo Planificador, antes va Planificar. Avanza con «Ir a…» o salta a cualquier paso.',
   'tour.scene.title': 'La escena 3D',
   'tour.scene.body':
     'Arrastra para girar, rueda para acercar. Clic en un punto para volar a ese sitio. Usa «Fondo: Sol / Tierra».',
@@ -797,7 +797,7 @@ export const es = {
   'welcome.kicker': 'Misión al polo sur de la Luna',
   'welcome.title': 'Toma la mejor decisión de alunizaje',
   'welcome.sub':
-    'Elige dónde aterrizar para tener luz del Sol y contacto con la Tierra. Lo verás en 4 pasos.',
+    'Elige dónde aterrizar para tener luz del Sol y contacto con la Tierra. Lo verás en {n} pasos.',
   'welcome.start': 'Empezar',
   'welcome.tour': 'Ver el recorrido guiado',
   'choose.kicker': 'Paso previo',
