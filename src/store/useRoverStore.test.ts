@@ -50,3 +50,15 @@ describe('rover in the URL', () => {
     expect(rover().autoDeploy).toBe('skip-descent')
   })
 })
+
+describe('rover egress phase', () => {
+  it('a restart or a new rover rolls down the ramps; seeking skips them', () => {
+    rover().setPhase('drive')
+    rover().restart()
+    expect(rover().phase).toBe('egress')
+    rover().seekTo(60_000)
+    expect(rover().phase).toBe('drive')
+    rover().setRover('csa-rover')
+    expect(rover().phase).toBe('egress')
+  })
+})

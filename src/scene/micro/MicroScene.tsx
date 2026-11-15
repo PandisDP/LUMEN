@@ -1,5 +1,5 @@
 import { Environment, Html, Line, PerspectiveCamera } from '@react-three/drei'
-import { type ThreeEvent, useFrame } from '@react-three/fiber'
+import { type ThreeEvent, useFrame, useThree } from '@react-three/fiber'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import {
   BufferAttribute,
@@ -323,7 +323,20 @@ function CraftEnvironment({
     const f = followRover && tm.active && Number.isFinite(tm.sunFrac) ? tm.sunFrac : siteSun
     const scene = state.scene
     scene.environmentIntensity = 0.55 * f
+    // Auto-exposure, as a camera would: a grazing Sun leaves the ground dim, and in permanent
+    // shadow only the headlights light it. Eased so entering the shadow is not a jump.
+    const want = f > 0.05 ? closeUpExposure(el) : SHADOW_EXPOSURE
+    const gl = state.gl
+    gl.toneMappingExposure += (want - gl.toneMappingExposure) * 0.06
   })
+  // Back to the scene's normal exposure when the close-up ends.
+  const glRef = useThree((s) => s.gl)
+  useEffect(() => {
+    const before = glRef.toneMappingExposure
+    return () => {
+      glRef.toneMappingExposure = before
+    }
+  }, [glRef])
   const sun = skyPoint(az, Math.max(el, 1), 60, 0)
   return (
     // Re-rendered only when the Sun has moved a few degrees.
@@ -339,6 +352,17 @@ function CraftEnvironment({
       </mesh>
     </Environment>
   )
+}
+
+/** Exposure of the close-up camera in permanent shadow (headlights only). */
+const SHADOW_EXPOSURE = 1.5
+/**
+ * Exposure for a Sun at `elDeg`: 1 from 12° up, rising to 2.5 for a Sun on the horizon, where
+ * level ground gets almost no direct light.
+ */
+const closeUpExposure = (elDeg: number) => {
+  const k = Math.min(1, Math.max(0, (12 - elDeg) / 12))
+  return 1 + 1.5 * k * k
 }
 
 const SHADOW_HALF_TILE = 10_500
@@ -376,7 +400,7 @@ function SunLight({
     // The site-wide intensity is the Sun at the lander; under the rover use the Sun at the rover.
     if (on && Number.isFinite(tm.sunFrac)) {
       light.intensity = 3.2 * tm.sunFrac
-      if (bounceRef.current) bounceRef.current.intensity = 0.32 * tm.sunFrac
+      if (bounceRef.current) bounceRef.current.intensity = 0.4 * tm.sunFrac
     }
   })
   useEffect(() => {
@@ -405,7 +429,7 @@ function SunLight({
       <ambientLight intensity={earthshine} color="#9fb7ff" />
       {/* Close-ups: sunlit regolith bounces light up into the shadowed side of the craft. */}
       {tight && (
-        <hemisphereLight ref={bounceRef} args={['#000000', '#b3aca2', 0.32 * instant.sunFrac]} />
+        <hemisphereLight ref={bounceRef} args={['#000000', '#b3aca2', 0.4 * instant.sunFrac]} />
       )}
       <object3D ref={targetRef} position={[0, 0, 0]} />
       <directionalLight
@@ -500,7 +524,15 @@ export function MicroScene() {
       {!landing || (landed && landerCam === 'eye') ? (
         <LookControls />
       ) : roving && detail && grids && traverse.data ? (
-        <RoverRig detail={detail} grids={grids} traverse={traverse.data} />
+        <RoverRig
+          detail={detail}
+          grids={grids}
+          traverse={traverse.data}
+          sunAzDeg={instant?.sky.sun.az}
+          sunElDeg={instant?.sky.sun.el}
+          earthAzDeg={instant?.sky.earth.az}
+          earthElDeg={instant?.sky.earth.el}
+        />
       ) : landed ? (
         instant && <LanderOrbit instant={instant} />
       ) : (

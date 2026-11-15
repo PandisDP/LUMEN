@@ -1,145 +1,44 @@
 import { Html, Line } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
-import {
-  type BufferGeometry,
-  type Group,
-  type Mesh,
-  MeshStandardMaterial,
-  type PerspectiveCamera,
-  Quaternion,
-  type SpotLight,
-  Vector3,
-} from 'three'
+import { type Group, type PerspectiveCamera, Quaternion, Vector3 } from 'three'
 import type { DemGrid } from '../../astro/dem.ts'
 import { groundSampler } from '../../astro/descent.ts'
 import { latLonToScene } from '../../astro/terrainMesh.ts'
-import {
-  type RoverId,
-  type TraverseResult,
-  sampleTraverse,
-  traverseDurationMs,
-} from '../../astro/traverse.ts'
+import { type TraverseResult, sampleTraverse, traverseDurationMs } from '../../astro/traverse.ts'
 import { HOUR_MS } from '../../astro/constants.ts'
 import type { SiteDetail } from '../../data/catalog.ts'
 import { useT } from '../../i18n/index.ts'
 import { FOV, useMissionStore } from '../../store/useMissionStore.ts'
 import { useRoverStore } from '../../store/useRoverStore.ts'
 import { formatDistance } from '../../ui/format.ts'
+import { RoverModel } from './RoverModel.tsx'
+import {
+  ROVER_RIGS,
+  type RoverModelHandle,
+  approach,
+  emptyRoverFrame,
+  turnPerM,
+  wheelLayout,
+} from './roverRig.ts'
+import { EGRESS, egressPose } from './egress.ts'
 import { roverTelemetry } from './roverTelemetry.ts'
+import { surfaceHalfSize } from './surface.ts'
+import { terrainMeshHeight } from './trackGeometry.ts'
+import { terrainSegments } from './nearGroundField.ts'
 
 type P3 = [number, number, number]
 const DEG = Math.PI / 180
 const UP = new Vector3(0, 1, 0)
+const RIGHT = new Vector3(1, 0, 0)
 const PUBLISH_EVERY_S = 0.1
-/** Body length of each rover model, m (the micro-rover is drawn larger than life: see ROVER_SCALE). */
-const ROVER_SCALE: Record<RoverId, number> = { rover: 1.4, 'csa-rover': 2.2 }
-const WHEEL_R = 0.16
-const WHEELS: [number, number][] = [
-  [-0.36, -0.42],
-  [0.36, -0.42],
-  [-0.38, 0],
-  [0.38, 0],
-  [-0.36, 0.42],
-  [0.36, 0.42],
-]
-
-function useRoverMaterials() {
-  const m = useMemo(
-    () => ({
-      body: new MeshStandardMaterial({ color: '#d9dde3', metalness: 0.55, roughness: 0.45 }),
-      gold: new MeshStandardMaterial({ color: '#d4a733', metalness: 0.85, roughness: 0.35 }),
-      dark: new MeshStandardMaterial({ color: '#2b2d33', metalness: 0.6, roughness: 0.6 }),
-      panel: new MeshStandardMaterial({ color: '#1b2f6b', metalness: 0.4, roughness: 0.25 }),
-      lamp: new MeshStandardMaterial({
-        color: '#fff7d6',
-        emissive: '#fff2b0',
-        emissiveIntensity: 0,
-      }),
-    }),
-    [],
-  )
-  useEffect(() => () => Object.values(m).forEach((x) => x.dispose()), [m])
-  return m
-}
-
 /**
- * Six-wheeled rover (procedural, about 1 m long before scaling): chassis, rocker wheels, a
- * camera mast, a tilted solar panel and a small dish. Built facing -z (north); the rig turns it
- * to its heading and lays it on the local slope.
+ * Visual limits for time-lapse playback (the traverse runs at hundreds of times real speed):
+ * the wheels turn as if driving at most this fast, and the steering shows the path curvature
+ * amplified, since a real 50 m bend is half a degree of steer.
  */
-function RoverModel({
-  wheels,
-  lampRef,
-  lampMesh,
-  m,
-}: {
-  wheels: React.RefObject<Group | null>
-  lampRef: React.RefObject<SpotLight | null>
-  lampMesh: React.RefObject<Mesh<BufferGeometry, MeshStandardMaterial> | null>
-  m: ReturnType<typeof useRoverMaterials>
-}) {
-  return (
-    <>
-      <mesh position={[0, 0.34, 0]} material={m.body} castShadow receiveShadow>
-        <boxGeometry args={[0.58, 0.2, 0.96]} />
-      </mesh>
-      <mesh position={[0, 0.46, 0.05]} material={m.gold} castShadow>
-        <boxGeometry args={[0.5, 0.06, 0.7]} />
-      </mesh>
-      {/* Solar panel, tilted back. */}
-      <mesh position={[0, 0.62, 0.12]} rotation={[-0.35, 0, 0]} material={m.panel} castShadow>
-        <boxGeometry args={[0.78, 0.02, 0.66]} />
-      </mesh>
-      {/* Camera mast and head. */}
-      <mesh position={[0.18, 0.78, -0.36]} material={m.dark} castShadow>
-        <cylinderGeometry args={[0.018, 0.018, 0.66, 8]} />
-      </mesh>
-      <mesh position={[0.18, 1.12, -0.38]} material={m.body} castShadow>
-        <boxGeometry args={[0.2, 0.09, 0.1]} />
-      </mesh>
-      <mesh ref={lampMesh} position={[0.18, 1.12, -0.435]} material={m.lamp}>
-        <boxGeometry args={[0.16, 0.05, 0.012]} />
-      </mesh>
-      {/* High-gain dish. */}
-      <mesh position={[-0.2, 0.74, -0.2]} rotation={[0.9, 0, 0]} material={m.body} castShadow>
-        <cylinderGeometry args={[0.14, 0.02, 0.05, 16]} />
-      </mesh>
-      <group ref={wheels}>
-        {WHEELS.map(([x, z], i) => (
-          <mesh
-            key={i}
-            position={[x, WHEEL_R, z]}
-            rotation={[0, 0, Math.PI / 2]}
-            material={m.dark}
-            castShadow
-          >
-            <cylinderGeometry args={[WHEEL_R, WHEEL_R, 0.1, 12]} />
-          </mesh>
-        ))}
-      </group>
-      {/* Faint fill (light bounced off the regolith) so the craft reads against the low Sun. */}
-      <pointLight
-        position={[0.6, 1.6, 1.2]}
-        intensity={2.2}
-        distance={7}
-        decay={1.4}
-        color="#cfd8ff"
-      />
-      {/* Headlights for the permanent shadow. */}
-      <spotLight
-        ref={lampRef}
-        position={[0.18, 1.12, -0.45]}
-        angle={0.6}
-        penumbra={0.5}
-        distance={60}
-        decay={1.2}
-        intensity={0}
-        color="#fff3c4"
-      />
-    </>
-  )
-}
+const MAX_VISUAL_SPEED_MS = 0.9
+const STEER_GAIN = 8
 
 /**
  * The rover, its route and the camera that follows it. Each frame the traverse result is
@@ -151,23 +50,60 @@ export function RoverRig({
   detail,
   grids,
   traverse,
+  sunAzDeg,
+  sunElDeg,
+  earthAzDeg,
+  earthElDeg,
+  surfaceY,
 }: {
   detail: SiteDetail
   grids: DemGrid[]
   traverse: TraverseResult
+  /**
+   * Sun and Earth in the local sky (azimuth clockwise from north, elevation): the solar array
+   * and the high-gain dish point at them. Without them they keep a rest pose.
+   */
+  sunAzDeg?: number
+  sunElDeg?: number
+  earthAzDeg?: number
+  earthElDeg?: number
+  /**
+   * Scene height of the surface the wheels stand on, if the caller draws something finer than
+   * the terrain (close-range micro-relief). Defaults to the terrain as drawn.
+   */
+  surfaceY?: (x: number, z: number) => number
 }) {
   const t = useT()
   const gl = useThree((s) => s.gl)
   const run = useRoverStore((s) => s.run)
   const seek = useRoverStore((s) => s.seek)
   const roverId = useRoverStore((s) => s.roverId)
-  const m = useRoverMaterials()
+  const spec = ROVER_RIGS[roverId]
+  const layout = useMemo(() => wheelLayout(spec), [spec])
   const rover = useRef<Group>(null)
-  const wheels = useRef<Group>(null)
-  const lamp = useRef<SpotLight>(null)
-  const lampMesh = useRef<Mesh<BufferGeometry, MeshStandardMaterial>>(null)
+  const model = useRef<RoverModelHandle>(null)
+  const frame = useRef(emptyRoverFrame(0))
+  /** Last heading and distance (for the path curvature) and the filtered curvature. */
+  const turn = useRef({ headingDeg: NaN, distM: NaN, perM: 0, target: 0 })
 
   const ground = useMemo(() => groundSampler(detail.site, grids), [detail, grids])
+  /**
+   * Height of what is drawn under the wheels: the terrain mesh or the DEM, whichever is on top
+   * (the mesh cells are wider than the DEM posts, so the two differ by decimetres on curved
+   * ground; the wheel tracks and the close-range ground follow the same surface).
+   */
+  const surface = useMemo(() => {
+    if (surfaceY) return surfaceY
+    if (!grids.length) return ground.groundY
+    const meshY = terrainMeshHeight(
+      detail.site,
+      grids,
+      ground,
+      surfaceHalfSize(detail),
+      terrainSegments(Boolean(detail.terrain)),
+    )
+    return (x: number, z: number) => Math.max(ground.groundY(x, z), meshY(x, z))
+  }, [surfaceY, detail, grids, ground])
   const duration = traverseDurationMs(traverse)
   const departMs = traverse.t[0]
   const route = useMemo(
@@ -179,6 +115,14 @@ export function RoverRig({
   )
   const goal = route[route.length - 1]
 
+  /** Traverse time at which the rover is where the ramps end: the drive starts there. */
+  const driveStartMs = useMemo(() => {
+    const i = traverse.distM.findIndex((d) => d >= EGRESS.groundR)
+    return i > 0 ? traverse.t[i] - traverse.t[0] : 0
+  }, [traverse])
+  const egressHeadingDeg = traverse.plan.points[0]?.headingDeg ?? 0
+  /** Real seconds into the roll down the ramps. */
+  const egressS = useRef(0)
   const clock = useRef(0)
   const spin = useRef(0)
   const sincePublish = useRef(0)
@@ -193,6 +137,7 @@ export function RoverRig({
       n: new Vector3(),
       q: new Quaternion(),
       yaw: new Quaternion(),
+      w: new Vector3(),
     }),
     [],
   )
@@ -200,6 +145,7 @@ export function RoverRig({
 
   useEffect(() => {
     clock.current = 0
+    egressS.current = 0
     first.current = true
   }, [run, traverse])
   useEffect(() => {
@@ -237,7 +183,7 @@ export function RoverRig({
     const wheel = (e: WheelEvent) => {
       e.preventDefault()
       const o = orbit.current
-      o.dist = Math.max(4, Math.min(400, o.dist * Math.exp(e.deltaY * 0.001)))
+      o.dist = Math.max(2.5, Math.min(400, o.dist * Math.exp(e.deltaY * 0.001)))
     }
     el.addEventListener('pointerdown', down)
     el.addEventListener('pointermove', move)
@@ -254,31 +200,82 @@ export function RoverRig({
   useFrame((state, delta) => {
     const store = useRoverStore.getState()
     const dt = Math.min(delta, 0.1)
-    if (store.playing) clock.current = Math.min(duration, clock.current + dt * store.speed * 1000)
+    const egress = store.phase === 'egress' && traverse.plan.points.length > 1
+    if (egress) {
+      // Rolling off the lander is a real-time prelude: it takes no mission time.
+      if (store.playing) egressS.current += dt
+      if (egressS.current >= EGRESS.durationS) {
+        clock.current = driveStartMs
+        store.setPhase('drive')
+      }
+    } else if (store.playing)
+      clock.current = Math.min(duration, clock.current + dt * store.speed * 1000)
+    const egressP = egress ? Math.min(1, egressS.current / EGRESS.durationS) : 1
     const s = sampleTraverse(traverse, departMs + clock.current)
     const g = rover.current
     if (!s || !g) return
 
     const p = latLonToScene(detail.site, s.lat, s.lon, s.heightM)
-    tmp.pos.set(p[0], ground.groundY(p[0], p[2]), p[2])
-    // Lay the chassis on the local slope, then turn it to its heading.
-    const d = 3
-    const dydx = (ground.groundY(p[0] + d, p[2]) - ground.groundY(p[0] - d, p[2])) / (2 * d)
-    const dydz = (ground.groundY(p[0], p[2] + d) - ground.groundY(p[0], p[2] - d)) / (2 * d)
+    tmp.pos.set(p[0], surface(p[0], p[2]), p[2])
+    // Lay the chassis on the local slope (over its own footprint), then turn it to its heading.
+    const d = spec.lengthM * 0.6
+    const dydx = (surface(p[0] + d, p[2]) - surface(p[0] - d, p[2])) / (2 * d)
+    const dydz = (surface(p[0], p[2] + d) - surface(p[0], p[2] - d)) / (2 * d)
     tmp.n.set(-dydx, 1, -dydz).normalize()
     tmp.q.setFromUnitVectors(UP, tmp.n)
     tmp.yaw.setFromAxisAngle(UP, -s.headingDeg * DEG)
-    g.position.copy(tmp.pos)
-    g.quaternion.copy(tmp.q).multiply(tmp.yaw)
-    const scale = ROVER_SCALE[roverId]
-    g.scale.setScalar(scale)
-    if (wheels.current && store.playing) {
-      spin.current += (s.speedMs * dt * store.speed) / (WHEEL_R * scale)
-      for (const w of wheels.current.children) w.rotation.x = spin.current
+    if (egress) {
+      // On the pallet, then down the ramps along the first heading of the route.
+      const e = egressPose(egressP)
+      const a = egressHeadingDeg * DEG
+      const x = Math.sin(a) * e.r
+      const z = -Math.cos(a) * e.r
+      tmp.pos.set(x, Math.max(surface(0, 0) + e.h, surface(x, z)), z)
+      tmp.yaw.setFromAxisAngle(UP, -egressHeadingDeg * DEG)
+      tmp.q.setFromAxisAngle(RIGHT, e.pitch)
+      g.position.copy(tmp.pos)
+      g.quaternion.copy(tmp.yaw).multiply(tmp.q)
+    } else {
+      g.position.copy(tmp.pos)
+      g.quaternion.copy(tmp.q).multiply(tmp.yaw)
+    }
+
+    // What the model articulates on: the ground under each wheel, relative to the chassis plane.
+    if (frame.current.wheelHeights.length !== layout.length)
+      frame.current = emptyRoverFrame(layout.length)
+    const f = frame.current
+    for (let i = 0; i < layout.length; i++) {
+      tmp.w.set(layout[i].x, 0, -layout[i].u).applyQuaternion(g.quaternion).add(tmp.pos)
+      // On the ramps the wheels ride the channels: no articulation.
+      f.wheelHeights[i] = egress ? 0 : (surface(tmp.w.x, tmp.w.z) - tmp.w.y) * tmp.n.y
+    }
+    // Path curvature from the change of heading over the distance driven (not across a seek).
+    const tr = turn.current
+    const stepM = s.distM - tr.distM
+    if (Math.abs(stepM) > 1e-4 && Math.abs(stepM) < 40)
+      tr.target = turnPerM(tr.headingDeg, s.headingDeg, stepM)
+    else if (!(Math.abs(stepM) < 40)) tr.target = 0
+    tr.headingDeg = s.headingDeg
+    tr.distM = s.distM
+    tr.perM = approach(tr.perM, s.driving ? tr.target : 0, dt, 0.35)
+    if (store.playing) {
+      const rolling = egress && egressP > EGRESS.deployShare ? 0.5 : 0
+      const v = egress ? rolling : Math.min(s.speedMs * store.speed, MAX_VISUAL_SPEED_MS)
+      spin.current = (spin.current + (v * dt) / spec.wheelR) % (Math.PI * 2)
     }
     const dark = s.sunFrac < 0.05
-    if (lamp.current) lamp.current.intensity = dark ? 18 : 0
-    lampMesh.current?.material.setValues({ emissiveIntensity: dark ? 3 : 0 })
+    f.spin = spin.current
+    f.turnPerM = tr.perM * STEER_GAIN
+    f.headingDeg = egress ? egressHeadingDeg : s.headingDeg
+    f.sunAzDeg = sunAzDeg ?? null
+    f.sunElDeg = sunElDeg ?? null
+    f.earthAzDeg = earthAzDeg ?? null
+    f.earthElDeg = earthElDeg ?? null
+    f.link = s.earthFrac >= 0.5
+    f.dark = dark
+    f.driving = s.driving && store.playing
+    f.drilling = clock.current >= duration
+    model.current?.update(f, dt)
 
     const tm = roverTelemetry
     tm.x = tmp.pos.x
@@ -300,32 +297,41 @@ export function RoverRig({
     tm.driving = s.driving
     tm.timeMs = departMs + clock.current
     tm.done = clock.current >= duration
+    tm.egress = egressP
 
     // Camera.
     const camera = state.camera as PerspectiveCamera
-    const fx = Math.sin(s.headingDeg * DEG)
-    const fz = -Math.cos(s.headingDeg * DEG)
+    const camHeading = egress ? egressHeadingDeg : s.headingDeg
+    const fx = Math.sin(camHeading * DEG)
+    const fz = -Math.cos(camHeading * DEG)
     let fov = 50
     if (store.cam === 'mast') {
-      tmp.want.set(tmp.pos.x + fx * 0.2, tmp.pos.y + 1.25 * scale, tmp.pos.z + fz * 0.2)
-      tmp.look.set(tmp.pos.x + fx * 30, tmp.pos.y + 1.1 * scale, tmp.pos.z + fz * 30)
+      // Out of the mast camera, in the rover's own frame (it pitches and rolls with it).
+      tmp.want.set(spec.eye.x, spec.eye.y, -spec.eye.u).applyQuaternion(g.quaternion).add(tmp.pos)
+      tmp.look
+        .set(spec.eye.x, spec.eye.y - 3, -spec.eye.u - 30)
+        .applyQuaternion(g.quaternion)
+        .add(tmp.pos)
       fov = 70
     } else if (store.cam === 'top') {
       const h = Math.max(120, orbit.current.dist * 14)
       tmp.want.set(tmp.pos.x - fx * 1, tmp.pos.y + h, tmp.pos.z - fz * 1)
       tmp.look.copy(tmp.pos)
     } else {
+      // Distances scale with the vehicle, so either rover fills the same part of the frame.
       const o = orbit.current
-      const yaw = (s.headingDeg + 180 + o.yaw) * DEG
-      const horiz = Math.cos(o.pitch * DEG) * o.dist
+      // During the egress: pulled back and to the side, so the lander and the ramps are in frame.
+      const dist = o.dist * spec.camScale * (egress ? 2.2 : 1)
+      const yaw = (camHeading + (egress ? 62 : 180) + o.yaw) * DEG
+      const horiz = Math.cos(o.pitch * DEG) * dist
       tmp.want.set(
         tmp.pos.x + Math.sin(yaw) * horiz,
-        tmp.pos.y + Math.sin(o.pitch * DEG) * o.dist + 1,
+        tmp.pos.y + Math.sin(o.pitch * DEG) * dist + spec.heightM * 0.45,
         tmp.pos.z - Math.cos(yaw) * horiz,
       )
       // Never under the terrain.
-      tmp.want.setY(Math.max(tmp.want.y, ground.groundY(tmp.want.x, tmp.want.z) + 1))
-      tmp.look.set(tmp.pos.x, tmp.pos.y + 0.6 * scale, tmp.pos.z)
+      tmp.want.setY(Math.max(tmp.want.y, surface(tmp.want.x, tmp.want.z) + 0.25))
+      tmp.look.set(tmp.pos.x, tmp.pos.y + spec.heightM * 0.45, tmp.pos.z)
     }
     if (first.current) {
       camera.position.copy(tmp.want)
@@ -353,7 +359,7 @@ export function RoverRig({
   return (
     <>
       <group ref={rover}>
-        <RoverModel wheels={wheels} lampRef={lamp} lampMesh={lampMesh} m={m} />
+        <RoverModel key={roverId} id={roverId} ref={model} />
       </group>
       {route.length > 1 && (
         <Line points={route} color="#7fd4ff" lineWidth={2} dashed dashSize={6} gapSize={4} />
