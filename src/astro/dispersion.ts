@@ -19,6 +19,8 @@ export interface DispersionInput {
   startMs: number
   missionDays: number
   linkMarginDeg?: number
+  /** Count the link only while a DSN complex sees the Moon. */
+  requireDsn?: boolean
   rings?: number
   perRing?: number
   /** Coarser than the main scenario on purpose: N horizons must stay interactive. */
@@ -102,7 +104,7 @@ export function computeDispersion(
     const site = { lat: p.lat, lon: p.lon, heightM: horizon.terrainHeightM }
     const mask = { azStepDeg: horizon.azStepDeg, elevDeg: horizon.elevDeg }
     const m = computeMetrics(
-      evaluateSite(eph, site, mask, input.linkMarginDeg ?? 0),
+      evaluateSite(eph, site, mask, input.linkMarginDeg ?? 0, input.requireDsn),
       input.startMs,
       toMs,
     )

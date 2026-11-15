@@ -86,13 +86,14 @@ export function useOptimize(scenario: Scenario, requested: boolean) {
   const radiusM = useMissionStore((s) => s.ellipseRadiusM) || 500
   const missionDays = useMissionStore((s) => s.missionDays)
   const linkMarginDeg = useMissionStore((s) => s.linkMarginDeg)
+  const requireDsn = useMissionStore((s) => s.requireDsn)
   const scienceWeight = useMissionStore((s) => s.scienceWeight)
   const rover = useMissionStore((s) => s.hardwareLimits.roverMaxSlopeDeg)
   const dems = detail ? demRefs(detail) : []
   const usable = !!detail?.terrain && dems.length > 0
   const key =
     requested && usable && result && !loading
-      ? `opt|${detail!.site.lat}:${detail!.site.lon}|${scenario.startMs}|${missionDays}|${linkMarginDeg}|${radiusM}|${scienceWeight}|${rover}`
+      ? `opt|${detail!.site.lat}:${detail!.site.lon}|${scenario.startMs}|${missionDays}|${linkMarginDeg}|${requireDsn}|${radiusM}|${scienceWeight}|${rover}`
       : null
   const r = useAsync(key, () => {
     let p = optimizeCache.get(key!)
@@ -105,6 +106,7 @@ export function useOptimize(scenario: Scenario, requested: boolean) {
           startMs: scenario.startMs,
           missionDays,
           linkMarginDeg,
+          requireDsn,
           scienceWeight,
           roverMaxSlopeDeg: rover,
         },

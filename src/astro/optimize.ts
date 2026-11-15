@@ -21,6 +21,8 @@ export interface OptimizeInput {
   startMs: number
   missionDays: number
   linkMarginDeg?: number
+  /** Count the link only while a DSN complex sees the Moon. */
+  requireDsn?: boolean
   /** Blend with the ice-access score (needs an illumination map). */
   scienceWeight?: number
   roverMaxSlopeDeg?: number
@@ -92,7 +94,7 @@ export function computeOptimize(
     const mask = { azStepDeg: horizon.azStepDeg, elevDeg: horizon.elevDeg }
     const site = { lat, lon, heightM: horizon.terrainHeightM }
     const m = computeMetrics(
-      evaluateSite(eph, site, mask, input.linkMarginDeg ?? 0),
+      evaluateSite(eph, site, mask, input.linkMarginDeg ?? 0, input.requireDsn),
       input.startMs,
       toMs,
     )

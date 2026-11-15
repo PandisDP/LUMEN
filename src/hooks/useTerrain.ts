@@ -37,10 +37,11 @@ export function useDispersion(scenario: Scenario) {
   const radiusM = useMissionStore((s) => s.ellipseRadiusM)
   const missionDays = useMissionStore((s) => s.missionDays)
   const linkMarginDeg = useMissionStore((s) => s.linkMarginDeg)
+  const requireDsn = useMissionStore((s) => s.requireDsn)
   const dems = detail ? demRefs(detail) : []
   const key =
     detail && result && !loading && radiusM > 0 && dems.length
-      ? `${siteKey(detail)}|${scenario.startMs}|${missionDays}|${linkMarginDeg}|${radiusM}`
+      ? `${siteKey(detail)}|${scenario.startMs}|${missionDays}|${linkMarginDeg}|${requireDsn}|${radiusM}`
       : null
   const r = useAsync(key, () => {
     let p = dispersionCache.get(key!)
@@ -53,6 +54,7 @@ export function useDispersion(scenario: Scenario) {
           startMs: scenario.startMs,
           missionDays,
           linkMarginDeg,
+          requireDsn,
         },
         dems,
       )
@@ -73,6 +75,7 @@ export function useDispersion(scenario: Scenario) {
     i.startMs === scenario.startMs &&
     i.missionDays === missionDays &&
     i.linkMarginDeg === linkMarginDeg &&
+    (i.requireDsn ?? false) === requireDsn &&
     i.radiusM === radiusM
   const wanted = radiusM > 0 && dems.length > 0
   return {
