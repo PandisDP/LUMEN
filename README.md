@@ -8,6 +8,15 @@ Killa Landing is a static web application for **planning landings at the lunar s
 
 The interface is available in Spanish, English and Quechua (the Quechua translation is partial and under review). Use the **EN** button in the top bar or add `?lang=en` to the address.
 
+## Team
+
+| Name                  | In Killa Landing                                | Background                                                                                                                                                               |
+| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Jorge Lozano**      | Mathematical models and optimisation algorithms | Computer scientist and mining engineer; MSc researcher in reinforcement learning for mine planning                                                                       |
+| **Erick Lozano**      | User experience and front-end design            | Software developer with more than 5 years of professional experience                                                                                                     |
+| **Melissa Amado**     | Use case and startup development                | Serial entrepreneur; NASA Challenge Global Nominee 2024 (Cusco) and Women in Tech LATAM awardee                                                                          |
+| **Fernando Figueroa** | Mission control and aerospace knowledge         | 25 years at NASA Stennis; Discipline Lead for Autonomous Systems and Operations and founder of its Autonomous Systems Lab; NASA Exceptional Technology Achievement Medal |
+
 Related documents:
 
 | Document                           | Contents                                                          |
@@ -35,6 +44,7 @@ Related documents:
 
 ## Contents
 
+- [Team](#team)
 - [What the app does](#what-the-app-does)
 - [Feature tour](#feature-tour)
 - [URL parameters](#url-parameters)
@@ -626,6 +636,7 @@ If PowerShell refuses to run npm with _"npm.ps1 cannot be loaded because running
 
 ## Credits
 
+- **Developed by** Jorge Lozano, Erick Lozano, Melissa Amado and Fernando Figueroa: see [Team](#team).
 - **Topography**: Lunar Orbiter Laser Altimeter (LOLA), Lunar Reconnaissance Orbiter, NASA/GSFC, via the PDS Geosciences Node.
 - **Ephemerides**: JPL Horizons, DE441 (NASA/JPL-Caltech).
 - **LRO WAC mosaics of the globe and the south pole**: NASA/GSFC/Arizona State University, via [Moon Trek](https://trek.nasa.gov/moon/) (NASA/JPL Solar System Treks).
