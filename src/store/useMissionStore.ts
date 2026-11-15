@@ -40,7 +40,8 @@ export type ScenarioPatch = Partial<Omit<Scenario, 'id'>>
 
 export type View = 'macro' | 'micro' | 'landing'
 /** After touchdown: through the lander's eye, or orbiting around the craft. */
-export type LanderCam = 'eye' | 'orbit'
+/** After touchdown: the lander's eye, an orbit around it, or the rover traverse to the ice. */
+export type LanderCam = 'eye' | 'orbit' | 'rover'
 export type BottomPanel = 'timeline' | 'horizon' | 'dates' | 'seasons' | 'map'
 
 export const MAX_SCENARIOS = 4

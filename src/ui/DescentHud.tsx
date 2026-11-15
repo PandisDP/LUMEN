@@ -3,6 +3,8 @@ import { panelIllumination, sunAheadApproach } from '../astro/descent.ts'
 import { BRAKING_DV_MS, totalDescentDvMs } from '../astro/descentPhysics.ts'
 import { LANDERS } from '../config/landers.ts'
 import { relocateTo } from '../scene/micro/relocate.ts'
+import { useRoverTraverse } from '../hooks/useRover.ts'
+import { useRoverStore } from '../store/useRoverStore.ts'
 import { useInstant } from '../hooks/useScenario.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { descentTelemetry } from '../scene/micro/descentTelemetry.ts'
@@ -39,6 +41,7 @@ export function DescentHud() {
   const vehicleId = useDescentStore((s) => s.vehicleId)
   const flight = useDescentStore((s) => s.flight)
   const { restart, setPlaying, setSpeed, seekTo, setMode, setVehicle } = useDescentStore.getState()
+  const rover = useRoverTraverse()
   const physics = flight.flown === 'physics'
   const sum = flight.summary
 
@@ -259,6 +262,19 @@ export function DescentHud() {
         <button type="button" className="btn" onClick={again}>
           <IconRestart /> {t('landing.restart')}
         </button>
+        {rover.available && (
+          <button
+            type="button"
+            className="btn"
+            title={t('rover.fullMissionTitle')}
+            onClick={() => {
+              useRoverStore.getState().setAutoDeploy('after-landing')
+              again()
+            }}
+          >
+            {t('rover.fullMission')}
+          </button>
+        )}
         <label className="toggle">
           {t('landing.speed')}
           <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
@@ -353,6 +369,20 @@ export function DescentHud() {
           <button type="button" className="btn" onClick={() => setView('micro')}>
             {t('landing.toSurface')}
           </button>
+          {rover.available && (
+            <button
+              type="button"
+              className="btn btn--accent"
+              disabled={!rover.data}
+              aria-busy={rover.loading}
+              onClick={() => {
+                useRoverStore.getState().restart()
+                setLanderCam('rover')
+              }}
+            >
+              ❄ {t('rover.deploy')}
+            </button>
+          )}
         </div>
       )}
       <p className="hint">{orbit ? t('landing.orbitHint') : t('landing.hint')}</p>

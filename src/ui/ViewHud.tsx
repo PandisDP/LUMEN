@@ -16,6 +16,7 @@ import {
 import { useDescentStore } from '../store/useDescentStore.ts'
 import { type MacroFrame, useViewStore } from '../store/useViewStore.ts'
 import { DescentHud } from './DescentHud.tsx'
+import { RoverHud } from './RoverHud.tsx'
 import { HelpButton } from './HelpButton.tsx'
 import { CompassTape } from './CompassTape.tsx'
 import { formatDistance, formatLatLon } from './format.ts'
@@ -176,8 +177,8 @@ export function ViewHud() {
     return (
       <div className="viewhud" data-tour="viewhud">
         {/* The compass follows the lander's eye; meaningless while orbiting the craft. */}
-        {!(landed && landerCam === 'orbit') && compass}
-        <DescentHud />
+        {!(landed && landerCam !== 'eye') && compass}
+        {landed && landerCam === 'rover' ? <RoverHud /> : <DescentHud />}
       </div>
     )
   }

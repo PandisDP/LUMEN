@@ -1,3 +1,4 @@
+import { roverTelemetry } from '../scene/micro/roverTelemetry.ts'
 import { useEffect } from 'react'
 import { useDescentStore } from '../store/useDescentStore.ts'
 import { maxMissionDays, useMissionStore } from '../store/useMissionStore.ts'
@@ -18,7 +19,8 @@ export function usePlayback() {
       // The descent replays at a fixed mission time: the lighting must not drift under it.
       const descending =
         useMissionStore.getState().view === 'landing' && !useDescentStore.getState().landed
-      if (descending) acc = 0
+      // During the rover traverse the rover's own clock sets the mission time.
+      if (descending || roverTelemetry.active) acc = 0
       else if (acc >= 1 / 30) {
         const s = useMissionStore.getState()
         const next = s.offsetH + acc * s.speed
