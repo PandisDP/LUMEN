@@ -16,39 +16,45 @@ interface SiteText {
 const EN: Record<string, SiteText> = {
   'shackleton-rim': {
     name: 'Shackleton rim',
-    mission: 'Artemis III candidate region',
+    mission: 'Artemis III candidate region (2022 list) · LUPEX candidate area',
     description:
       'One of the best-lit spots on the Moon: the crater rim stands above almost all the surrounding relief.',
   },
   'connecting-ridge': {
     name: 'Connecting ridge',
-    mission: 'Artemis III candidate region',
+    mission: 'Artemis III candidate region (2022 list)',
     description: 'Raised ridge joining the Shackleton and de Gerlache craters.',
   },
   'de-gerlache-rim': {
     name: 'de Gerlache rim',
-    mission: 'Artemis III candidate region',
+    mission: 'Artemis III candidate region (2022; de Gerlache Rim 2 stays in 2024)',
     description: 'Rim of de Gerlache crater, with long periods of illumination.',
   },
   'malapert-massif': {
     name: 'Malapert massif',
-    mission: 'Artemis III candidate region',
+    mission: 'Artemis III candidate region (2022 and 2024 lists)',
     description:
       'A ~5 km mountain facing the Earth: excellent direct visibility for communications.',
   },
   'mons-mouton': {
     name: 'Mons Mouton',
-    mission: 'IM-2 Athena (Intuitive Machines, CLPS 2025)',
+    mission: "IM-2 Athena (CLPS 2025) · Artemis III 2024 · Griffin-1 and Chang'e-8 area",
     description: 'Elevated plateau; landing site of the CLPS IM-2 mission.',
   },
   'nobile-rim': {
     name: 'Nobile rim',
-    mission: 'VIPER rover target area',
+    mission: 'VIPER rover target area · Nobile Rim 1 (Artemis III 2024)',
     description: 'Area west of Nobile crater with nearby permanently shadowed regions.',
+  },
+  'nobile-rim-2': {
+    name: 'Nobile Rim 2',
+    mission: 'Artemis III candidate region (2024 list)',
+    description:
+      'Second candidate region on the Nobile rim. Point taken from a multi-criteria study of Artemis III sites (84.20°S, 60.70°E); approximate.',
   },
   haworth: {
     name: 'Haworth floor',
-    mission: 'Permanently shadowed region (PSR)',
+    mission: 'Permanently shadowed region (PSR) · Haworth (Artemis III 2024)',
     description:
       'Floor of a deep crater: the Sun never clears its walls. Extreme cold and possible ice.',
   },
@@ -100,6 +106,12 @@ const EN: Record<string, SiteText> = {
     name: 'Blue Ghost M1',
     mission: 'Firefly Aerospace, CLPS 2025',
     description: 'Mare Crisium, 18.6°N. Operated a full lunar day with the Earth high in the sky.',
+  },
+  'im-3': {
+    name: 'IM-3 (Reiner Gamma)',
+    mission: 'Intuitive Machines, CLPS (planned 2027)',
+    description:
+      'Reiner Gamma magnetic swirl in Oceanus Procellarum (7.6°N, 58.7°W), target of the Lunar Vertex experiment. Flat mare with the Earth high in the sky.',
   },
   slim: {
     name: 'SLIM',

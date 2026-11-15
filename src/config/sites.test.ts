@@ -59,7 +59,7 @@ describe.skipIf(!existsSync(indexPath))('generated site data', () => {
       return Math.max(...e.filter((_, i) => Math.abs(((i * step - az + 540) % 360) - 180) <= 22.5))
     }
 
-    it('are the ten reference seeds, polar ones keep the 20 m path', () => {
+    it('are the eleven reference seeds, polar ones keep the 20 m path', () => {
       expect(reference.map((s) => s.id).sort()).toEqual(
         [
           'apollo-11',
@@ -70,6 +70,7 @@ describe.skipIf(!existsSync(indexPath))('generated site data', () => {
           'change-4',
           'change-6',
           'im-1',
+          'im-3',
           'luna-25',
           'slim',
         ].sort(),
