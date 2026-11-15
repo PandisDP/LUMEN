@@ -2796,3 +2796,28 @@ body.picking .stage canvas {
 .viewhud__countdowns .countdown {
   margin: 0;
 }
+
+/* Descent HUD: engine row of the physical model and its warnings. */
+.dhud__telemetry--engine {
+  margin-top: 4px;
+}
+
+.dhud__propbar > span {
+  background: #7ee081;
+}
+
+.dhud__propbar > span[data-low='true'] {
+  background: #ff6b6b;
+}
+
+.dhud__warn {
+  color: #ffc94d;
+}
+
+.dhud__warn .linklike {
+  font-size: inherit;
+}
+
+.dhud__telemetry--engine > div:last-child {
+  display: grid;
+}

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { CatmullRomCurve3, type PerspectiveCamera, Vector3 } from 'three'
 import {
   DESCENT_DURATION_S,
+  DESCENT_EYE_M,
   angleBetweenDeg,
   descentAttitude,
   descentPhase,
@@ -13,7 +14,11 @@ import {
   skyDirection,
   sunBehindApproach,
 } from '../../astro/descent.ts'
+import { planDescent } from '../../astro/descentPlan.ts'
+import { G0, sampleDescent, thrustTiltDeg } from '../../astro/descentPhysics.ts'
 import type { DemGrid } from '../../astro/dem.ts'
+import { slopeAtStack } from '../../astro/slope.ts'
+import { landerPreset } from '../../config/landers.ts'
 import type { InstantState } from '../../astro/instant.ts'
 import type { SiteDetail } from '../../data/catalog.ts'
 import { useDescentStore } from '../../store/useDescentStore.ts'
@@ -59,6 +64,38 @@ export function DescentControls({
     )
     return { curve, timeMap: descentTimeMap(waypoints), ground: groundSampler(detail.site, grids) }
   }, [detail, grids, approachAz])
+
+  // The physical descent (when selected and it closes); otherwise the kinematic curve is flown.
+  const mode = useDescentStore((s) => s.mode)
+  const vehicleId = useDescentStore((s) => s.vehicleId)
+  const plan = useMemo(() => {
+    if (mode !== 'physics') return null
+    const { ground } = path
+    const slopeAt = grids.length
+      ? (x: number, z: number) => {
+          const p = ground.latLon(x, z)
+          return slopeAtStack(grids, p.lat, p.lon)
+        }
+      : undefined
+    return planDescent(
+      landerPreset(vehicleId),
+      { ground: ground.groundY, slopeAt },
+      approachAz,
+      surfaceHalfSize(detail),
+    )
+  }, [mode, vehicleId, path, grids, approachAz, detail])
+  const flight = plan?.result.summary.ok ? plan.result : null
+  const duration = flight ? flight.summary.durationS : DESCENT_DURATION_S
+  useEffect(() => {
+    const hazard = plan?.hazard
+    useDescentStore.getState().publishFlight({
+      flown: flight ? 'physics' : 'kinematic',
+      durationS: duration,
+      summary: plan?.result.summary ?? null,
+      hazard: hazard ? { ...hazard, ...path.ground.latLon(hazard.x, hazard.z) } : null,
+      noSafeGround: plan?.noSafeGround ?? false,
+    })
+  }, [plan, flight, duration, path])
 
   const finalRef = useRef(landedPose(instant, detail))
   const sunRef = useRef(instant)
@@ -129,10 +166,29 @@ export function DescentControls({
     const camera = state.camera as PerspectiveCamera
     const store = useDescentStore.getState()
     const step = store.playing ? Math.min(delta, 0.1) * store.speed : 0
-    clock.current = Math.min(DESCENT_DURATION_S, clock.current + step)
+    clock.current = Math.min(duration, clock.current + step)
     const t = clock.current
 
-    path.curve.getPoint(path.timeMap(t), pos)
+    const tm = descentTelemetry
+    if (flight) {
+      // The model tracks the footpads; the camera rides at eye height above them.
+      const s = sampleDescent(flight, t)
+      pos.set(s.pos[0], s.pos[1] + DESCENT_EYE_M, s.pos[2])
+      const m0 = flight.samples.massKg[0]
+      const v = landerPreset(vehicleId)
+      tm.phase = s.phase
+      tm.vSpeed = s.vel[1]
+      tm.hSpeed = Math.hypot(s.vel[0], s.vel[2])
+      tm.propKg = s.massKg - v.dryKg
+      tm.propFrac = tm.propKg / flight.summary.propStartKg
+      tm.dvMs = v.ispS * G0 * Math.log(m0 / s.massKg)
+      tm.throttle = s.throttle
+      tm.tiltDeg = thrustTiltDeg(s.thrustDir)
+    } else {
+      path.curve.getPoint(path.timeMap(t), pos)
+      tm.phase = descentPhase(t)
+      tm.hSpeed = tm.propKg = tm.propFrac = tm.dvMs = tm.throttle = tm.tiltDeg = NaN
+    }
     camera.position.copy(pos)
 
     // The look-away offset drifts back to the flight attitude once released.
@@ -153,11 +209,9 @@ export function DescentControls({
     }
 
     // Telemetry for the HUD (read at 10 Hz from the DOM side).
-    const tm = descentTelemetry
-    tm.phase = descentPhase(t)
     tm.altAglM = pos.y - path.ground.groundY(pos.x, pos.z)
     tm.distM = dist
-    if (step > 0 && Number.isFinite(lastY.current)) {
+    if (!flight && step > 0 && Number.isFinite(lastY.current)) {
       const v = (pos.y - lastY.current) / step
       tm.vSpeed += (v - tm.vSpeed) * 0.2
     }
@@ -179,7 +233,7 @@ export function DescentControls({
       useViewStore.getState().set({ az, el, fov: fov.current })
     }
 
-    if (t >= DESCENT_DURATION_S && !store.landed) {
+    if (t >= duration && !store.landed) {
       // Hand over to the surface view's controls in exactly this pose.
       useViewStore.getState().set({ az, el, fov: fov.current })
       useMissionStore.getState().lookAt(az, el, fov.current)

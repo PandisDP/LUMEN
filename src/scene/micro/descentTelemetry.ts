@@ -20,4 +20,16 @@ export const descentTelemetry = {
   sunOffAxisDeg: NaN,
   /** The Sun's disc is inside the camera frame and not hidden by the horizon. */
   sunInFov: false,
+  // Physical model only (NaN in the kinematic fly-down).
+  /** Horizontal speed, m/s. */
+  hSpeed: NaN,
+  /** Propellant on board, kg, and as a fraction of what the approach started with. */
+  propKg: NaN,
+  propFrac: NaN,
+  /** Δv spent so far in the simulated approach, m/s. */
+  dvMs: NaN,
+  /** Thrust as a fraction of the maximum, 0..1. */
+  throttle: NaN,
+  /** Tilt of the thrust axis from the vertical, deg. */
+  tiltDeg: NaN,
 }
