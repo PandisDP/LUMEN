@@ -13,7 +13,7 @@ const reducedMotion = () =>
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-/** The LUMEN mark: planet with an orbit ring, drawn larger and animated for the splash. */
+/** The Killa Landing mark: planet with an orbit ring, drawn larger and animated for the splash. */
 function LogoMark() {
   return (
     <svg className="splash__mark" viewBox="0 0 64 64" aria-hidden>
@@ -91,7 +91,7 @@ export function Splash({ ready, onDone }: { ready: boolean; onDone: () => void }
       <div className="splash__logo">
         <LogoMark />
         <span className="splash__word">
-          LUMEN <span>3D</span>
+          KILLA <span>LANDING</span>
         </span>
         <p className="splash__wait">
           <Killa state="thinking" size={48} />

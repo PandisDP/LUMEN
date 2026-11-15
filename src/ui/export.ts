@@ -33,7 +33,7 @@ const csvCell = (v: number, digits = 4) => (Number.isFinite(v) ? v.toFixed(digit
 
 function metaLines(meta: ExportMeta, series: SiteSeries): string[] {
   const lines = [
-    'LUMEN 3D export',
+    'Killa Landing export',
     `site: ${meta.siteName} (${meta.siteId})`,
     `lat_deg: ${meta.lat}`,
     `lon_deg: ${meta.lon}`,
@@ -166,7 +166,7 @@ export function horizonToCsv(
   obstructionKm?: number[],
 ): string {
   const out = [
-    '# LUMEN 3D horizon profile',
+    '# Killa Landing horizon profile',
     `# site: ${meta.siteName} (${meta.siteId})`,
     `# lat_deg: ${meta.lat}`,
     `# lon_deg: ${meta.lon}`,

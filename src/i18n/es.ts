@@ -5,8 +5,8 @@ export const es = {
   'app.sitePanel': 'Sitio de alunizaje',
   'app.loadingSites': 'Cargando sitios…',
   'loader.textures': 'Cargando texturas… {pct}%',
-  'splash.label': 'LUMEN 3D',
-  'splash.loading': 'Cargando LUMEN 3D…',
+  'splash.label': 'Killa Landing',
+  'splash.loading': 'Cargando Killa Landing…',
   'common.close': 'Cerrar',
   'common.computing': 'Calculando…',
 
@@ -72,10 +72,10 @@ export const es = {
   'tour.prev': 'Anterior',
   'tour.skip': 'Saltar',
   'tour.finish': 'Terminar',
-  'tour.invite': '¿Primera vez en LUMEN 3D? Un recorrido de 1 minuto te enseña cada parte.',
+  'tour.invite': '¿Primera vez en Killa Landing? Un recorrido de 1 minuto te enseña cada parte.',
   'tour.start': 'Empezar recorrido',
   'tour.later': 'Ahora no',
-  'tour.welcome.title': 'Bienvenido a LUMEN 3D',
+  'tour.welcome.title': 'Bienvenido a Killa Landing',
   'tour.welcome.body':
     'Una sola pregunta: si aterrizas aquí y en esta fecha, ¿tendrás Sol para la energía y la Tierra a la vista para comunicarte?',
   'tour.steps.title': '4 pasos',
@@ -341,7 +341,7 @@ export const es = {
   'picker.use': 'Usar',
   'links.title': 'Ver este punto en los visores del LRO y en JPL Horizons',
   'links.horizonsTitle':
-    'Consulta en JPL Horizons el acimut y la elevación aparentes de este cuerpo desde el sitio, hora a hora, para la ventana de misión actual (texto, misma API que usa LUMEN).',
+    'Consulta en JPL Horizons el acimut y la elevación aparentes de este cuerpo desde el sitio, hora a hora, para la ventana de misión actual (texto, misma API que usa Killa Landing).',
   'links.quickmapTitle':
     'Abre las mismas coordenadas en LROC QuickMap (ASU): imágenes NAC, iluminación, PSR y topografía del LRO.',
   'links.trekTitle':
@@ -531,7 +531,7 @@ export const es = {
     'Cuanto más corta la ruta y más Sol haya al salir, mejor: prueba Mons Mouton o la Cresta de conexión, o cambia la fecha de alunizaje.',
   'challenge.ice.why':
     'Dentro de la sombra permanente no hay Sol: el rover vive solo de su batería, a unos −200 °C. Por eso se aluniza en un punto iluminado cercano y se planifica la travesía (distancia, pendiente y hora de salida) para entrar, medir y llegar con energía de sobra.',
-  'explain.sources.title': 'Recursos de la NASA y la CSA que usa LUMEN 3D',
+  'explain.sources.title': 'Recursos de la NASA y la CSA que usa Killa Landing',
   'explain.sources.horizons':
     'Efemérides DE441: posiciones del Sol y la Tierra vistas desde cada sitio (2026–2030), validación al segundo de arco y geometría de la DSN.',
   'explain.sources.quickmap':

@@ -7,8 +7,8 @@ export const en: Record<keyof typeof es, string> = {
   'app.sitePanel': 'Landing site',
   'app.loadingSites': 'Loading sites…',
   'loader.textures': 'Loading textures… {pct}%',
-  'splash.label': 'LUMEN 3D',
-  'splash.loading': 'Loading LUMEN 3D…',
+  'splash.label': 'Killa Landing',
+  'splash.loading': 'Loading Killa Landing…',
   'common.close': 'Close',
   'common.computing': 'Computing…',
 
@@ -73,10 +73,10 @@ export const en: Record<keyof typeof es, string> = {
   'tour.prev': 'Back',
   'tour.skip': 'Skip',
   'tour.finish': 'Finish',
-  'tour.invite': 'First time in LUMEN 3D? A 1-minute tour shows you every part.',
+  'tour.invite': 'First time in Killa Landing? A 1-minute tour shows you every part.',
   'tour.start': 'Start tour',
   'tour.later': 'Not now',
-  'tour.welcome.title': 'Welcome to LUMEN 3D',
+  'tour.welcome.title': 'Welcome to Killa Landing',
   'tour.welcome.body':
     'One question: if you land here on this date, will you have sunlight for power and the Earth in view to communicate?',
   'tour.steps.title': '4 steps',
@@ -338,7 +338,7 @@ export const en: Record<keyof typeof es, string> = {
   'picker.use': 'Use',
   'links.title': 'See this point in the LRO map viewers and in JPL Horizons',
   'links.horizonsTitle':
-    'Query JPL Horizons for the apparent azimuth and elevation of this body from the site, hourly, over the current mission window (plain text, the same API LUMEN uses).',
+    'Query JPL Horizons for the apparent azimuth and elevation of this body from the site, hourly, over the current mission window (plain text, the same API Killa Landing uses).',
   'links.quickmapTitle':
     'Opens the same coordinates in LROC QuickMap (ASU): LRO NAC images, illumination, PSRs and topography.',
   'links.trekTitle':
@@ -526,7 +526,7 @@ export const en: Record<keyof typeof es, string> = {
     'The shorter the route and the more Sun at departure, the better: try Mons Mouton or the Connecting ridge, or change the landing date.',
   'challenge.ice.why':
     'Inside the permanent shadow there is no Sun: the rover lives on its battery alone, at about −200 °C. That is why you land on a nearby sunlit spot and plan the traverse (distance, slope and departure time) to drive in, measure and arrive with energy to spare.',
-  'explain.sources.title': 'NASA and CSA resources used by LUMEN 3D',
+  'explain.sources.title': 'NASA and CSA resources used by Killa Landing',
   'explain.sources.horizons':
     'DE441 ephemerides: Sun and Earth positions seen from each site (2026–2030), arcsecond-level validation and DSN geometry.',
   'explain.sources.quickmap':

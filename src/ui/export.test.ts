@@ -39,7 +39,7 @@ describe('seriesToCsv', () => {
   const rows = lines.filter((l) => !l.startsWith('#')).slice(1)
 
   it('has a metadata header, the column header and one row per sample', () => {
-    expect(lines[0]).toBe('# LUMEN 3D export')
+    expect(lines[0]).toBe('# Killa Landing export')
     expect(csv).toContain('# dte_link_margin_deg: 0')
     expect(header).toBe([...SERIES_COLUMNS, 'battery_soc_pct'].join(','))
     expect(rows).toHaveLength(series.count)

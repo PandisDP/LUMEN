@@ -1,4 +1,4 @@
-# Validación de LUMEN 3D frente al reto NASA Space Apps
+# Validación de Killa Landing frente al reto NASA Space Apps
 
 **Reto**: _Missions to the Moon's south pole face extreme lighting and communication constraints…_
 (iluminación y comunicaciones en el polo sur lunar).

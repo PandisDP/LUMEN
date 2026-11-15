@@ -75,7 +75,7 @@ export function TopBar() {
       <div className="topbar__brand">
         <img className="topbar__mark" src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" />
         <span className="topbar__logo">
-          LUMEN <span>3D</span>
+          KILLA <span>LANDING</span>
         </span>
         <span className="topbar__tag">{t('topbar.tag')}</span>
       </div>

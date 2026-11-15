@@ -32,7 +32,7 @@ export function ExportMenu({ final = false }: { final?: boolean }) {
       if (kind === 'all') {
         const items = await Promise.all(state.scenarios.map(evaluateForExport))
         const bundle = {
-          generator: 'LUMEN 3D',
+          generator: 'Killa Landing',
           scenarios: items.map((x, k) => ({
             label: SCENARIO_LABELS[k],
             ...scenarioToJsonObject(

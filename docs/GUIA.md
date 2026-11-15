@@ -1,4 +1,4 @@
-# Guía de usuario de LUMEN 3D
+# Guía de usuario de Killa Landing
 
 Esta guía recorre todo el sistema: qué muestra cada parte de la pantalla, cómo se usa y cómo leer los resultados. Para instalar el proyecto, ver el [README](../README.md); para el diseño técnico, [ARCHITECTURE.md](../ARCHITECTURE.md). Al final hay un [resumen en inglés](#english-summary).
 
@@ -25,7 +25,7 @@ Esta guía recorre todo el sistema: qué muestra cada parte de la pantalla, cóm
 
 ## 1. Para qué sirve
 
-LUMEN 3D responde a una pregunta: **si alunizo en este sitio y en esta fecha, ¿tendré Sol para generar energía y la Tierra a la vista para comunicarme, y es seguro el terreno?**
+Killa Landing responde a una pregunta: **si alunizo en este sitio y en esta fecha, ¿tendré Sol para generar energía y la Tierra a la vista para comunicarme, y es seguro el terreno?**
 
 En el polo sur lunar el Sol nunca sube más de unos grados y la Tierra roza el horizonte, así que una montaña a 100 km puede dejar un sitio a oscuras o sin enlace. La aplicación compara la posición real del Sol y la Tierra con el **horizonte real** del sitio, calculado con la topografía LOLA de la NASA, y lo resume en métricas de energía, comunicación y seguridad.
 
@@ -310,7 +310,7 @@ El mismo glosario está dentro de la app, al final del panel **¿Por qué?**.
 
 ## English summary
 
-LUMEN 3D answers one question: _if we land at this site on this date, will there be sunlight for power, Earth in view for communications, and safe terrain?_ It compares the real Sun and Earth positions with each site's **real horizon** (NASA LOLA topography).
+Killa Landing answers one question: _if we land at this site on this date, will there be sunlight for power, Earth in view for communications, and safe terrain?_ It compares the real Sun and Earth positions with each site's **real horizon** (NASA LOLA topography).
 
 - **Start**: a logo splash while the site catalogue loads (click or Enter/Space/Esc to skip), then an optional 1-minute guided tour (**Guide** button replays it).
 - **Layout**: top bar (views, Export, Compare, Hide panels, Why?, Guide, ES/EN), full-window 3D scene with its HUD, and three panels that start minimised (keys **1**, **2**, **3**). Every panel and the HUD have a **?** help popover.
