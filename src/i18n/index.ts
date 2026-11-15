@@ -8,7 +8,7 @@ import { qu } from './qu.ts'
  * Minimal translation layer (no dependency). Spanish is the source dictionary; the English one is
  * typed against it, so a missing or extra key is a compile error. Quechua (Southern, Cusco-Collao)
  * covers the main interface only: it is a partial dictionary and anything it lacks falls back to
- * Spanish (see docs/QUECHUA.md).
+ * Spanish.
  */
 export type Lang = 'es' | 'en' | 'qu'
 export type MsgKey = keyof typeof es

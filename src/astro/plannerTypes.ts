@@ -2,7 +2,7 @@ import { type RoverId, SAMPLING_DEFAULTS } from './traverse.ts'
 import type { Constraint, HardwareLimits } from './hardware.ts'
 
 /**
- * Contract of the mission planner (the surface part of docs/MISION.md): given a point with ice
+ * Contract of the mission planner (the surface part of docs/MISSION.md): given a point with ice
  * and a range of landing dates, find for every day the best landing point around it for the
  * rover to complete the mission, subject to every constraint, and rank the days.
  * The rover's mission: drive to the ice, take every sample, and be back at the lander before

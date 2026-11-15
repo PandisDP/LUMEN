@@ -17,7 +17,7 @@ export interface CatalogRow {
 
 /**
  * Every curated site evaluated with the active landing date, mission length and link margin,
- * then judged against the hardware limits. The worker queues the 15 requests; the limits
+ * then judged against the hardware limits. The worker queues one request per site; the limits
  * themselves are applied on the main thread, so moving a slider is instant.
  */
 export function useCatalogViability(enabled: boolean) {
