@@ -1,6 +1,6 @@
 # Killa Landing
 
-> Formerly "LUMEN 3D". _Killa_ means "Moon" in Quechua. The GitHub repository (`PandisDP/LUMEN`), the site address and a few internal identifiers (the npm package name `lumen-3d`, the `lumen3d.*` storage keys, the `lumen3d_*` export file names) keep the old name.
+> _Killa_ means "Moon" in Quechua. The GitHub repository (`PandisDP/LUMEN`), the site address and a few internal identifiers (the npm package name `lumen-3d`, the `lumen3d.*` storage keys, the `lumen3d_*` export file names) use the name LUMEN.
 
 Killa Landing is a static web application for **planning landings at the lunar south pole**. For any site and landing date it places the Sun and the Earth against the **real terrain horizon** (LOLA topography from the Lunar Reconnaissance Orbiter), computes solar power and direct-to-Earth communications over the mission, checks the landing slope, simulates the powered descent and a rover round trip to permanently shadowed ice, and includes a planner that finds the best landing point for every day of a date range. Everything is computed in the browser: there is no backend.
 
@@ -10,27 +10,28 @@ The interface is available in Spanish, English and Quechua (the Quechua translat
 
 Related documents:
 
-| Document                           | Language                        | Contents                                                                 |
-| ---------------------------------- | ------------------------------- | ------------------------------------------------------------------------ |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | English                         | Technical design, algorithms, data formats, how to extend                |
-| [docs/GUIA.md](docs/GUIA.md)       | Spanish (short English summary) | User guide: every part of the screen and how to read the results         |
-| [docs/MISION.md](docs/MISION.md)   | Spanish                         | Mission planning stated formally as an optimisation problem              |
-| [docs/DISENO.md](docs/DISENO.md)   | Spanish                         | Visual system: tokens, colour roles, components, the Killa mascot        |
-| [docs/QUECHUA.md](docs/QUECHUA.md) | Spanish                         | Quechua translation: criteria, glossary and the list of points to review |
+| Document                           | Contents                                                          |
+| ---------------------------------- | ----------------------------------------------------------------- |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical design, algorithms, data formats, how to extend         |
+| [docs/GUIDE.md](docs/GUIDE.md)     | User guide: every part of the screen and how to read the results  |
+| [docs/MISSION.md](docs/MISSION.md) | The mission-planning problem the planner solves, stated formally  |
+| [docs/DESIGN.md](docs/DESIGN.md)   | Visual system: tokens, colour roles, components, the Killa mascot |
 
 ## Screenshots
 
-| Orbit view                                             | Surface view: the Sun grazing the ridge        |
-| ------------------------------------------------------ | ---------------------------------------------- |
-| ![Orbit view](docs/img/orbita.jpg)                     | ![Surface view](docs/img/superficie.jpg)       |
-| **Slope layer and landing ellipse**                    | **Descent: telemetry and slope reticle**       |
-| ![Slopes and landing ellipse](docs/img/pendientes.jpg) | ![Descent simulation](docs/img/aterrizaje.jpg) |
-| **Lander on the surface**                              | **Compare view**                               |
-| ![Lander on the surface](docs/img/modulo.jpg)          | ![Compare scenarios](docs/img/comparar.jpg)    |
-| **Descent with physics: propellant and Δv**            | **Rover view**                                 |
-| ![Descent with physics](docs/img/descenso-fisica.jpg)  | ![Rover](docs/img/rover.jpg)                   |
-| **Planner step**                                       |                                                |
-| ![Planner](docs/img/planificar.jpg)                    |                                                |
+| Welcome: choose an audience                        | Plan step: the best landing per day             |
+| -------------------------------------------------- | ----------------------------------------------- |
+| ![Welcome card](docs/img/welcome.jpg)              | ![Planner results](docs/img/planner.jpg)        |
+| **Orbit view: the south pole and the Earth**       | **Surface view: the Sun grazing the ridge**     |
+| ![Orbit view](docs/img/orbit.jpg)                  | ![Surface view](docs/img/surface.jpg)           |
+| **Slope layer and landing ellipse**                | **Descent with physics: telemetry and reticle** |
+| ![Slopes and landing ellipse](docs/img/slopes.jpg) | ![Descent simulation](docs/img/descent.jpg)     |
+| **Lander on the surface**                          | **Rover: heading to the ice**                   |
+| ![Lander on the surface](docs/img/lander.jpg)      | ![Rover driving to the ice](docs/img/rover.jpg) |
+| **Rover: sampling in permanent shadow**            | **Decide: compare scenarios**                   |
+| ![Rover sampling](docs/img/rover-sampling.jpg)     | ![Compare scenarios](docs/img/compare.jpg)      |
+| **Light theme**                                    |                                                 |
+| ![Light theme](docs/img/light-theme.jpg)           |                                                 |
 
 ## Contents
 
@@ -280,11 +281,11 @@ By default the answers are computed on the device from the catalogue evaluation 
 
 ### Languages
 
-| Code | Language                         | Status                                                                                                                                                                                                                     |
-| ---- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `es` | Spanish                          | Source dictionary (949 keys).                                                                                                                                                                                              |
-| `en` | English                          | Complete; typed against the Spanish dictionary, so a missing or extra key does not compile.                                                                                                                                |
-| `qu` | Quechua (Southern, Cusco-Collao) | Partial: 750 of 949 keys (79 %). Anything missing falls back to Spanish. The translation was written by a language model, not a native speaker, and is **under review**; see [docs/QUECHUA.md](docs/QUECHUA.md) (Spanish). |
+| Code | Language                         | Status                                                                                                                                                                                                               |
+| ---- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `es` | Spanish                          | Source dictionary (949 keys).                                                                                                                                                                                        |
+| `en` | English                          | Complete; typed against the Spanish dictionary, so a missing or extra key does not compile.                                                                                                                          |
+| `qu` | Quechua (Southern, Cusco-Collao) | Partial: 750 of 949 keys (79 %). Anything missing falls back to Spanish. The translation was written by a language model, not a native speaker,, and has not been reviewed by one. The texts live in `src/i18n/qu/`. |
 
 The language is taken from `?lang=`, then from the saved choice, then from the browser language (Spanish → ES, Quechua → QU, anything else → EN). Site names and descriptions are available in Spanish and English.
 
@@ -406,7 +407,7 @@ All models are first-order engineering estimates intended for comparing sites an
 
 **Not simulated**
 
-- The Earth–Moon transfer, lunar orbit insertion and the braking burn from orbit (the last is only accounted for as a fixed Δv). [docs/MISION.md](docs/MISION.md) (Spanish) states the wider mission problem; the app implements its surface part.
+- The Earth–Moon transfer, lunar orbit insertion and the braking burn from orbit (the last is only accounted for as a fixed Δv). [docs/MISSION.md](docs/MISSION.md) states the surface problem the planner solves.
 - Attitude dynamics, engine lag and navigation errors during the descent; the guidance does not steer around terrain ahead of it.
 - The hand-over of the samples to the lander and any ascent or return to Earth: the rover mission ends when the rover is back at the lander.
 - Rover slip, sinkage, obstacle avoidance below the 20 m DEM and regenerative braking.
@@ -635,7 +636,7 @@ If PowerShell refuses to run npm with _"npm.ps1 cannot be loaded because running
 - **Regolith, lander insulation, solar panels, Sun glare, stars, rover and tracks**: procedural textures and geometry generated in the browser.
 - **Fonts**: Inter, DM Sans and DM Mono, loaded from Google Fonts.
 - **Libraries**: React, Vite, three.js, React Three Fiber and drei, zustand, astronomy-engine (Don Cross), Vitest, Testing Library and Playwright.
-- **Visual system**: the Genius Mining AI design system, as described in [docs/DISENO.md](docs/DISENO.md) (Spanish).
+- **Visual system**: the Genius Mining AI design system, as described in [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Licence
 

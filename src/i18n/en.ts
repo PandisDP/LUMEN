@@ -107,7 +107,7 @@ export const en: Record<keyof typeof es, string> = {
   'tour.more.title': 'More',
   'tour.more.body': 'Change site, hardware filter, “Why is it hard?” and hide panels.',
   'tour.done.title': 'All set!',
-  'tour.fullGuide': 'Read the full user guide (Spanish, with English summary)',
+  'tour.fullGuide': 'Read the full user guide',
   'tour.done.body': 'Replay this tour from “Guide”. Each panel has a “?” with its help.',
 
   // 3D labels
@@ -196,7 +196,7 @@ export const en: Record<keyof typeof es, string> = {
   'hw.aria': 'Hardware viability filter',
   'hw.title': 'Hardware viability · {days}-day mission',
   'hw.intro':
-    'Set what your lander tolerates and every catalogue site is marked at once: ✓ viable, ! marginal (less than 20 % headroom), ✕ ruled out. The active landing date and link margin are used.',
+    'Set what your lander tolerates and every catalogue site is marked at once: ✓ viable, ▲ marginal (less than 20 % headroom), ▼ ruled out. The active landing date and link margin are used.',
   'hw.field.slope': 'Max slope (°, p90 within 500 m)',
   'hw.field.night': 'Max continuous night (h)',
   'hw.field.dte': 'Min DTE link (%)',

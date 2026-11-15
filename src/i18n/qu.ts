@@ -8,7 +8,7 @@ export type QuDict = Partial<Record<keyof typeof es, string>>
 
 /**
  * Runasimi (Southern Quechua, Cusco-Collao; official three-vowel spelling). Main interface only,
- * written without a native reviewer: see docs/QUECHUA.md for the glossary and the review list.
+ * written without a native reviewer.
  * The parts live in ./qu/ by area.
  */
 export const qu: QuDict = { ...core, ...scene, ...flow }

@@ -106,7 +106,7 @@ select {
   z-index: 1;
 }
 
-.viewhud__more {
+.viewhud .btn.viewhud__more {
   display: none;
 }
 
@@ -2942,7 +2942,7 @@ body.picking .stage canvas {
 
 /* Phones: the HUD keeps the compass and one button; the control rows open on demand. */
 @media (max-width: 640px) {
-  .viewhud .viewhud__more {
+  .viewhud .btn.viewhud__more {
     display: inline-flex;
   }
 

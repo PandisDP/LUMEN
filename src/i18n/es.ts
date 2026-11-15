@@ -197,7 +197,7 @@ export const es = {
   'hw.aria': 'Filtro de viabilidad por hardware',
   'hw.title': 'Viabilidad por hardware · misión de {days} días',
   'hw.intro':
-    'Fija lo que tolera tu módulo y cada sitio del catálogo se marca al instante: ✓ viable, ! al límite (menos de un 20 % de margen), ✕ descartado. Se usan la fecha de alunizaje y el margen de enlace activos.',
+    'Fija lo que tolera tu módulo y cada sitio del catálogo se marca al instante: ✓ viable, ▲ al límite (menos de un 20 % de margen), ▼ descartado. Se usan la fecha de alunizaje y el margen de enlace activos.',
   'hw.field.slope': 'Pendiente máx. (°, p90 en 500 m)',
   'hw.field.night': 'Noche continua máx. (h)',
   'hw.field.dte': 'Enlace DTE mín. (%)',

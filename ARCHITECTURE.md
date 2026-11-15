@@ -1,8 +1,8 @@
 # Killa Landing architecture
 
-This document explains how the application is organised, why the main decisions were taken, how the algorithms work and how to extend it. To install and run the project see [README.md](README.md); to use it, the [user guide](docs/GUIA.md) (Spanish).
+This document explains how the application is organised, why the main decisions were taken, how the algorithms work and how to extend it. To install and run the project see [README.md](README.md); to use it, the [user guide](docs/GUIDE.md) (Spanish).
 
-Killa Landing was formerly called "LUMEN 3D". The repository, the site address, the npm package name (`lumen-3d`), the browser storage keys (`lumen3d.*`, `lumen-theme`) and the export file names (`lumen3d_*`) keep the historical name.
+The repository, the site address, the npm package name (`lumen-3d`), the browser storage keys (`lumen3d.*`, `lumen-theme`) and the export file names (`lumen3d_*`) use the name LUMEN.
 
 ## 1. Overview
 
@@ -307,7 +307,7 @@ That is 50 % energy, 35 % Earth link and 15 % survival, which penalises nights o
 
 ## 10. Planner
 
-Contract in [src/astro/plannerTypes.ts](src/astro/plannerTypes.ts), engine in [src/astro/planner.ts](src/astro/planner.ts), orchestration in [src/hooks/usePlanner.ts](src/hooks/usePlanner.ts). Given an ice target and a range of landing dates it finds, for every day, the best landing point around the target from which the rover completes its round trip, and ranks the days. [docs/MISION.md](docs/MISION.md) (Spanish) states the wider problem; the app implements its surface part.
+Contract in [src/astro/plannerTypes.ts](src/astro/plannerTypes.ts), engine in [src/astro/planner.ts](src/astro/planner.ts), orchestration in [src/hooks/usePlanner.ts](src/hooks/usePlanner.ts). Given an ice target and a range of landing dates it finds, for every day, the best landing point around the target from which the rover completes its round trip, and ranks the days. [docs/MISSION.md](docs/MISSION.md) (Spanish) states the wider problem; the app implements its surface part.
 
 The key observation is that the horizon of a landing point and its route to the ice do not depend on the date, so they are computed once per candidate.
 
@@ -408,7 +408,7 @@ jsdom has no WebGL, so scene components are not rendered in the unit tests; thei
 
 ## 14. State and persistence
 
-Six zustand stores hold the state. The URL carries the shareable part; `localStorage` carries preferences. The storage keys keep the historical `lumen3d.*` and `lumen-theme` names so that existing visitors keep their settings.
+Six zustand stores hold the state. The URL carries the shareable part; `localStorage` carries preferences. The storage keys are named `lumen3d.*` and `lumen-theme`.
 
 | Store             | In the URL                                                                                                  | Persisted                                                      |
 | ----------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
@@ -440,7 +440,7 @@ The mission store mirrors the active scenario's settings at its top level, so pa
 
 ## 15. Styling and theming
 
-- All colours, radii, shadows, fonts and timings are **design tokens** in [src/styles/tokens.css](src/styles/tokens.css); no other file defines a colour. The visual system is described in [docs/DISENO.md](docs/DISENO.md) (Spanish).
+- All colours, radii, shadows, fonts and timings are **design tokens** in [src/styles/tokens.css](src/styles/tokens.css); no other file defines a colour. The visual system is described in [docs/DESIGN.md](docs/DESIGN.md) (Spanish).
 - Theme-dependent tokens are HSL triplets: light on `:root`, dark on `.dark`. The theme is the `.dark` class on `<html>`, set by [src/ui/theme.ts](src/ui/theme.ts) and, before first paint, by an inline script in `index.html`. Dark is the default.
 - **The scene is always dark.** Its container carries its own `dark` class (`<div class="stage dark">`), so controls and labels floating on the 3D view keep the dark palette in the light theme too.
 - Canvas charts cannot read CSS variables per draw call, so `useChartTheme()` ([src/ui/chartTheme.ts](src/ui/chartTheme.ts)) resolves the tokens to strings and charts redraw when the theme changes. In-scene marks use `SCENE_COLORS` ([src/scene/sceneColors.ts](src/scene/sceneColors.ts)), the dark token values as hex; a test checks them against the tokens.
@@ -454,7 +454,7 @@ The mission store mirrors the active scenario's settings at its top level, so pa
 
 - `es.ts` is the **source** dictionary (949 keys); `MsgKey` is `keyof typeof es`.
 - `en.ts` is typed as `Record<keyof typeof es, string>`: a missing or extra key is a compile error.
-- `qu.ts` merges `qu/core.ts`, `qu/scene.ts` and `qu/flow.ts` into a **partial** Quechua dictionary (750 keys). `translate` falls back to Spanish for anything missing. Status and review notes are in [docs/QUECHUA.md](docs/QUECHUA.md) (Spanish).
+- `qu.ts` merges `qu/core.ts`, `qu/scene.ts` and `qu/flow.ts` into a **partial** Quechua dictionary (750 keys). `translate` falls back to Spanish for anything missing. It was written without a native reviewer.
 - Parameters use `{name}` placeholders. Components call `useT()`; canvas code and formatters use the non-reactive `t()`.
 - The language is detected from `?lang=`, then the saved choice, then the browser language, and is mirrored to `<html lang>`.
 - Curated site names and descriptions are Spanish in `config/sites.ts` with English texts in `i18n/sites.ts`.
@@ -527,7 +527,7 @@ Both display layers have an undocumented grey scale, which is why the cross-chec
 - ESLint uses the recommended JavaScript and typescript-eslint rules, the React Hooks rules (`recommended-latest`) and React Refresh. The hooks rules forbid mutating values returned by hooks, so per-frame state lives in classes with methods or is changed through functions (for example `setRegolithSunElevation`).
 - Prettier: no semicolons, single quotes, trailing commas, 100 columns. `public/` and `package-lock.json` are ignored.
 - Git history uses feature branches merged into the main line (for example `feature/quechua`, `feature/ida-y-vuelta`).
-- A visible change to the interface should be reflected in [docs/GUIA.md](docs/GUIA.md).
+- A visible change to the interface should be reflected in [docs/GUIDE.md](docs/GUIDE.md).
 
 ### Testing
 

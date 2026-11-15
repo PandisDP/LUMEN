@@ -7,8 +7,8 @@ import { TOUR_STEPS, placeBubble, tourText } from './tourSteps.ts'
 const PAD = 8
 
 /** Step-by-step walkthrough: dims the page, spotlights one element and explains it. */
-/** Full user guide (docs/GUIA.md), opened from the last step of the tour. */
-const GUIDE_URL = 'https://github.com/PandisDP/LUMEN/blob/main/docs/GUIA.md'
+/** Full user guide (docs/GUIDE.md), opened from the last step of the tour. */
+const GUIDE_URL = 'https://github.com/PandisDP/LUMEN/blob/main/docs/GUIDE.md'
 
 export function Tour() {
   const t = useT()
