@@ -14,13 +14,14 @@ afirma la documentación (`README.md`, `ARCHITECTURE.md`, `docs/GUIA.md`) y ejec
 
 ## 1. Resumen ejecutivo
 
-|                                                      |                        |
-| ---------------------------------------------------- | ---------------------- |
-| **Cumplimiento global estimado**                     | **≈ 85 %**             |
-| Objetivos del reto (70 % del peso)                   | 86 / 100               |
-| Consideraciones técnicas, UX, datos e impacto (20 %) | 85 / 100               |
-| Uso de los recursos de la pestaña _Resources_ (10 %) | 75 / 100               |
-| Typecheck · Lint · Tests                             | ✅ · ✅ · ✅ 1111/1111 |
+|                                                              |                                            |
+| ------------------------------------------------------------ | ------------------------------------------ |
+| **Cumplimiento global estimado**                             | **≈ 85 %**                                 |
+| Estado en la rama `feature/audiencia-y-mision` (15 nov 2026) | **≈ 91 %**, plan de cierre a ≈ 93 % en § 9 |
+| Objetivos del reto (70 % del peso)                           | 86 / 100                                   |
+| Consideraciones técnicas, UX, datos e impacto (20 %)         | 85 / 100                                   |
+| Uso de los recursos de la pestaña _Resources_ (10 %)         | 75 / 100                                   |
+| Typecheck · Lint · Tests                                     | ✅ · ✅ · ✅ 1111/1111                     |
 
 **Veredicto**: el proyecto cubre todos los objetivos del reto con implementación real y verificable
 en código, no solo en el README. Siete de los diez bloques evaluados están completos o casi
@@ -225,8 +226,9 @@ Siguen abiertas de la sección 7, sin recomendación propia:
   conexiones lentas.
 - No se ha revisado la app en móvil ni en Safari.
 
-Con las acciones 1 a 6 hechas, el cumplimiento estimado pasa del 85 % a **≈ 93 %**. Las
-pendientes (7 a 10) suman unos 3 puntos más.
+Recalculando la rúbrica del anexo con las acciones 1 a 6 hechas, el cumplimiento estimado pasa
+del 85 % a **≈ 91 %** (no al 93 % que se adelantó: esa cifra exige además el plan de la
+sección 9). El detalle del recálculo está en la sección 9.
 
 --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | -------- |
 | 1 | Añadir un **selector de audiencia** (Planificador / Educador / Público) que oculte tarjetas técnicas y active explicaciones; reutilizar `ExplainPanel` y `levels.ts` | 8 (70 → ~90) | Medio |
@@ -241,6 +243,64 @@ pendientes (7 a 10) suman unos 3 puntos más.
 | 10 | Glosario dentro de la app (reutilizar los textos de `docs/GUIA.md` § 15 vía i18n) | 8 | Bajo |
 
 Con las acciones 1 a 5 el cumplimiento estimado subiría del 85 % a aproximadamente el 93 %.
+
+---
+
+## 9. Plan de cierre para llegar al 93 %
+
+### Dónde estamos
+
+| Bloque                                        | Peso   | Auditoría inicial | Hoy (rama) | Tras el plan  |
+| --------------------------------------------- | ------ | ----------------- | ---------- | ------------- |
+| 1 Selección de sitios                         | 8,75 % | 85                | 93         | 93            |
+| 2 Comparación                                 | 8,75 % | 95                | 95         | 95            |
+| 3 Fecha, días y estaciones                    | 8,75 % | 80                | 90         | 90            |
+| 4 Sol y Tierra vs horizonte                   | 8,75 % | 95                | 95         | 95            |
+| 5 Energía y comunicaciones                    | 8,75 % | 90                | 90         | 96            |
+| 6 Múltiples visualizaciones                   | 8,75 % | 85                | 95         | 95            |
+| 7 Dinámica temporal                           | 8,75 % | 90                | 90         | 90            |
+| 8 Accesibilidad por niveles                   | 8,75 % | 70                | 88         | 93            |
+| Consideraciones (técnico, UX, datos, impacto) | 20 %   | 85                | 87,5       | 90            |
+| Recursos (QuickMap, Moon Trek, Horizons, CSA) | 10 %   | 75                | 90         | 90            |
+| **Total**                                     |        | **≈ 85 %**        | **≈ 91 %** | **≈ 92–93 %** |
+
+Las notas de «Hoy» para los ítems 3, 6 y 8 **dependen de la fase 0**: las pestañas _Estaciones_
+y _Mapa polar_ y el modo por audiencia pasan typecheck, lint y tests, pero todavía no se han
+revisado en un navegador. Si la fase 0 encuentra defectos visuales, esas notas bajan hasta que se
+corrijan.
+
+### Fases
+
+| Fase                                   | Qué                                                                                                                                                                                                                                               | Dónde                                                                                                                                              | Criterio de aceptación                                                                                                                                                                | Esfuerzo                               | Sube              |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ----------------- |
+| **0. Verificar lo ya hecho**           | Revisar en navegador (Chrome, Safari y un móvil) las tres audiencias, las pestañas _Estaciones_ y _Mapa polar_, los enlaces a Horizons/QuickMap/Moon Trek y el sitio Chang'e‑7 en las tres vistas. Medir la primera carga con red limitada        | Sitio publicado y `npm run dev`                                                                                                                    | Sin errores de consola; el mapa muestra relieve, parches y sitios; el clic en un mes cambia la fecha; los tres enlaces abren el punto correcto; lista de defectos corregida o anotada | 0,5 día                                | Consolida el 91 % |
+| **1. Veredicto en el panel principal** | Mostrar «Viable / Al límite / Descartado» junto a la puntuación del sitio activo, con la restricción que falla                                                                                                                                    | `src/ui/MetricsPanel.tsx`; reutiliza `classifySite` (`src/astro/hardware.ts`) y las claves `hw.verdict.*`                                          | El veredicto coincide con el del filtro de hardware para el mismo sitio y límites; test en `panels.test.tsx`                                                                          | 0,5 día                                | Ítem 5            |
+| **2. DSN como opción del DTE**         | Casilla «Exigir estación DSN» (apagada por defecto): el enlace solo cuenta cuando alguna estación ve la Luna a ≥ 10°                                                                                                                              | `src/astro/series.ts` o `metrics.ts` (máscara por muestra con `dsnVisibility`), parámetro en `ScenarioParams`, `useUrlSync.ts`, `TimeControls.tsx` | Con la casilla apagada los números no cambian (tests actuales intactos); encendida, DTE % ≤ valor anterior; test unitario; parámetro en la URL                                        | 1 día                                  | Ítem 5, datos     |
+| **3. Glosario en la app**              | Los 9 términos de `docs/GUIA.md` § 15 como sección del panel «¿Por qué?», en ES y EN                                                                                                                                                              | `src/ui/ExplainPanel.tsx`, `src/i18n/es.ts`, `en.ts`                                                                                               | Visible en las tres audiencias; `i18n.test.ts` en verde; la guía enlaza a la app en vez de duplicar                                                                                   | 0,5 día                                | Ítem 8            |
+| **4. Sensibilidad a la fecha**         | En la tarjeta de dispersión (o junto a la puntuación), la puntuación a ±1, ±3 y ±7 días de la fecha actual                                                                                                                                        | `src/ui/LandingPanel.tsx` o `MetricsPanel.tsx`; reutiliza `runDateSweep`                                                                           | Fila mín/actual/máx con las fechas; clic en un valor mueve la fecha; test con serie sintética                                                                                         | 0,5 día                                | UX                |
+| **5. Coherencia doc ↔ código**         | Renombrar «elipse de aterrizaje» → «zona de dispersión» (7 claves por idioma y 20 menciones en README y GUIA); actualizar ARCHITECTURE § 3 (`ephemeris.ts` = tabla DE441 con respaldo IAU); mencionar las pestañas y la audiencia en ARCHITECTURE | `src/i18n/*.ts`, `README.md`, `docs/GUIA.md`, `ARCHITECTURE.md`                                                                                    | `grep -ri elipse` solo devuelve usos geométricos legítimos; tests de UI ajustados                                                                                                     | 0,5 día                                | Coherencia        |
+| **6. Test de iluminación no circular** | Que `illumValidation.test.ts` recalcule al menos un estadístico (p. ej. fracción PSR de un tile) desde `public/data/illum/` en vez de leer solo el JSON                                                                                           | `src/astro/illumValidation.test.ts`                                                                                                                | El test falla si se altera el mapa de iluminación                                                                                                                                     | 0,5 día                                | Datos             |
+| **7. Peso y carga**                    | Según la medición de la fase 0: carga diferida de imágenes NAC y de tiles de sitios no activos, y aviso de progreso                                                                                                                               | `src/data/loadImagery.ts`, `loadDem.ts`                                                                                                            | Primera vista interactiva en < 5 s con 10 Mb/s                                                                                                                                        | 0,5–1 día, solo si la medición lo pide | Impacto           |
+
+Total: **4 a 5 días** de trabajo. El orden recomendado es 0 → 1 → 3 → 2 → 4 → 5 → 6 → 7: primero lo
+que confirma la nota actual, luego lo de mayor puntuación por hora.
+
+### Fuera del plan (no dependen del código)
+
+- **GitHub Actions bloqueado por facturación** en la cuenta: hasta resolverlo, CI y despliegue
+  automático no corren y la publicación es manual desde `gh-pages`.
+- **Chandrayaan‑4**: se añadirá al catálogo cuando ISRO publique el sitio.
+- **Fusión a `main`** y nuevo despliegue: tras la fase 0.
+- **Planificador de misión** (`docs/MISION.md`): es funcionalidad nueva más allá del reto; no
+  entra en este porcentaje.
+
+### Techo realista
+
+Con este plan la estimación queda en 92–93 %. Lo que impide ir más allá con la rúbrica actual:
+los seis sitios de referencia con horizonte esférico ideal (ítem 1), la ventana de misión máxima
+de 60 días (ítems 3 y 7), y la «elipse» que es un círculo sin orientación ni ponderación
+estadística (consideraciones técnicas). Son cambios de más alcance que no compensan su coste para
+el reto.
 
 ---
 
