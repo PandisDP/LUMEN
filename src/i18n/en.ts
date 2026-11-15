@@ -33,7 +33,8 @@ export const en: Record<keyof typeof es, string> = {
   'audience.planner': 'Planner',
   'audience.educator': 'Educator',
   'audience.public': 'Public',
-  'audience.planner.desc': 'Everything: DSN, thermal, landing ellipse, hardware filter and export.',
+  'audience.planner.desc':
+    'Everything: DSN, thermal, landing dispersion zone, hardware filter and export.',
   'audience.educator.desc':
     'The physics of the place: Sun, Earth, horizon, illumination and ice, without the engineering detail.',
   'audience.public.desc': 'The essentials: is there Sun? can you see Earth? and why that matters.',
@@ -62,7 +63,7 @@ export const en: Record<keyof typeof es, string> = {
   'help.charts':
     'Move mission time with the slider or press Play. “Timeline” shows Sun, Earth and battery over the days; “360° horizon” draws the terrain with the paths; “Alternative dates” scores every landing day over the next 12 months.',
   'help.hud':
-    '3D view controls. In Orbit: drag to rotate, scroll to zoom and click a dot to fly to the site. On the Surface: look at the Sun or the Earth, toggle the horizon line, slopes, landing ellipse, or relocate the site with a click.',
+    '3D view controls. In Orbit: drag to rotate, scroll to zoom and click a dot to fly to the site. On the Surface: look at the Sun or the Earth, toggle the horizon line, slopes, landing dispersion zone, or relocate the site with a click.',
 
   // Guided tour
   'tour.aria': 'Guided tour',
@@ -239,7 +240,7 @@ export const en: Record<keyof typeof es, string> = {
   'opt.button': 'Suggest a better point',
   'opt.loading': 'Looking for safe ground and evaluating the mission at each point…',
   'opt.summary': '{safe} points with slope < 10° · the {n} highest were evaluated',
-  'opt.none': 'No ground below 10° of slope inside the ellipse.',
+  'opt.none': 'No ground below 10° of slope inside the dispersion zone.',
   'opt.where': '{d} to the {dir}',
   'opt.stats': 'slope {slope} · light {sun} · DTE {dte} · night {night}',
   'opt.go': 'Go to this point',
@@ -268,6 +269,16 @@ export const en: Record<keyof typeof es, string> = {
   'stats.energy': 'Energy (vs. continuous Sun)',
   'stats.sunlit': 'Time in sunlight',
   'stats.dte': 'Time with DTE link',
+  'shift.label': 'If the date moves: {min}–{max}',
+  'shift.title':
+    'Score of the same mission landing a few days earlier or later. Click a value to use that date.',
+  'shift.now': 'now',
+  'shift.cell': '{days} days: score {score}',
+  'metrics.verdict': 'Verdict',
+  'metrics.verdictTitle':
+    'Against the hardware limits (slope, longest night and minimum link). Adjust them in More → Hardware.',
+  'metrics.verdictFails': 'fails: {what}',
+  'metrics.verdictTight': 'tight on: {what}',
   'stats.both': 'Sun + Earth at once',
   'stats.night': 'Longest night',
   'stats.noDte': 'Longest link outage',
@@ -390,6 +401,35 @@ export const en: Record<keyof typeof es, string> = {
     'The Canadian Space Agency contributes Canadarm3, Gateway\x27s robotic arm, and in return gets two astronaut flights to the Moon: Jeremy Hansen flew around it on Artemis II (April 2026). It is also preparing a utility rover for the 2030s that must survive the two-week lunar night at about −200 °C and scout for ice, exactly what this tool measures.',
   'explain.c8.cta': 'Try the Canadian rover',
   'explain.source': 'Source',
+  'glossary.title': 'Glossary',
+  'glossary.mask.term': 'Horizon mask',
+  'glossary.mask.def':
+    'Elevation of the terrain in every direction seen from the site (0.5° resolution, out to 300 km). It decides when the Sun or the Earth are blocked.',
+  'glossary.frac.term': 'Visible fraction',
+  'glossary.frac.def':
+    'Share of the disc of the Sun (or the Earth) above the horizon; a body counts as visible from 50 %.',
+  'glossary.dte.term': 'DTE',
+  'glossary.dte.def': 'Direct-to-Earth: communication straight to Earth, with no relay satellite.',
+  'glossary.margin.term': 'Link margin',
+  'glossary.margin.def':
+    'Degrees the Earth must clear above the terrain for a usable link; it keeps the signal from bouncing off the ground (multipath).',
+  'glossary.dsn.term': 'DSN',
+  'glossary.dsn.def':
+    'Deep Space Network: NASA’s antennas at Goldstone, Madrid and Canberra. To talk to the Moon at least one must have it in view.',
+  'glossary.dispersion.term': 'Dispersion zone',
+  'glossary.dispersion.def':
+    'Circle around the site where the lander may end up because of guidance error (500 m, 1 km or 2 km radius).',
+  'glossary.psr.term': 'PSR',
+  'glossary.psr.def':
+    'Permanently shadowed region: crater floors the Sun never reaches, where ice can survive.',
+  'glossary.slope.term': 'Slope',
+  'glossary.slope.def':
+    'Tilt of the ground computed on the 20 m terrain. Under 10° is safe to land on; over 15° is hazardous.',
+  'glossary.lola.term': 'LOLA',
+  'glossary.lola.def':
+    'Lunar Orbiter Laser Altimeter: the laser altimeter on the LRO orbiter, the source of all the topography.',
+  'glossary.tplus.term': 'T+',
+  'glossary.tplus.def': 'Time elapsed since touchdown; shared by every scenario.',
   'explain.sources.title': 'NASA and CSA resources used by LUMEN 3D',
   'explain.sources.horizons':
     'DE441 ephemerides: Sun and Earth positions seen from each site (2026–2030), arcsecond-level validation and DSN geometry.',
@@ -402,6 +442,9 @@ export const en: Record<keyof typeof es, string> = {
 
   // Link margin
   'link.label': 'Min. link elev. (°)',
+  'link.dsn': 'Require a DSN station',
+  'link.dsnTitle':
+    'The link only counts while Goldstone, Madrid or Canberra see the Moon at 10° or more. With no station in view (≈1.6 % of the time, gaps of up to ~90 min) there is no link even with the Earth above the horizon.',
   'link.title':
     'Minimum Earth elevation above the terrain for a usable DTE link (avoids multipath off the regolith). Typical: 3–5°.',
   'link.required': 'link needs ≥ {deg}',
@@ -454,8 +497,8 @@ export const en: Record<keyof typeof es, string> = {
   'hud.aerialView': 'Aerial view',
   'hud.landerView': 'Lander view',
   'hud.slope': 'Slopes',
-  'hud.ellipse': 'Ellipse',
-  'hud.ellipseOff': 'no ellipse',
+  'hud.ellipse': 'Dispersion',
+  'hud.ellipseOff': 'no zone',
   'hud.pick': 'Click to relocate',
   'hud.pickActive': 'Click the terrain…',
   'hud.pickTitle':
@@ -512,8 +555,8 @@ export const en: Record<keyof typeof es, string> = {
     '{res} m/px DEM: slopes are smoothed and underestimate the real one at lander scale.',
 
   // Dispersion
-  'dispersion.title': 'Landing-ellipse sensitivity (r = {r})',
-  'dispersion.loading': 'Computing horizons for the ellipse points…',
+  'dispersion.title': 'Sensitivity in the dispersion zone (r = {r})',
+  'dispersion.loading': 'Computing horizons for the zone points…',
   'dispersion.spread': 'Score between {min} and {max} across {n} possible touchdown points.',
   'dispersion.range': 'min · median · max',
   'dispersion.score': 'Score',

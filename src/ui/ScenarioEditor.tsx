@@ -201,6 +201,14 @@ export function ScenarioEditor({
                 onChange={(e) => change({ linkMarginDeg: Number(e.target.value) })}
               />
             </label>
+            <label className="field field--check" title={t('link.dsnTitle')}>
+              <input
+                type="checkbox"
+                checked={value.requireDsn}
+                onChange={(e) => change({ requireDsn: e.target.checked })}
+              />
+              <span>{t('link.dsn')}</span>
+            </label>
             <label className="field">
               <span>
                 {t('editor.science')} <strong>{Math.round(value.scienceWeight * 100)} %</strong>

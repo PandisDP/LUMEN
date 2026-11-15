@@ -22,8 +22,16 @@ export function TimeControls() {
   const playing = useMissionStore((s) => s.playing)
   const speed = useMissionStore((s) => s.speed)
   const linkMarginDeg = useMissionStore((s) => s.linkMarginDeg)
-  const { setStart, setOffset, setMissionDays, togglePlay, setSpeed, setLinkMargin } =
-    useMissionStore.getState()
+  const requireDsn = useMissionStore((s) => s.requireDsn)
+  const {
+    setStart,
+    setOffset,
+    setMissionDays,
+    togglePlay,
+    setSpeed,
+    setLinkMargin,
+    setRequireDsn,
+  } = useMissionStore.getState()
   const t = useT()
   const showLinkMargin = useShow('linkMargin')
   const { instant, timeMs } = useInstant(scenario)
@@ -67,6 +75,16 @@ export function TimeControls() {
               value={linkMarginDeg}
               onChange={(e) => setLinkMargin(Number(e.target.value))}
             />
+          </label>
+        )}
+        {showLinkMargin && (
+          <label className="field field--check" title={t('link.dsnTitle')}>
+            <input
+              type="checkbox"
+              checked={requireDsn}
+              onChange={(e) => setRequireDsn(e.target.checked)}
+            />
+            <span>{t('link.dsn')}</span>
           </label>
         )}
         <div className="time__buttons">

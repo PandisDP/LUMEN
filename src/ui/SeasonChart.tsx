@@ -173,11 +173,12 @@ export function SeasonChart() {
   const scenario = useMissionStore(selectActiveScenario)
   const missionDays = useMissionStore((s) => s.missionDays)
   const linkMarginDeg = useMissionStore((s) => s.linkMarginDeg)
+  const requireDsn = useMissionStore((s) => s.requireDsn)
   const setStart = useMissionStore((s) => s.setStart)
   const t = useT()
   const siteText = useSiteText()
   const { info, detail } = useScenarioData(scenario)
-  const key = detail && info ? `${info.id}|${missionDays}|${linkMarginDeg}` : null
+  const key = detail && info ? `${info.id}|${missionDays}|${linkMarginDeg}|${requireDsn}` : null
   const { data, loading } = useAsync(key, () =>
     runDateSweep({
       site: detail!.site,
@@ -186,9 +187,14 @@ export function SeasonChart() {
       days: SWEEP_DAYS,
       missionDays,
       linkMarginDeg,
+      requireDsn,
     }),
   )
-  const months = useMemo(() => (data ? aggregateByMonth(data) : []), [data])
+  // The sweep ends on 2030-12-31: drop the stub of a month that a window start can spill into.
+  const months = useMemo(
+    () => (data ? aggregateByMonth(data).filter((m) => m.days >= 20) : []),
+    [data],
+  )
   const { best, worst } = useMemo(() => extremeMonths(months), [months])
   const pick = (m: MonthStat) => setStart(monthLandingMs(m))
 

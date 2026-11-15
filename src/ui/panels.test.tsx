@@ -78,3 +78,13 @@ describe('overlays', () => {
     expect(st.explainOpen).toBe(false)
   })
 })
+
+describe('glossary', () => {
+  it('lists the terms inside the "Why?" panel', () => {
+    useMissionStore.getState().setExplainOpen(true)
+    render(<ExplainPanel />)
+    expect(screen.getByRole('heading', { name: 'Glosario' })).toBeInTheDocument()
+    expect(screen.getAllByRole('term')).toHaveLength(10)
+    expect(screen.getByText('Zona de dispersión')).toBeInTheDocument()
+  })
+})

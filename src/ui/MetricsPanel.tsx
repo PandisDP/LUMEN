@@ -1,7 +1,8 @@
 import { fsplDb, primaryStation, relativeFsplDb } from '../astro/dsn.ts'
 import type { InstantState } from '../astro/instant.ts'
 import type { ScenarioMetrics } from '../astro/metrics.ts'
-import type { SiteDetail } from '../data/catalog.ts'
+import { classifySite } from '../astro/hardware.ts'
+import type { SiteDetail, SiteInfo } from '../data/catalog.ts'
 import { useBattery, useInstant, useThermal } from '../hooks/useScenario.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { useSiteText, useSourceText } from '../i18n/sites.ts'
@@ -18,6 +19,7 @@ import { useIceAccess } from '../hooks/useScience.ts'
 import { LevelTag } from './LevelTag.tsx'
 import { type Level, dteLevel, energyLevel, nightLevel } from './levels.ts'
 import { useShow } from './audience.ts'
+import { DateShift } from './DateShift.tsx'
 
 type T = ReturnType<typeof useT>
 
@@ -224,6 +226,36 @@ export function WindowSummary({ m, compact = false }: { m: ScenarioMetrics; comp
   )
 }
 
+/**
+ * Go / marginal / no-go for the active site against the hardware limits (the same rule as the
+ * hardware filter), naming the limits that fail or are within 20 % of failing.
+ */
+function Verdict({ info, m }: { info?: SiteInfo; m: ScenarioMetrics }) {
+  const t = useT()
+  const limits = useMissionStore((s) => s.hardwareLimits)
+  const v = classifySite(limits, {
+    slopeP90Deg: info?.slopeP90Deg,
+    longestDarkH: m.longestDarkH,
+    dtePct: m.dtePct,
+  })
+  const notes = v.failed.length ? v.failed : v.tight
+  return (
+    <p className="verdict" data-level={v.verdict} title={t('metrics.verdictTitle')}>
+      <span className="panel__label">{t('metrics.verdict')}</span>
+      <strong>
+        <LevelTag level={v.verdict} /> {t(`hw.verdict.${v.verdict}`)}
+      </strong>
+      {notes.length > 0 && (
+        <span className="verdict__why">
+          {t(v.failed.length ? 'metrics.verdictFails' : 'metrics.verdictTight', {
+            what: notes.map((c) => t(`hw.c.${c}`)).join(', '),
+          })}
+        </span>
+      )}
+    </p>
+  )
+}
+
 /** One-line state for the collapsed header: Sun elevation and Earth visibility. */
 function InstantSummary({ i }: { i: InstantState }) {
   const t = useT()
@@ -258,6 +290,7 @@ export function MetricsPanel() {
     ice: useShow('ice'),
     terrain: useShow('terrain'),
     dispersion: useShow('dispersion'),
+    dateShift: useShow('dateShift'),
   }
 
   return (
@@ -299,6 +332,8 @@ export function MetricsPanel() {
               <small>/100</small>
             </span>
           </div>
+          <Verdict info={info} m={result.metrics} />
+          {show.dateShift && <DateShift scenario={scenario} detail={detail} />}
           {show.scienceWeight && (
             <ScienceWeight engineering={result.metrics.score} science={science} />
           )}

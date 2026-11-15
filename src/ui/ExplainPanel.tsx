@@ -28,6 +28,20 @@ const SOURCES: { id: string; name: string; href: string }[] = [
   { id: 'csa', name: 'CSA · Moon exploration', href: CSA_MOON_URL },
 ]
 
+/** Terms used across the panels, in reading order (texts: `glossary.<id>.term` / `.def`). */
+const GLOSSARY = [
+  'mask',
+  'frac',
+  'dte',
+  'margin',
+  'dsn',
+  'dispersion',
+  'psr',
+  'slope',
+  'lola',
+  'tplus',
+] as const
+
 export function ExplainPanel() {
   const t = useT()
   const open = useMissionStore((s) => s.explainOpen)
@@ -73,6 +87,17 @@ export function ExplainPanel() {
           </article>
         ))}
       </div>
+      <section className="explain__glossary" aria-labelledby="explain-glossary">
+        <h3 id="explain-glossary">{t('glossary.title')}</h3>
+        <dl>
+          {GLOSSARY.map((id) => (
+            <div key={id}>
+              <dt>{t(`glossary.${id}.term` as MsgKey)}</dt>
+              <dd>{t(`glossary.${id}.def` as MsgKey)}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
       <section className="explain__sources" aria-labelledby="explain-sources">
         <h3 id="explain-sources">{t('explain.sources.title')}</h3>
         <ul>

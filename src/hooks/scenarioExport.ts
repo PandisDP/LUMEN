@@ -21,6 +21,7 @@ export async function evaluateForExport(sc: Scenario) {
     startMs: sc.startMs,
     missionDays: sc.missionDays,
     linkMarginDeg: sc.linkMarginDeg,
+    requireDsn: sc.requireDsn,
   })
   const meta: ExportMeta = {
     siteId: info.id,
@@ -33,6 +34,7 @@ export async function evaluateForExport(sc: Scenario) {
     missionDays: sc.missionDays,
     linkMarginDeg: sc.linkMarginDeg,
     extra: {
+      require_dsn_station: sc.requireDsn ? 1 : 0,
       energy_profile: sc.energyId,
       energy_params_panel_az_peakW_batteryWh_activeW_hibernateW_thresholdPct_initialPct:
         encodeProfile(sc.energy),

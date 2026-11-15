@@ -16,6 +16,8 @@ export interface ScenarioParams {
   missionDays: number
   /** Minimum Earth elevation over the terrain for a DTE link, deg. */
   linkMarginDeg: number
+  /** The DTE link also needs a DSN complex with the Moon in view. */
+  requireDsn: boolean
   /** Preset id, or 'custom' once any field is edited. */
   energyId: string
   energy: EnergyProfile
@@ -63,6 +65,7 @@ const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(mi
 export const defaultParams = (): ScenarioParams => ({
   missionDays: MISSION_DAYS.default,
   linkMarginDeg: LINK_MARGIN.default,
+  requireDsn: false,
   energyId: DEFAULT_ENERGY_ID,
   energy: { ...energyPreset(DEFAULT_ENERGY_ID)!.profile },
   hardwareLimits: { ...DEFAULT_LIMITS },
@@ -73,6 +76,7 @@ export const defaultParams = (): ScenarioParams => ({
 export const paramsOf = (x: ScenarioParams): ScenarioParams => ({
   missionDays: x.missionDays,
   linkMarginDeg: x.linkMarginDeg,
+  requireDsn: x.requireDsn,
   energyId: x.energyId,
   energy: { ...x.energy },
   hardwareLimits: { ...x.hardwareLimits },
@@ -102,6 +106,7 @@ export function sanitizeParams(
     out.missionDays = Math.round(clamp(days, MISSION_DAYS.min, MISSION_DAYS.max))
   const link = num(patch.linkMarginDeg)
   if (link !== undefined) out.linkMarginDeg = clamp(link, LINK_MARGIN.min, LINK_MARGIN.max)
+  if (typeof patch.requireDsn === 'boolean') out.requireDsn = patch.requireDsn
   const sci = num(patch.scienceWeight)
   if (sci !== undefined) out.scienceWeight = Math.round(clamp(sci, 0, 1) * 100) / 100
   if (patch.hardwareLimits && typeof patch.hardwareLimits === 'object')
@@ -195,6 +200,7 @@ export interface MissionState extends ScenarioParams {
   setShowPaths: (show: boolean) => void
   lookAt: (az: number, el: number, fov?: number) => void
   setLinkMargin: (deg: number) => void
+  setRequireDsn: (on: boolean) => void
   setShowSlope: (show: boolean) => void
   setEllipseRadius: (m: number) => void
   setAerial: (aerial: boolean) => void
@@ -405,6 +411,7 @@ export const useMissionStore = create<MissionState>()((set, get) => {
     setLinkMargin: (deg) => {
       if (Number.isFinite(deg)) updateActive({ linkMarginDeg: deg })
     },
+    setRequireDsn: (requireDsn) => updateActive({ requireDsn }),
     setShowSlope: (showSlope) => set({ showSlope }),
     setEllipseRadius: (m) => {
       if ((ELLIPSE_RADII as readonly number[]).includes(m)) set({ ellipseRadiusM: m })

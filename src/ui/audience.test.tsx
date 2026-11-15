@@ -78,6 +78,30 @@ describe('panels follow the audience', () => {
     expect(await screen.findByText('Noche más larga', {}, { timeout: 5000 })).toBeInTheDocument()
   })
 
+  it('every audience gets the verdict against the hardware limits', async () => {
+    useUiStore.setState({ audience: 'public' })
+    render(<MetricsPanel />)
+    // Apollo 11: flat reference site, Earth always up, but a two-week night ahead.
+    const label = await screen.findByText('Veredicto', {}, { timeout: 5000 })
+    expect(label.parentElement).toHaveTextContent(/Viable|Al límite|Descartado/)
+    // A stricter night limit turns it into a no-go that names the failing limit.
+    useMissionStore.getState().setHardwareLimits({ maxNightH: 1 })
+    expect(await screen.findByText(/falla: .*noche/)).toBeInTheDocument()
+  })
+
+  it('shows the date-slip scores to planners and hides them from the public', async () => {
+    const { unmount } = render(<MetricsPanel />)
+    expect(
+      await screen.findByText(/Si la fecha se mueve/, {}, { timeout: 10_000 }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /días: puntuación/ })).toHaveLength(7)
+    unmount()
+    useUiStore.setState({ audience: 'public' })
+    render(<MetricsPanel />)
+    await screen.findByText('Veredicto', {}, { timeout: 5000 })
+    expect(screen.queryByText(/Si la fecha se mueve/)).toBeNull()
+  })
+
   it('the public only has the timeline and map tabs, and an open hidden tab falls back', () => {
     useMissionStore.getState().setBottomPanel('dates')
     useUiStore.setState({ audience: 'public' })

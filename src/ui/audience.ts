@@ -17,6 +17,7 @@ export type Feature =
   | 'horizonTab' // 360° horizon chart tab
   | 'datesTab' // alternative dates tab
   | 'seasonsTab' // Sun elevation and Earth visibility by month, 2026–2030
+  | 'dateShift' // score if the landing slips ±1, ±3, ±7 days
   | 'linkMargin' // DTE link margin control
   | 'customCoords' // custom coordinates form
   | 'explainAuto' // open "Why?" automatically on entering the exploration
@@ -34,6 +35,7 @@ export const FEATURES: readonly Feature[] = [
   'horizonTab',
   'datesTab',
   'seasonsTab',
+  'dateShift',
   'linkMargin',
   'customCoords',
   'explainAuto',

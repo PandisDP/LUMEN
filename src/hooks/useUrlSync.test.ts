@@ -61,6 +61,32 @@ describe('URL state', () => {
     expect(useUiStore.getState().audience).toBe('educator')
   })
 
+  it('round-trips the DSN requirement, top level and per scenario', () => {
+    expect(stateToSearch()).not.toContain('dsn=')
+    state().setRequireDsn(true)
+    const search = stateToSearch()
+    expect(search).toContain('dsn=1')
+    state().reset()
+    state().setSites(sites)
+    applyUrl(search)
+    expect(state().requireDsn).toBe(true)
+
+    const t = Date.UTC(2027, 2, 1)
+    state().setScenarios(
+      [
+        { siteId: 'cabeus', startMs: t, requireDsn: true },
+        { siteId: 'haworth', startMs: t, requireDsn: false, missionDays: 20 },
+      ],
+      0,
+    )
+    const multi = stateToSearch()
+    state().reset()
+    state().setSites(sites)
+    applyUrl(multi)
+    expect(state().scenarios.map((x) => x.requireDsn)).toEqual([true, false])
+    expect(state().scenarios[1].missionDays).toBe(20)
+  })
+
   it('keeps the single-scenario format working', () => {
     applyUrl('?site=cabeus&date=2027-05-01T00:00Z&days=20')
     expect(state().scenarios).toHaveLength(1)

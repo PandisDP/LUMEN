@@ -32,7 +32,7 @@ export const es = {
   'audience.educator': 'Educador',
   'audience.public': 'Público',
   'audience.planner.desc':
-    'Todos los datos: DSN, térmico, elipse de aterrizaje, filtro de hardware y exportación.',
+    'Todos los datos: DSN, térmico, zona de dispersión del aterrizaje, filtro de hardware y exportación.',
   'audience.educator.desc':
     'La física del lugar: Sol, Tierra, horizonte, iluminación y hielo, sin los detalles de ingeniería.',
   'audience.public.desc': 'Lo esencial: ¿hay Sol?, ¿se ve la Tierra?, y por qué eso importa.',
@@ -61,7 +61,7 @@ export const es = {
   'help.charts':
     'Mueve el tiempo de la misión con el deslizador o pulsa Reproducir. «Línea temporal» muestra Sol, Tierra y batería a lo largo de los días; «Horizonte 360°» dibuja el relieve con las trayectorias; «Fechas alternativas» puntúa cada día de alunizaje de los próximos 12 meses.',
   'help.hud':
-    'Controles de la vista 3D. En Órbita: arrastra para girar, rueda para acercar y clic en un punto para viajar al sitio. En Superficie: mira al Sol o a la Tierra, activa la línea de horizonte, las pendientes, la elipse de aterrizaje o reubica el sitio con un clic.',
+    'Controles de la vista 3D. En Órbita: arrastra para girar, rueda para acercar y clic en un punto para viajar al sitio. En Superficie: mira al Sol o a la Tierra, activa la línea de horizonte, las pendientes, la zona de dispersión del aterrizaje o reubica el sitio con un clic.',
 
   // Guided tour
   'tour.aria': 'Recorrido guiado',
@@ -241,7 +241,7 @@ export const es = {
   'opt.button': 'Sugerir mejor punto',
   'opt.loading': 'Buscando terreno seguro y evaluando la misión en cada punto…',
   'opt.summary': '{safe} puntos con pendiente < 10° · se evaluaron los {n} más altos',
-  'opt.none': 'No hay terreno con pendiente < 10° dentro de la elipse.',
+  'opt.none': 'No hay terreno con pendiente < 10° dentro de la zona de dispersión.',
   'opt.where': 'a {d} al {dir}',
   'opt.stats': 'pendiente {slope} · luz {sun} · DTE {dte} · noche {night}',
   'opt.go': 'Ir a este punto',
@@ -271,6 +271,16 @@ export const es = {
   'stats.energy': 'Energía (vs. Sol continuo)',
   'stats.sunlit': 'Tiempo con Sol',
   'stats.dte': 'Tiempo con enlace DTE',
+  'shift.label': 'Si la fecha se mueve: {min}–{max}',
+  'shift.title':
+    'Puntuación de la misma misión aterrizando unos días antes o después. Clic en un valor para usar esa fecha.',
+  'shift.now': 'hoy',
+  'shift.cell': '{days} días: puntuación {score}',
+  'metrics.verdict': 'Veredicto',
+  'metrics.verdictTitle':
+    'Frente a los límites de hardware (pendiente, noche más larga y enlace mínimo). Se ajustan en Más → Hardware.',
+  'metrics.verdictFails': 'falla: {what}',
+  'metrics.verdictTight': 'justo en: {what}',
   'stats.both': 'Sol + Tierra a la vez',
   'stats.night': 'Noche más larga',
   'stats.noDte': 'Mayor corte de enlace',
@@ -393,6 +403,36 @@ export const es = {
     'La Agencia Espacial Canadiense aporta Canadarm3, el brazo robótico de la estación Gateway, y a cambio tiene dos vuelos de astronautas a la Luna: Jeremy Hansen la rodeó en Artemis II (abril de 2026). También prepara un rover utilitario para la década de 2030 que deberá sobrevivir a la noche lunar de dos semanas a unos −200 °C y buscar hielo, justo lo que mide esta herramienta.',
   'explain.c8.cta': 'Probar el rover canadiense',
   'explain.source': 'Fuente',
+  'glossary.title': 'Glosario',
+  'glossary.mask.term': 'Máscara de horizonte',
+  'glossary.mask.def':
+    'Elevación del relieve en cada dirección vista desde el sitio (0,5° de resolución, hasta 300 km). Decide cuándo el Sol o la Tierra quedan tapados.',
+  'glossary.frac.term': 'Fracción visible',
+  'glossary.frac.def':
+    'Parte del disco del Sol (o de la Tierra) que asoma sobre el horizonte; un astro cuenta como visible desde el 50 %.',
+  'glossary.dte.term': 'DTE',
+  'glossary.dte.def': 'Direct-to-Earth: comunicación directa con la Tierra, sin satélite relé.',
+  'glossary.margin.term': 'Margen de enlace',
+  'glossary.margin.def':
+    'Grados que la Tierra debe superar sobre el relieve para un enlace utilizable; evita que la señal rebote en el suelo (multitrayecto).',
+  'glossary.dsn.term': 'DSN',
+  'glossary.dsn.def':
+    'Deep Space Network: las antenas de la NASA en Goldstone, Madrid y Canberra. Para hablar con la Luna, al menos una debe tenerla a la vista.',
+  'glossary.dispersion.term': 'Zona de dispersión',
+  'glossary.dispersion.def':
+    'Círculo alrededor del sitio donde puede acabar el módulo por la imprecisión del guiado (500 m, 1 km o 2 km de radio).',
+  'glossary.psr.term': 'PSR',
+  'glossary.psr.def':
+    'Región en sombra permanente: fondos de cráter donde nunca da el Sol y puede conservarse hielo.',
+  'glossary.slope.term': 'Pendiente',
+  'glossary.slope.def':
+    'Inclinación del terreno calculada sobre el relieve de 20 m. Menos de 10° es seguro para aterrizar; más de 15°, peligroso.',
+  'glossary.lola.term': 'LOLA',
+  'glossary.lola.def':
+    'Lunar Orbiter Laser Altimeter: el altímetro láser del orbitador LRO, de donde sale toda la topografía.',
+  'glossary.tplus.term': 'T+',
+  'glossary.tplus.def':
+    'Tiempo transcurrido desde el alunizaje; todos los escenarios lo comparten.',
   'explain.sources.title': 'Recursos de la NASA y la CSA que usa LUMEN 3D',
   'explain.sources.horizons':
     'Efemérides DE441: posiciones del Sol y la Tierra vistas desde cada sitio (2026–2030), validación al segundo de arco y geometría de la DSN.',
@@ -405,6 +445,9 @@ export const es = {
 
   // Link margin
   'link.label': 'Elev. mín. enlace (°)',
+  'link.dsn': 'Exigir estación DSN',
+  'link.dsnTitle':
+    'El enlace solo cuenta cuando Goldstone, Madrid o Canberra ven la Luna a 10° o más. Sin estación a la vista (≈1,6 % del tiempo, huecos de hasta ~90 min) no hay enlace aunque la Tierra esté sobre el horizonte.',
   'link.title':
     'Elevación mínima de la Tierra sobre el relieve para un enlace DTE utilizable (evita el multitrayecto por rebote en el regolito). Típico: 3–5°.',
   'link.required': 'enlace requiere ≥ {deg}',
@@ -458,8 +501,8 @@ export const es = {
   'hud.aerialView': 'Vista aérea',
   'hud.landerView': 'Vista del lander',
   'hud.slope': 'Pendientes',
-  'hud.ellipse': 'Elipse',
-  'hud.ellipseOff': 'sin elipse',
+  'hud.ellipse': 'Dispersión',
+  'hud.ellipseOff': 'sin zona',
   'hud.pick': 'Reubicar con clic',
   'hud.pickActive': 'Haz clic en el terreno…',
   'hud.pickTitle':
@@ -517,8 +560,8 @@ export const es = {
     'DEM de {res} m/px: la pendiente queda suavizada y subestima la real a escala del lander.',
 
   // Dispersion
-  'dispersion.title': 'Sensibilidad en la elipse (r = {r})',
-  'dispersion.loading': 'Calculando horizontes de los puntos de la elipse…',
+  'dispersion.title': 'Sensibilidad en la zona de dispersión (r = {r})',
+  'dispersion.loading': 'Calculando horizontes de los puntos de la zona…',
   'dispersion.spread': 'Puntuación entre {min} y {max} en {n} puntos de aterrizaje posibles.',
   'dispersion.range': 'mín · mediana · máx',
   'dispersion.score': 'Puntuación',

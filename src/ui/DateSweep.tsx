@@ -77,11 +77,13 @@ export function DateSweep() {
   const missionDays = useMissionStore((s) => s.missionDays)
   const setStart = useMissionStore((s) => s.setStart)
   const linkMarginDeg = useMissionStore((s) => s.linkMarginDeg)
+  const requireDsn = useMissionStore((s) => s.requireDsn)
   const t = useT()
   const siteText = useSiteText()
   const { info, detail } = useScenarioData(scenario)
   const [fromMs] = useState(() => todayUtc())
-  const key = detail && info ? `${info.id}|${fromMs}|${missionDays}|${linkMarginDeg}` : null
+  const key =
+    detail && info ? `${info.id}|${fromMs}|${missionDays}|${linkMarginDeg}|${requireDsn}` : null
   const { data, loading } = useAsync(key, () =>
     runDateSweep({
       site: detail!.site,
@@ -90,6 +92,7 @@ export function DateSweep() {
       days: SWEEP_DAYS,
       missionDays,
       linkMarginDeg,
+      requireDsn,
     }),
   )
   const best = useMemo(

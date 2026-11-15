@@ -1,3 +1,4 @@
+import { anyStationSeesMoon } from './dsn.ts'
 import { type EphemerisSeries, type Site, makeObserver, skyFromVectors } from './ephemeris.ts'
 import type { Vec3 } from './frames.ts'
 import { type HorizonMask, discVisibleFraction, maskAt } from './horizon.ts'
@@ -24,12 +25,15 @@ export interface SiteSeries {
  * @param linkMarginDeg Minimum clearance of the Earth above the terrain horizon for a usable
  *   direct-to-Earth link (multipath off the regolith). The Sun is always judged against the
  *   bare horizon.
+ * @param requireDsn Also require a DSN complex with the Moon in view: without one the Earth
+ *   counts as not visible for the link (about 1.6 % of the time, gaps of up to ~90 min).
  */
 export function evaluateSite(
   eph: EphemerisSeries,
   site: Site,
   mask: HorizonMask,
   linkMarginDeg = 0,
+  requireDsn = false,
 ): SiteSeries {
   const { count } = eph
   const out: SiteSeries = {
@@ -60,6 +64,8 @@ export function evaluateSite(
       maskAt(mask, sky.earth.az) + linkMarginDeg,
       sky.earth.radiusDeg,
     )
+    if (requireDsn && out.earthFrac[i] > 0 && !anyStationSeesMoon(eph.startMs + i * eph.stepMs))
+      out.earthFrac[i] = 0
   }
   return out
 }

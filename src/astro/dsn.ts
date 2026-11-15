@@ -45,6 +45,10 @@ export function dsnVisibility(date: Date): StationState[] {
   })
 }
 
+/** Whether any DSN complex has the Moon above its tracking limit at `timeMs`. */
+export const anyStationSeesMoon = (timeMs: number) =>
+  dsnVisibility(new Date(timeMs)).some((s) => s.visible)
+
 /** The station that would carry the link now: the visible one with the Moon highest. */
 export function primaryStation(states: readonly StationState[]): StationState | undefined {
   let best: StationState | undefined

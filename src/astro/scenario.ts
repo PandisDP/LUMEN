@@ -18,6 +18,8 @@ export interface ScenarioInput {
   stepMinutes?: number
   /** Minimum Earth elevation above the terrain horizon for a DTE link (deg). */
   linkMarginDeg?: number
+  /** Count the link only while a DSN complex sees the Moon. */
+  requireDsn?: boolean
 }
 
 export interface ScenarioResult {
@@ -47,6 +49,7 @@ export function computeScenario(input: ScenarioInput): ScenarioResult {
     input.site,
     input.mask,
     input.linkMarginDeg,
+    input.requireDsn,
   )
   return {
     series,
@@ -61,6 +64,8 @@ export interface SweepInput {
   days: number
   missionDays: number
   linkMarginDeg?: number
+  /** Count the link only while a DSN complex sees the Moon. */
+  requireDsn?: boolean
 }
 
 /** Candidate landing dates, one per day, each evaluated over the mission duration. */
@@ -72,6 +77,7 @@ export function computeDateSweep(input: SweepInput): DateCandidate[] {
     input.site,
     input.mask,
     input.linkMarginDeg,
+    input.requireDsn,
   )
   return sweepLandingDates(series, input.missionDays, 24)
 }

@@ -25,12 +25,13 @@ export function useCatalogViability(enabled: boolean) {
   const startMs = useMissionStore((s) => selectActiveScenario(s).startMs)
   const missionDays = useMissionStore((s) => s.missionDays)
   const linkMarginDeg = useMissionStore((s) => s.linkMarginDeg)
+  const requireDsn = useMissionStore((s) => s.requireDsn)
   const limits = useMissionStore((s) => s.hardwareLimits)
   const scienceWeight = useMissionStore((s) => s.scienceWeight)
   const curated = useMemo(() => sites.filter((s) => !s.custom), [sites])
   const key =
     enabled && curated.length
-      ? `catalog|${startMs}|${missionDays}|${linkMarginDeg}|${curated.map((s) => s.id).join(',')}`
+      ? `catalog|${startMs}|${missionDays}|${linkMarginDeg}|${requireDsn}|${curated.map((s) => s.id).join(',')}`
       : null
   const { data, loading, error } = useAsync(key, () =>
     cached(key!, () =>
@@ -43,6 +44,7 @@ export function useCatalogViability(enabled: boolean) {
             startMs,
             missionDays,
             linkMarginDeg,
+            requireDsn,
           })
           return { info, metrics: r.metrics }
         }),

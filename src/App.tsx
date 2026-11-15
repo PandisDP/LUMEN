@@ -27,6 +27,9 @@ import { Tour } from './ui/Tour.tsx'
 import { ViewHud } from './ui/ViewHud.tsx'
 import { ChooseSite, Welcome } from './ui/Welcome.tsx'
 
+/** Session flag: the "Why?" cards were already shown automatically (reloads don't repeat it). */
+const EXPLAINED_KEY = 'lumen3d.explained'
+
 /** Collapsed header of the site panel: the active site. */
 function SiteSummary() {
   const siteText = useSiteText()
@@ -42,6 +45,8 @@ export default function App() {
   const panels = useUiStore((s) => s.panels)
   const stage = useUiStore((s) => s.stage)
   const audience = useUiStore((s) => s.audience)
+  // The map and the seasons chart need more room than the timeline strips.
+  const tallBottom = useMissionStore((s) => s.bottomPanel === 'map' || s.bottomPanel === 'seasons')
   const explainAuto = useShow('explainAuto')
   const t = useT()
   const exploring = stage === 'explore'
@@ -51,6 +56,12 @@ export default function App() {
   useEffect(() => {
     if (!exploring || !explainAuto || explained.current) return
     explained.current = true
+    try {
+      if (sessionStorage.getItem(EXPLAINED_KEY)) return
+      sessionStorage.setItem(EXPLAINED_KEY, '1')
+    } catch {
+      // Storage blocked: fall back to once per page load.
+    }
     useMissionStore.getState().setExplainOpen(true)
   }, [exploring, explainAuto])
 
@@ -72,6 +83,7 @@ export default function App() {
     exploring && panels.left && 'app--left-open',
     exploring && panels.right && 'app--right-open',
     exploring && panels.bottom && 'app--bottom-open',
+    exploring && panels.bottom && tallBottom && 'app--bottom-tall',
   ]
     .filter(Boolean)
     .join(' ')

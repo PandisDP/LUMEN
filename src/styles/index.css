@@ -1005,6 +1005,10 @@ body.picking .stage canvas {
   --bottom-space: var(--bottom-h);
 }
 
+.app--bottom-tall {
+  --bottom-h: min(480px, 58vh);
+}
+
 .panel {
   position: absolute;
   z-index: 2;
@@ -2620,4 +2624,124 @@ body.picking .stage canvas {
   .polar-map__legend {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* Inline checkbox next to the number fields (time controls, scenario editor). */
+.field--check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-end;
+  padding-bottom: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.field--check input {
+  width: auto;
+  accent-color: var(--accent);
+}
+
+/* Go / marginal / no-go line under the score. */
+.verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin: 6px 0 8px;
+  font-size: 13px;
+}
+
+.verdict .panel__label {
+  margin: 0;
+}
+
+.verdict[data-level='good'] strong {
+  color: var(--good, #7ee081);
+}
+
+.verdict[data-level='warn'] strong {
+  color: var(--warn, #ffc94d);
+}
+
+.verdict[data-level='bad'] strong {
+  color: var(--bad, #ff6b6b);
+}
+
+.verdict__why {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Score if the landing date slips (metrics panel). */
+.shift {
+  margin: 0 0 10px;
+}
+
+.shift__row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.shift__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 0;
+  color: var(--text);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.shift__cell small {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.shift__cell strong {
+  font-size: 13px;
+}
+
+.shift__cell[data-level='good'] strong {
+  color: var(--good, #7ee081);
+}
+
+.shift__cell[data-level='warn'] strong {
+  color: var(--warn, #ffc94d);
+}
+
+.shift__cell[data-level='bad'] strong {
+  color: var(--bad, #ff6b6b);
+}
+
+.shift__cell[aria-current='date'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  cursor: default;
+}
+
+/* Glossary inside the "Why?" overlay. */
+.explain__glossary dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px 18px;
+  margin: 8px 0 16px;
+}
+
+.explain__glossary dt {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.explain__glossary dd {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
 }

@@ -57,19 +57,19 @@ Cada panel y el HUD tienen un botón **«?»** con una explicación breve y un e
 
 En la pantalla de bienvenida (**¿Quién eres?**) y en la barra superior (**Modo**) se elige cuánto detalle mostrar. Los cálculos son siempre los mismos; solo cambia qué se ve. La elección se recuerda y viaja en los enlaces compartidos como `?mode=`.
 
-| Qué se muestra                                                  | Público | Educador | Planificador |
-| --------------------------------------------------------------- | :-----: | :------: | :----------: |
-| Sol, Tierra, cuentas atrás, puntuación, línea temporal, batería |    ✓    |    ✓     |      ✓       |
-| Energía, luz y DTE del resumen de la ventana                    |    ✓    |    ✓     |      ✓       |
-| Resto del resumen (ambos, noche, sin DTE, elevación solar)      |         |    ✓     |      ✓       |
-| Temperatura estimada, acceso a hielo, pendientes del terreno    |         |    ✓     |      ✓       |
-| Pestañas Horizonte 360°, Fechas alternativas y Estaciones       |         |    ✓     |      ✓       |
-| Pestaña Mapa polar                                              |    ✓    |    ✓     |      ✓       |
-| Control Ingeniería ↔ Ciencia, coordenadas personalizadas        |         |    ✓     |      ✓       |
-| Fila DSN (distancia, pérdida, estación), margen de enlace       |         |          |      ✓       |
-| Elipse de aterrizaje y «Sugerir mejor punto»                    |         |          |      ✓       |
-| Filtro de hardware, exportación CSV/JSON                        |         |          |      ✓       |
-| «¿Por qué?» abierto al entrar                                   |    ✓    |    ✓     |              |
+| Qué se muestra                                                                    | Público | Educador | Planificador |
+| --------------------------------------------------------------------------------- | :-----: | :------: | :----------: |
+| Sol, Tierra, cuentas atrás, puntuación, línea temporal, batería                   |    ✓    |    ✓     |      ✓       |
+| Energía, luz y DTE del resumen de la ventana                                      |    ✓    |    ✓     |      ✓       |
+| Resto del resumen (ambos, noche, sin DTE, elevación solar)                        |         |    ✓     |      ✓       |
+| Temperatura estimada, acceso a hielo, pendientes del terreno                      |         |    ✓     |      ✓       |
+| Pestañas Horizonte 360°, Fechas alternativas y Estaciones                         |         |    ✓     |      ✓       |
+| Pestaña Mapa polar                                                                |    ✓    |    ✓     |      ✓       |
+| Control Ingeniería ↔ Ciencia, coordenadas personalizadas                          |         |    ✓     |      ✓       |
+| Fila DSN (distancia, pérdida, estación), margen de enlace y «Exigir estación DSN» |         |          |      ✓       |
+| Zona de dispersión y «Sugerir mejor punto»                                        |         |          |      ✓       |
+| Filtro de hardware, exportación CSV/JSON                                          |         |          |      ✓       |
+| «¿Por qué?» abierto al entrar                                                     |    ✓    |    ✓     |              |
 
 ## 4. Vista Órbita
 
@@ -103,10 +103,10 @@ La cámara está en el sitio, a 2 m del suelo (la altura de un lander). El terre
 | Pendientes            | Capa de pendiente del terreno: azul < 10° segura, amarillo 10–15° marginal, naranja > 15° peligrosa                                                                                                         |
 | Imagen orbital LRO    | Foto real del Lunar Reconnaissance Orbiter sobre el relieve (mosaico LROC NAC de 10 m/px vía LROC QuickMap; al norte de 85,5° S, WAC de 100 m). Sus sombras son las de la foto, no las de la fecha simulada |
 | Sombra permanente     | Capa de iluminación media de un año: azul rayado = sombra permanente (PSR, posible hielo), de gris a amarillo según la luz; dibuja en discontinua la ruta del rover hasta el hielo                          |
-| Elipse                | Elipse de aterrizaje de 500 m, 1 km o 2 km con 17 puntos evaluados (su puntuación de 0 a 100)                                                                                                               |
+| Dispersión            | Zona de dispersión de 500 m, 1 km o 2 km con 17 puntos evaluados (su puntuación de 0 a 100)                                                                                                                 |
 | Reubicar con clic     | Activa el modo de selección: un clic en el terreno mueve el sitio a ese punto y recalcula su horizonte                                                                                                      |
 
-![Pendientes y elipse](img/pendientes.jpg)
+![Pendientes y zona de dispersión](img/pendientes.jpg)
 
 Las pendientes y la reubicación solo están disponibles en sitios con terreno LOLA de 20 m (los del polo sur). La capa de sombra permanente necesita además el mapa de iluminación del sitio (`npm run data:derived`).
 
@@ -160,7 +160,7 @@ Para toda la ventana de misión:
 - Energía, tiempo con Sol, enlace DTE, Sol + Tierra a la vez, noche más larga, mayor corte de enlace.
 - **Energía · batería**: perfil energético (lander de caja, rover con seguimiento, panel fijo o personalizado) y estado de carga mínimo; avisa si la batería se agota antes del amanecer.
 - **Terreno · aterrizaje**: pendiente en el sitio y en su entorno.
-- **Sensibilidad en la elipse**: mínimo, mediana y máximo de la puntuación en los 17 puntos de la elipse. **Sugerir mejor punto** busca dentro de la elipse terreno con pendiente < 10°, evalúa la misión en los 40 puntos más altos y propone los 3 mejores (puntuación, diferencia con el objetivo, distancia y rumbo); **Ir a este punto** reubica el sitio allí.
+- **Sensibilidad en la zona de dispersión**: mínimo, mediana y máximo de la puntuación en los 17 puntos de la zona de dispersión. **Sugerir mejor punto** busca dentro de la zona de dispersión terreno con pendiente < 10°, evalúa la misión en los 40 puntos más altos y propone los 3 mejores (puntuación, diferencia con el objetivo, distancia y rumbo); **Ir a este punto** reubica el sitio allí.
 - **Acceso a hielo (PSR)**: distancia en línea recta y por ruta del rover hasta la sombra permanente más cercana (hasta 2 km, sin pisar pendientes mayores que el límite del rover, 20° por defecto) y la **puntuación ciencia** (100 a menos de 500 m, 0 a 2 km).
 
 Los valores con nivel llevan icono ✓ / ! / ✕ además del color.
@@ -240,11 +240,13 @@ Las columnas del CSV están descritas en el [README](../README.md#columnas-de-la
 1. En **Órbita**, elige un sitio del polo sur (o introduce coordenadas).
 2. Abre el **panel derecho** (tecla 2) y mira la puntuación y la batería.
 3. En el **panel inferior** (tecla 3), revisa la **Línea temporal** y busca en **Fechas alternativas** un día mejor.
-4. Baja a **Superficie**: mira al Sol y a la Tierra, activa **Pendientes** y la **Elipse** para ver si el terreno es seguro y si la misión depende mucho del punto exacto.
+4. Baja a **Superficie**: mira al Sol y a la Tierra, activa **Pendientes** y la **Dispersión** para ver si el terreno es seguro y si la misión depende mucho del punto exacto.
 5. Prueba el **Aterrizaje** con Sol de cola y de frente.
 6. Añade escenarios y usa **Comparar** para decidir; **exporta** los datos para el informe.
 
 ## 15. Glosario
+
+El mismo glosario está dentro de la app, al final del panel **¿Por qué?**.
 
 | Término              | Significado                                                                                                       |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -252,7 +254,7 @@ Las columnas del CSV están descritas en el [README](../README.md#columnas-de-la
 | Fracción visible     | Parte del disco del Sol (o de la Tierra) que asoma sobre el horizonte; un astro cuenta como visible desde el 50 % |
 | DTE                  | _Direct-to-Earth_: comunicación directa con la Tierra, sin satélite relé                                          |
 | Margen de enlace     | Grados que la Tierra debe superar sobre el relieve para un enlace utilizable (evita el multitrayecto)             |
-| Elipse de aterrizaje | Zona donde puede acabar el lander por la imprecisión del guiado                                                   |
+| Zona de dispersión   | Zona donde puede acabar el lander por la imprecisión del guiado                                                   |
 | PSR                  | Región en sombra permanente: fondos de cráter donde nunca da el Sol                                               |
 | Pendiente            | Inclinación del terreno calculada sobre el DEM de 20 m (operador de Horn)                                         |
 | LOLA                 | _Lunar Orbiter Laser Altimeter_, el altímetro láser del LRO que da la topografía                                  |
@@ -260,12 +262,12 @@ Las columnas del CSV están descritas en el [README](../README.md#columnas-de-la
 
 ## 16. Problemas frecuentes
 
-| Síntoma                                    | Causa / solución                                                                                                      |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| Pantalla negra en Superficie               | Es de noche en el sitio (Sol bajo el horizonte). Mueve el tiempo o activa **Pendientes**, que se ve siempre           |
-| No aparecen Pendientes, Elipse ni Reubicar | El sitio no tiene terreno LOLA de 20 m (referencias fuera del polo)                                                   |
-| Los números aparecen atenuados un momento  | Se están recalculando; los valores anteriores se muestran hasta tener los nuevos                                      |
-| La escena va lenta                         | Cierra paneles que no uses (las gráficas no se calculan si su panel está minimizado) o reduce el tamaño de la ventana |
+| Síntoma                                        | Causa / solución                                                                                                      |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Pantalla negra en Superficie                   | Es de noche en el sitio (Sol bajo el horizonte). Mueve el tiempo o activa **Pendientes**, que se ve siempre           |
+| No aparecen Pendientes, Dispersión ni Reubicar | El sitio no tiene terreno LOLA de 20 m (referencias fuera del polo)                                                   |
+| Los números aparecen atenuados un momento      | Se están recalculando; los valores anteriores se muestran hasta tener los nuevos                                      |
+| La escena va lenta                             | Cierra paneles que no uses (las gráficas no se calculan si su panel está minimizado) o reduce el tamaño de la ventana |
 
 ---
 
@@ -276,7 +278,7 @@ LUMEN 3D answers one question: _if we land at this site on this date, will there
 - **Start**: a logo splash while the site catalogue loads (click or Enter/Space/Esc to skip), then an optional 1-minute guided tour (**Guide** button replays it).
 - **Layout**: top bar (views, Export, Compare, Hide panels, Why?, Guide, ES/EN), full-window 3D scene with its HUD, and three panels that start minimised (keys **1**, **2**, **3**). Every panel and the HUD have a **?** help popover.
 - **Orbit view**: the lit Moon (Moon Trek LRO WAC mosaics) with LOLA relief, Sun, Earth and clickable sites.
-- **Surface view**: a lander's-eye camera at 2 m on 20 m/px terrain with regolith detail; heading tape with Sun/Earth markers; look at the Sun or Earth, horizon line, sky paths, aerial view, slope layer (< 10° safe, 10–15° marginal, > 15° hazardous), real LRO image layer (LROC NAC via QuickMap), landing ellipse (17 scored points) and click-to-relocate.
+- **Surface view**: a lander's-eye camera at 2 m on 20 m/px terrain with regolith detail; heading tape with Sun/Earth markers; look at the Sun or Earth, horizon line, sky paths, aerial view, slope layer (< 10° safe, 10–15° marginal, > 15° hazardous), real LRO image layer (LROC NAC via QuickMap), landing dispersion zone (17 scored points) and click-to-relocate.
 - **Landing view**: an illustrative descent with a phase stepper, altitude/range/vertical-speed cards, a slope-coded reticle (colour and shape), Sun-in-camera warning, engine dust in the last 30 m, and an orbit camera around the detailed lander after touchdown.
-- **Panels**: sites and scenarios (up to 4, plus custom coordinates); site status (Sun, Earth link, score, battery, terrain, ellipse sensitivity); time controls with timeline, 360° horizon and a 12-month landing-date sweep.
+- **Panels**: sites and scenarios (up to 4, plus custom coordinates); site status (Sun, Earth link, score, battery, terrain, dispersion sensitivity); time controls with timeline, 360° horizon and a 12-month landing-date sweep.
 - **Compare** up to 4 scenarios at the same mission time, with one-click presets. **Export** CSV/JSON series, horizon profile or all scenarios. The **URL** keeps the full state, so the address bar is the share link.

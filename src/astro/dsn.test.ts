@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import fixtures from './__fixtures__/horizons-dsn.json'
+import { ephemerisSeries } from './ephemeris.ts'
 import { wrap180 } from './frames.ts'
+import { sphericalMask } from './horizon.ts'
+import { evaluateSite } from './series.ts'
 import {
   DSN_MIN_EL_DEG,
   MEAN_EARTH_MOON_KM,
   DSN_STATIONS,
+  anyStationSeesMoon,
   dsnVisibility,
   fsplDb,
   primaryStation,
@@ -71,5 +75,36 @@ describe('DSN geometry against JPL Horizons', () => {
     const mine = dsnVisibility(new Date(`${f.date}Z`))[k]
     expect(Math.abs(mine.el - f.el)).toBeLessThan(0.01)
     expect(Math.abs(wrap180(mine.az - f.az)) * Math.cos((f.el * Math.PI) / 180)).toBeLessThan(0.01)
+  })
+})
+
+describe('requiring a DSN station for the link', () => {
+  // A far-side-free equatorial site: the Earth is always up, so only the DSN can cut the link.
+  const site = { lat: 0, lon: 0, heightM: 0 }
+  const mask = sphericalMask(2, 1)
+  const startMs = Date.UTC(2026, 0, 1)
+  const eph = ephemerisSeries(startMs, 600_000, 30 * 144)
+
+  it('leaves the series untouched when the option is off', () => {
+    const base = evaluateSite(eph, site, mask, 0)
+    expect(Array.from(evaluateSite(eph, site, mask, 0, false).earthFrac)).toEqual(
+      Array.from(base.earthFrac),
+    )
+  })
+
+  it('drops the link exactly when no complex sees the Moon', () => {
+    const base = evaluateSite(eph, site, mask, 0)
+    const dsn = evaluateSite(eph, site, mask, 0, true)
+    let cut = 0
+    for (let i = 0; i < eph.count; i++) {
+      const seen = anyStationSeesMoon(startMs + i * 600_000)
+      expect(dsn.earthFrac[i]).toBe(seen ? base.earthFrac[i] : 0)
+      if (!seen) cut++
+    }
+    // Some gaps in a month, but a small share of the time.
+    expect(cut).toBeGreaterThan(0)
+    expect(cut / eph.count).toBeLessThan(0.05)
+    // The Sun is not affected.
+    expect(Array.from(dsn.sunFrac)).toEqual(Array.from(base.sunFrac))
   })
 })

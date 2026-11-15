@@ -36,6 +36,7 @@ function encodeOverrides(sc: ScenarioParams, base: ScenarioParams): string {
   let out = ''
   if (sc.missionDays !== base.missionDays) out += `~d${sc.missionDays}`
   if (sc.linkMarginDeg !== base.linkMarginDeg) out += `~l${sc.linkMarginDeg}`
+  if (sc.requireDsn !== base.requireDsn) out += `~gs${sc.requireDsn ? 1 : 0}`
   if (sc.scienceWeight !== base.scienceWeight) out += `~sci${sc.scienceWeight}`
   if (encodeEnergy(sc) !== encodeEnergy(base)) out += `~en${encodeEnergy(sc).replaceAll(',', '_')}`
   const hw = encodeLimits(sc.hardwareLimits)
@@ -46,7 +47,8 @@ function encodeOverrides(sc: ScenarioParams, base: ScenarioParams): string {
 function decodeOverrides(parts: string[]): Partial<ScenarioParams> {
   const out: Partial<ScenarioParams> = {}
   for (const part of parts) {
-    if (part.startsWith('sci')) out.scienceWeight = Number(part.slice(3))
+    if (part.startsWith('gs')) out.requireDsn = part.slice(2) === '1'
+    else if (part.startsWith('sci')) out.scienceWeight = Number(part.slice(3))
     else if (part.startsWith('en'))
       Object.assign(out, decodeEnergy(part.slice(2).replaceAll('_', ',')))
     else if (part.startsWith('hw')) {
@@ -95,6 +97,7 @@ function topLevelParams(p: URLSearchParams): Partial<ScenarioParams> {
   const days = Number(p.get('days'))
   if (days) out.missionDays = days
   if (p.has('link')) out.linkMarginDeg = Number(p.get('link'))
+  if (p.has('dsn')) out.requireDsn = p.get('dsn') === '1'
   const hw = decodeLimits(p.get('hw') ?? '')
   if (hw) out.hardwareLimits = hw
   if (p.has('sci')) out.scienceWeight = Number(p.get('sci'))
@@ -109,7 +112,7 @@ function topLevelParams(p: URLSearchParams): Partial<ScenarioParams> {
  *   ?lat=-89.1&lon=-60 (custom coordinates)
  *   &s=shackleton-rim@2027-03-01T00:00Z,shackleton-floor@2027-03-01T00:00Z~d30&a=0&cmp=1 (Compare;
  *     `~…` = settings of that scenario that differ from the top-level ones)
- *   &link=3 (DTE link margin, deg)
+ *   &link=3 (DTE link margin, deg) &dsn=1 (the link also needs a DSN station in view)
  *   &lang=en (UI language) &mode=public (audience: planner | educator | public)
  *   &hw=15,120,30,20 (hardware limits: slope, night h, DTE %, rover slope) &sci=0.3 (science weight)
  *   &en=lander | en=custom:vertical-box,0,150,1500,150,45,25,100 (energy profile)
@@ -173,6 +176,7 @@ export function stateToSearch(): string {
   p.set('view', s.view)
   if (s.approachAz !== null) p.set('ap', String(Math.round(s.approachAz)))
   p.set('link', String(sc.linkMarginDeg))
+  if (sc.requireDsn) p.set('dsn', '1')
   if (s.scenarios.length > 1) {
     p.set('s', s.scenarios.map((x) => scenarioItem(x, sc)).join(','))
     p.set('a', String(scenarioIndex(s, s.activeId)))

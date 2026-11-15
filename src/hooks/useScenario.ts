@@ -17,13 +17,15 @@ import { useAsync } from './useAsync.ts'
 /** Site info + horizon + evaluated time series for one scenario. */
 export function useScenarioData(scenario: Scenario) {
   const sites = useMissionStore((s) => s.sites)
-  const { missionDays, linkMarginDeg } = scenario
+  const { missionDays, linkMarginDeg, requireDsn } = scenario
   const info = findSite(sites, scenario.siteId)
 
   const detail = useAsync(info ? `detail:${info.id}` : null, () => loadSiteDetail(info!))
   const ready = detail.data && !detail.loading
   const resultKey =
-    ready && info ? `${info.id}|${scenario.startMs}|${missionDays}|${linkMarginDeg}` : null
+    ready && info
+      ? `${info.id}|${scenario.startMs}|${missionDays}|${linkMarginDeg}|${requireDsn}`
+      : null
   const result = useAsync(resultKey, () =>
     runScenario({
       site: detail.data!.site,
@@ -31,6 +33,7 @@ export function useScenarioData(scenario: Scenario) {
       startMs: scenario.startMs,
       missionDays,
       linkMarginDeg,
+      requireDsn,
     }),
   )
 
