@@ -1,4 +1,12 @@
-import { describe, expect, it, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import type { DemGrid, DemMeta } from '../astro/dem.ts'
+import type { EphemTableMeta } from '../astro/ephemTable.ts'
+import { setEphemerisTable } from '../astro/ephemeris.ts'
+import { DEFAULT_LIMITS } from '../astro/hardware.ts'
+import { computeIceAccess } from '../astro/iceAccess.ts'
+import type { IllumGrid, IllumMeta } from '../astro/illumination.ts'
+import { type RoverId, SAMPLING_DEFAULTS, computeTraverse } from '../astro/traverse.ts'
 import { hasKey } from '../i18n/index.ts'
 import {
   type ChallengeSetupCtx,
@@ -11,6 +19,7 @@ import {
   nextChallenge,
   totalScore,
 } from './challenges.ts'
+import { energyPreset } from './energyProfiles.ts'
 import { SITE_SEEDS } from './sites.ts'
 
 const base: ChallengeState = {
@@ -117,13 +126,21 @@ const CASES: Record<string, { start: ChallengeState; solved: ChallengeState }> =
       view: 'micro',
       ice: { reachable: false, routeM: null, insidePsr: false },
     },
+    // Mons Mouton with the utility rover, 3 samples × 2 h, landing 2027-03-15.
     solved: {
       ...base,
       siteId: 'mons-mouton',
       lat: -84.79,
       view: 'micro',
       ice: { reachable: true, routeM: 868, insidePsr: false },
-      rover: { reaches: true, minSocPct: 74 },
+      rover: {
+        reaches: true,
+        samples: 3,
+        samplesDone: 3,
+        returns: true,
+        onTime: true,
+        minSocPct: 57.1,
+      },
     },
   },
 }
@@ -137,7 +154,7 @@ const setupSpy = () => {
       setOffset: vi.fn(),
     },
     descent: { setMode: vi.fn(), setVehicle: vi.fn() },
-    rover: { setRover: vi.fn() },
+    rover: { setRover: vi.fn(), setSamples: vi.fn(), setSampleH: vi.fn() },
   }
   return ctx satisfies ChallengeSetupCtx
 }
@@ -202,7 +219,7 @@ describe('challenge definitions', () => {
     }
   })
 
-  it('the landing challenge starts with the heavy lander and the ice one with the micro-rover', () => {
+  it('the landing challenge starts with the heavy lander and the ice one with the micro-rover and the full workload', () => {
     const a = setupSpy()
     findChallenge('landing')!.setup(a)
     expect(a.descent.setVehicle).toHaveBeenCalledWith('heavy')
@@ -210,6 +227,8 @@ describe('challenge definitions', () => {
     const b = setupSpy()
     findChallenge('ice')!.setup(b)
     expect(b.rover.setRover).toHaveBeenCalledWith('rover')
+    expect(b.rover.setSamples).toHaveBeenCalledWith(3)
+    expect(b.rover.setSampleH).toHaveBeenCalledWith(2)
   })
 })
 
@@ -264,18 +283,35 @@ describe('goal thresholds', () => {
     expect(touchdown({ ...s, descent: { ...d, ok: false } })).toBe(false)
   })
 
-  it('ice: a real traverse from outside the shadow, battery never under 30 %', () => {
+  it('ice: a real round trip from outside the shadow, battery never under 30 %', () => {
     const s = CASES.ice.solved
+    const r = s.rover!
     const route = goal('ice', 'route')
+    const samples = goal('ice', 'samples')
+    const back = goal('ice', 'return')
     const battery = goal('ice', 'battery')
     // Landing inside the PSR (Shackleton floor) is not a traverse.
     const inside = { ...s, ice: { reachable: true, routeM: 0, insidePsr: true } }
-    expect(route(inside)).toBe(false)
-    expect(battery(inside)).toBe(false)
-    expect(battery({ ...s, rover: { reaches: true, minSocPct: 30 } })).toBe(true)
-    // de Gerlache rim on 2027-03-15.
-    expect(battery({ ...s, rover: { reaches: true, minSocPct: 20 } })).toBe(false)
-    expect(battery({ ...s, rover: { reaches: false, minSocPct: 45 } })).toBe(false)
+    for (const check of [route, samples, back, battery]) expect(check(inside)).toBe(false)
+    expect(battery({ ...s, rover: { ...r, minSocPct: 30 } })).toBe(true)
+    // The micro-rover from Mons Mouton with 2 samples × 2 h: back in time, but with 28 %.
+    const tight = { ...s, rover: { ...r, samples: 2, samplesDone: 2, minSocPct: 28.5 } }
+    expect([samples(tight), back(tight), battery(tight)]).toEqual([true, true, false])
+    // The micro-rover from the Shackleton rim with 3 × 2 h: one sample and it stays there.
+    const stuck = {
+      ...s,
+      rover: { ...r, samplesDone: 1, returns: false, onTime: false, minSocPct: 20 },
+    }
+    expect(route(stuck)).toBe(true)
+    expect([samples(stuck), back(stuck), battery(stuck)]).toEqual([false, false, false])
+    // All the samples, but the battery runs out on the way back; or it is back too late.
+    const stranded = { ...s, rover: { ...r, returns: false, onTime: false, minSocPct: 45 } }
+    expect([samples(stranded), back(stranded), battery(stranded)]).toEqual([true, false, false])
+    const late = { ...s, rover: { ...r, onTime: false } }
+    expect([samples(late), back(late), battery(late)]).toEqual([true, false, false])
+    // It never arrived: the battery it still has does not count.
+    const short = { ...s, rover: { ...r, reaches: false, samplesDone: 0, returns: false } }
+    expect([samples(short), back(short), battery(short)]).toEqual([false, false, false])
     expect(battery({ ...s, rover: undefined })).toBe(false)
   })
 
@@ -284,7 +320,131 @@ describe('goal thresholds', () => {
     expect(sun.current?.(CASES.light.solved)).toBe('100 %')
     expect(sun.current?.({ ...base })).toBeUndefined()
     expect(findChallenge('night')!.goals[0].current?.(CASES.night.start)).toBe('312 h')
+    const ice = findChallenge('ice')!.goals
+    expect(ice.map((g) => g.current?.(CASES.ice.solved))).toEqual([
+      '868 m',
+      '3 / 3',
+      undefined,
+      '57 %',
+    ])
+    expect(ice.map((g) => g.current?.(CASES.ice.start))).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ])
   })
+})
+
+/*
+ * The ice challenge against the published data: the real route and the real round trip of each
+ * rover, as the app computes them (landing 2027-03-15, 14 days, default hardware limits).
+ */
+describe('ice challenge on the real terrain', () => {
+  const START = Date.UTC(2027, 2, 15)
+  const DAY = 86_400_000
+  const bin = (f: string) => {
+    const b = readFileSync(`public/data/${f}`)
+    return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)
+  }
+  const json = <T>(f: string) => JSON.parse(readFileSync(`public/data/${f}`, 'utf8')) as T
+  let coarse: DemGrid
+
+  beforeAll(() => {
+    const em = json<EphemTableMeta>('ephem/de441.json')
+    setEphemerisTable({ ...em, data: new Float32Array(bin('ephem/de441.bin')) })
+    coarse = {
+      ...json<DemMeta>('dem/south_480m.json'),
+      data: new Int16Array(bin('dem/south_480m.bin')),
+    }
+  })
+  afterAll(() => setEphemerisTable(null))
+
+  /** The state the app would show at `siteId` with that rover and workload. */
+  function real(siteId: string, roverId: RoverId, samples: number, sampleH: number) {
+    const d = json<{
+      lat: number
+      lon: number
+      terrain: { file: string; meta: DemMeta }
+      illum: { file: string; meta: IllumMeta }
+    }>(`sites/${siteId}.json`)
+    const tile: DemGrid = { ...d.terrain.meta, data: new Int16Array(bin(d.terrain.file)) }
+    const illum: IllumGrid = { ...d.illum.meta, data: new Uint8Array(bin(d.illum.file)) }
+    const route = computeIceAccess(tile, illum, d.lat, d.lon, {
+      roverMaxSlopeDeg: DEFAULT_LIMITS.roverMaxSlopeDeg,
+    })
+    const state: ChallengeState = {
+      ...base,
+      siteId,
+      lat: d.lat,
+      lon: d.lon,
+      startMs: START,
+      view: 'micro',
+      ice: { reachable: route.reachable, routeM: route.routeM, insidePsr: route.insidePsr },
+    }
+    if (!route.reachable || !route.path.length) return state
+    const { summary } = computeTraverse(
+      [tile, coarse],
+      {
+        lat: d.lat,
+        lon: d.lon,
+        path: route.path,
+        startMs: START,
+        energy: energyPreset(roverId)!.profile,
+        vehicleId: roverId,
+        roverMaxSlopeDeg: DEFAULT_LIMITS.roverMaxSlopeDeg,
+        linkMarginDeg: 3,
+        requireDsn: false,
+        samples,
+        sampleH,
+        deadlineMs: START + CHALLENGE_LIMITS.shortMissionDays * DAY,
+      },
+      illum,
+    )
+    state.rover = {
+      reaches: summary.reaches,
+      samples: summary.samples,
+      samplesDone: summary.samplesDone,
+      returns: summary.returns,
+      onTime: summary.onTime,
+      minSocPct: summary.minSocPct,
+    }
+    return state
+  }
+  const ice = findChallenge('ice')!
+  const { samples: N, sampleH: H } = SAMPLING_DEFAULTS
+
+  it('starts unsolved: no route from Chang’e-7, and the micro-rover cannot do 3 × 2 h', () => {
+    const start = real('change-7', 'rover', N, H)
+    expect(start.ice?.reachable).toBe(false)
+    expect(goalsMet(ice, start)).toEqual([false, false, false, false])
+    // Moving the site is not enough: the starting rover and workload fail from the best ones.
+    for (const siteId of ['mons-mouton', 'connecting-ridge']) {
+      const s = real(siteId, 'rover', N, H)
+      expect(s.rover!.samplesDone, siteId).toBeLessThan(N)
+      expect(goalsMet(ice, s), siteId).toEqual([true, false, false, false])
+    }
+  }, 60_000)
+
+  it('is solved with the utility rover, or with the micro-rover and less work', () => {
+    const utility = real('mons-mouton', 'csa-rover', N, H)
+    expect(utility.ice!.routeM).toBeCloseTo(868, 0)
+    expect(utility.rover!.minSocPct).toBeCloseTo(57.1, 0)
+    expect(goalsMet(ice, utility)).toEqual([true, true, true, true])
+    // The hardest candidate for the utility rover still clears the 30 %.
+    const far = real('de-gerlache-rim', 'csa-rover', N, H)
+    expect(far.rover!.minSocPct).toBeCloseTo(37, 0)
+    expect(goalsMet(ice, far)).toEqual([true, true, true, true])
+    const micro = real('mons-mouton', 'rover', 3, 1)
+    expect(micro.rover!.minSocPct).toBeCloseTo(45, 0)
+    expect(goalsMet(ice, micro)).toEqual([true, true, true, true])
+  }, 60_000)
+
+  it('the battery goal still bites: the micro-rover with 2 × 2 h comes back under 30 %', () => {
+    const tight = real('mons-mouton', 'rover', 2, 2)
+    expect(tight.rover!.minSocPct).toBeCloseTo(28.5, 0)
+    expect(goalsMet(ice, tight)).toEqual([true, true, true, false])
+  }, 60_000)
 })
 
 describe('score', () => {

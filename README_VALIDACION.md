@@ -308,10 +308,10 @@ con evidencia y cuáles no.
 
 ### Nuevo: simulación de aterrizaje y de rover
 
-| Función             | Qué hace                                                                                                                                                                       | Evidencia                                                                                                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Descenso con física | Masa puntual con empuje, gravedad lunar y ecuación del cohete, guiado ZEM/ZEV hasta el contacto; tres módulos; telemetría de propelente y Δv; aviso de desvío a terreno seguro | `descentPhysics.ts` (23 tests), `descentPlan.ts` (5 tests). En Shackleton: 115 s, contacto a 1,0 m/s, 300 m/s de Δv simulado, 25 % de propelente restante |
-| Recorrido del rover | El rover recorre la ruta al hielo con batería, potencia, temperatura, Sol/sombra permanente y enlace; la hora de misión avanza con él                                          | `traverse.ts` (20 tests). En Shackleton: 1,4 km en 7 h 7 min, batería final 46 %, 4 h 33 min en sombra                                                    |
+| Función             | Qué hace                                                                                                                                                                                                                                   | Evidencia                                                                                                                                                                                                                                                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Descenso con física | Masa puntual con empuje, gravedad lunar y ecuación del cohete, guiado ZEM/ZEV hasta el contacto; tres módulos; telemetría de propelente y Δv; aviso de desvío a terreno seguro                                                             | `descentPhysics.ts` (23 tests), `descentPlan.ts` (5 tests). En Shackleton: 115 s, contacto a 1,0 m/s, 300 m/s de Δv simulado, 25 % de propelente restante                                                                                                                                                                                      |
+| Recorrido del rover | Viaje de ida y vuelta: el rover va al hielo, recoge las muestras (3 × 2 h por defecto) y regresa al módulo antes del fin de la misión, con batería, potencia, temperatura, Sol/sombra permanente y enlace; la hora de misión avanza con él | `traverse.ts` (31 tests). En el borde de Shackleton (ruta de 1,4 km, 1 de marzo de 2027, 14 días), rover utilitario: 3 de 3 muestras, viaje completo en 13,1 h, margen de 322,9 h hasta el fin de la misión, batería mínima 47,1 %. El micro-rover de 40 kg solo completa 1 de 3 y fracasa (batería al 19,7 % sin poder recargar en la sombra) |
 
 ### Brechas
 
@@ -372,8 +372,12 @@ con evidencia y cuáles no.
 
 El modo Planificador gana un paso inicial que invierte la pregunta: dado un punto con hielo y un
 rango de fechas, entrega para cada día el mejor punto de aterrizaje que cumple todas las
-restricciones (incluido que el rover llegue al hielo con batería) y los cinco mejores días. Es la
-fase de superficie de `docs/MISION.md`. Verificación: 1722 tests unitarios, 7 pruebas de extremo
+restricciones (incluido que el rover llegue al hielo, recoja las muestras y vuelva al módulo antes
+del fin de la misión con batería) y los cinco mejores días. Con los valores por defecto (rover
+utilitario, 3 muestras de 2 h), el recorrido de referencia desde el borde de Shackleton (1 de marzo
+de 2027, misión de 14 días) da 3 de 3 muestras, 13,1 h de viaje completo, 322,9 h de margen y
+batería mínima del 47,1 %; el micro-rover solo completa 1 de 3 muestras y falla. Es la
+fase de superficie de `docs/MISION.md`. Verificación: 1846 tests unitarios, 7 pruebas de extremo
 a extremo (una recorre planificar → abrir en Órbita), y una ejecución real de 30 días en ~7 s.
 No cambia la rúbrica del reto: refuerza los bloques de comparación rápida y de coordinación
 ciencia–ingeniería.

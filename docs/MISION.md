@@ -10,10 +10,13 @@ primera ronda de preguntas (§ 11). Las marcas ❓ señalan lo que sigue abierto
 
 ## 1. Enunciado
 
-Una misión tiene un **objetivo** y unas **restricciones**. Aquí el objetivo es científico: llegar
-con un vehículo a un punto del polo sur lunar donde una misión previa detectó hielo. Las
-restricciones vienen del vehículo (batería, pendiente tolerable, enlace con la Tierra) y de la
-geometría Sol‑Tierra‑Luna.
+Una misión tiene un **objetivo** y unas **restricciones**. Aquí el objetivo es científico y es un
+viaje de **ida y vuelta**: un rover sale del módulo de aterrizaje, llega a un punto del polo sur
+lunar donde una misión previa detectó hielo, **recoge muestras y analiza el terreno**, y **regresa
+al módulo** para que las muestras puedan volver a la Tierra. Llegar al hielo no basta: sin
+muestras o sin regreso, la misión no se cumple. Las restricciones vienen del vehículo (batería,
+pendiente tolerable, enlace con la Tierra), del plazo (el rover debe estar de vuelta antes del fin
+de la misión en superficie) y de la geometría Sol‑Tierra‑Luna.
 
 > **Dada** una fecha deseada de lanzamiento desde la Tierra y un objetivo con hielo,
 > **elegir** la trayectoria, la fecha de aterrizaje y el punto de aterrizaje
@@ -130,12 +133,12 @@ filosofías de misión distintas, y el optimizador debe mostrarlas lado a lado.
 
 ## 4. Objetivos (vector a minimizar)
 
-|      | Objetivo                          | Expresión                                                           | Cómo se calcula                                                                                                                                                                       |
-| ---- | --------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `f₁` | Tiempo total hasta el aterrizaje  | `t_A − t_L` = viaje + espera en órbita                              | Aritmética sobre `τ(c)` y `t_A`; se reporta desglosado                                                                                                                                |
-| `f₂` | Distancia transitable al objetivo | `ruta(p → T)` en metros                                             | Dijkstra de 8 vecinos sobre el DEM de 20 m con límite de pendiente del rover (`computeIceAccess` en `src/astro/iceAccess.ts`). Si no hay ruta: distancia geodésica y marca «sin ruta» |
-| `f₃` | Recurso propulsivo (Δv total)     | `Δv_base(c) · k(d_TL(t_O)) + Δv_espera(L) + Δv_relé(m)` en km/s     | Tabla de clases + distancia Tierra‑Luna del DE441 + coste de espera (§ 2.2) + Δv del relé propio si `m` lo incluye (0 en los demás modos)                                             |
-| `f₄` | Dependencia externa (opcional)    | `0` si DTE o relé propio; `1` si relé de terceros; `0,5` si híbrido | Indicador ordinal; permite que el frente de Pareto separe «autónomo» de «dependiente». Se puede apagar y mostrar solo como atributo                                                   |
+|      | Objetivo                          | Expresión                                                           | Cómo se calcula                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---- | --------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `f₁` | Tiempo total hasta el aterrizaje  | `t_A − t_L` = viaje + espera en órbita                              | Aritmética sobre `τ(c)` y `t_A`; se reporta desglosado                                                                                                                                                                                                                                                                                                                                                            |
+| `f₂` | Distancia transitable al objetivo | `ruta(p → T)` en metros (solo ida; el rover recorre el doble)       | Dijkstra de 8 vecinos sobre el DEM de 20 m con límite de pendiente del rover (`computeIceAccess` en `src/astro/iceAccess.ts`). Si no hay ruta: distancia geodésica y marca «sin ruta». El rover la recorre de ida y de vuelta: se acompaña del resultado del viaje completo (`computeTraverse` en `src/astro/traverse.ts`): muestras recogidas, duración total, margen hasta el fin de la misión y batería mínima |
+| `f₃` | Recurso propulsivo (Δv total)     | `Δv_base(c) · k(d_TL(t_O)) + Δv_espera(L) + Δv_relé(m)` en km/s     | Tabla de clases + distancia Tierra‑Luna del DE441 + coste de espera (§ 2.2) + Δv del relé propio si `m` lo incluye (0 en los demás modos)                                                                                                                                                                                                                                                                         |
+| `f₄` | Dependencia externa (opcional)    | `0` si DTE o relé propio; `1` si relé de terceros; `0,5` si híbrido | Indicador ordinal; permite que el frente de Pareto separe «autónomo» de «dependiente». Se puede apagar y mostrar solo como atributo                                                                                                                                                                                                                                                                               |
 
 **Decidido**: `f₁` es el **tiempo total** `t_A − t_L`, porque los recursos son limitados y la
 espera en órbita también los consume. Se muestra siempre desglosado en viaje `τ(c)` y espera `L`.
@@ -153,16 +156,16 @@ Los tres objetivos están en unidades distintas (días, metros, km/s). Para el p
 Un candidato que viole cualquiera de estas se descarta antes de comparar objetivos. Cada una se
 evalúa con código que ya existe en Killa Landing, salvo g5.
 
-| Id     | Restricción                                                                                                                                  | Expresión                                                                  | Cómo se evalúa                                                                                                                                                                                                    |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **g1** | Luz continua tras el aterrizaje (**requisito de la misión**, no derivado de la batería: menos días de luz desaprovecharían la investigación) | `luz_continua(p, t_A) ≥ N_luz`                                             | `evaluateSite` → serie `sunFrac` → `findWindows(≥ 0,5)` → `stateAt(t_A)`: si `on`, `nextChangeMs − t_A ≥ N_luz · 24 h` (`src/astro/series.ts`, `windows.ts`)                                                      |
-| **g2** | Pendiente segura en `p`                                                                                                                      | `pendiente(p) < H.maxSlopeDeg` y ningún vecino 3×3 ≥ 15°                   | `src/astro/slope.ts`; mismo criterio que `computeOptimize` en `optimize.ts`                                                                                                                                       |
-| **g3** | Comunicación suficiente en el modo `m`                                                                                                       | `cov(m, p, [t_A, t_A + D]) ≥ H.minCovPct` y corte más largo ≤ `maxOutageH` | DTE: `computeMetrics(...).dtePct` y `longestNoDteH`; relé: `relay%` paramétrico (§ 2.3); híbrido: unión de ventanas con `findWindows` sobre `max(earthFrac, relayVisible)`                                        |
-| **g4** | Energía                                                                                                                                      | la batería no se agota en `[t_A, t_A + D]`                                 | `simulateBattery(series, E).depletedAtMs === null` (`src/astro/energy.ts`)                                                                                                                                        |
-| **g5** | Ventana de lanzamiento                                                                                                                       | `t_L ∈ W_L`                                                                | **Decidido**: lista de intervalos del **proveedor de lanzamiento** (dato de entrada). Si no se ha cargado ninguna, se usa como respaldo una regla geométrica aproximada por clase y se marca «ventanas estimadas» |
-| **g6** | Acceso al objetivo                                                                                                                           | existe ruta `p → T` con pendiente ≤ `H.roverMaxSlopeDeg`                   | `computeIceAccess(...).reachable`                                                                                                                                                                                 |
-| **g7** | Cobertura de efemérides                                                                                                                      | `t_A + D` dentro de 2026–2030                                              | `tableCovers` (`ephemTable.ts`); fuera, se evalúa con el modelo IAU y se marca «precisión reducida»                                                                                                               |
-| **g8** | Cobertura de terreno                                                                                                                         | `p` dentro de `R` y del tile LOLA 20 m                                     | `demCovers` (`src/astro/dem.ts`)                                                                                                                                                                                  |
+| Id     | Restricción                                                                                                                                  | Expresión                                                                                                                                                                                                       | Cómo se evalúa                                                                                                                                                                                                                                                                                                                        |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **g1** | Luz continua tras el aterrizaje (**requisito de la misión**, no derivado de la batería: menos días de luz desaprovecharían la investigación) | `luz_continua(p, t_A) ≥ N_luz`                                                                                                                                                                                  | `evaluateSite` → serie `sunFrac` → `findWindows(≥ 0,5)` → `stateAt(t_A)`: si `on`, `nextChangeMs − t_A ≥ N_luz · 24 h` (`src/astro/series.ts`, `windows.ts`)                                                                                                                                                                          |
+| **g2** | Pendiente segura en `p`                                                                                                                      | `pendiente(p) < H.maxSlopeDeg` y ningún vecino 3×3 ≥ 15°                                                                                                                                                        | `src/astro/slope.ts`; mismo criterio que `computeOptimize` en `optimize.ts`                                                                                                                                                                                                                                                           |
+| **g3** | Comunicación suficiente en el modo `m`                                                                                                       | `cov(m, p, [t_A, t_A + D]) ≥ H.minCovPct` y corte más largo ≤ `maxOutageH`                                                                                                                                      | DTE: `computeMetrics(...).dtePct` y `longestNoDteH`; relé: `relay%` paramétrico (§ 2.3); híbrido: unión de ventanas con `findWindows` sobre `max(earthFrac, relayVisible)`                                                                                                                                                            |
+| **g4** | Energía                                                                                                                                      | la batería no se agota en `[t_A, t_A + D]`                                                                                                                                                                      | `simulateBattery(series, E).depletedAtMs === null` (`src/astro/energy.ts`)                                                                                                                                                                                                                                                            |
+| **g5** | Ventana de lanzamiento                                                                                                                       | `t_L ∈ W_L`                                                                                                                                                                                                     | **Decidido**: lista de intervalos del **proveedor de lanzamiento** (dato de entrada). Si no se ha cargado ninguna, se usa como respaldo una regla geométrica aproximada por clase y se marca «ventanas estimadas»                                                                                                                     |
+| **g6** | Acceso al objetivo, muestreo y regreso                                                                                                       | existe ruta `p → T` con pendiente ≤ `H.roverMaxSlopeDeg`; el rover llega a `T`, completa las `N_m` muestras de `h_m` horas, vuelve a `p` antes de `t_A + D` y su batería no baja de `SOC_min` en ningún momento | `computeIceAccess(...).reachable` y `computeTraverse(...).summary`: `success` (llega, `samplesDone = samples`, vuelve y a tiempo) y `minSocPct ≥ SOC_min`. En el planificador, `roverViolation` (`src/astro/planner.ts`) da el motivo: sin ruta, no llega, no completa las muestras, no vuelve, vuelve tarde o batería bajo el mínimo |
+| **g7** | Cobertura de efemérides                                                                                                                      | `t_A + D` dentro de 2026–2030                                                                                                                                                                                   | `tableCovers` (`ephemTable.ts`); fuera, se evalúa con el modelo IAU y se marca «precisión reducida»                                                                                                                                                                                                                                   |
+| **g8** | Cobertura de terreno                                                                                                                         | `p` dentro de `R` y del tile LOLA 20 m                                                                                                                                                                          | `demCovers` (`src/astro/dem.ts`)                                                                                                                                                                                                                                                                                                      |
 
 Restricciones opcionales (parametrizables, apagadas por defecto):
 
@@ -220,7 +223,10 @@ Producto bruto: ~10⁷–10⁸ tuplas. Parece mucho, pero el problema es **separ
 - La iluminación, el enlace y la batería en `p` dependen solo de `(p, t_A)`, **no** de cómo se
   llegó. Se precalcula una vez por `p` la serie solar/terrestre de todo el rango de `t_A` (como
   hace `sweepLandingDates`) y se obtiene `luz_continua(p, t)` y `DTE%(p, t)` para todos los `t`.
-- `f₂` y g6 dependen solo de `p`. Se calculan una vez por `p`.
+- `f₂` y la ruta de g6 dependen solo de `p`. Se calculan una vez por `p`. El viaje del rover
+  (energía, muestreo y regreso) depende también de `t_A`, porque el Sol cambia: la ruta y el
+  horizonte a lo largo de ella se preparan una vez por `p` y cada día solo repite la simulación
+  de la batería, que es rápida.
 - `f₁`, `f₃` y g5 dependen solo de `(t_L, c, m, t_A)`. Son aritmética.
 - `m` solo cambia g3 y los sumandos `Δv_relé` y `f₄`: la cobertura DTE se calcula una vez por
   `(p, t_A)` y la del relé una vez por `t_A`; los cuatro modos se derivan de esas dos series sin
@@ -266,28 +272,32 @@ por dominancia, no por una sola cifra.
 
 ## 9. Parámetros
 
-| Nombre                 | Tipo                       | Defecto                                  | Mín        | Máx        | Unidad | Descripción                               |
-| ---------------------- | -------------------------- | ---------------------------------------- | ---------- | ---------- | ------ | ----------------------------------------- |
-| `target`               | id de sitio o `{lat, lon}` | `shackleton-floor`                       | —          | —          | —      | PSR del catálogo o coordenadas nuevas     |
-| `launchWindows`        | lista de intervalos        | vacía (→ regla estimada)                 | —          | —          | UTC    | Ventanas del proveedor de lanzamiento     |
-| `loiterSkPerDay`       | número                     | 0,1                                      | 0          | 1          | m/s/d  | Mantenimiento de órbita por día de espera |
-| `boilOffPctPerMonth`   | número                     | 0 (almacenables)                         | 0          | 10         | %/mes  | Evaporación de propelente criogénico      |
-| `radiusM`              | número                     | 2 000                                    | 500        | 5 000      | m      | Radio de búsqueda del punto de aterrizaje |
-| `launchDate`           | fecha                      | hoy + 90 d                               | 2026‑01‑01 | 2030‑12‑31 | UTC    | Fecha deseada de lanzamiento              |
-| `launchSlackDays`      | entero                     | 30                                       | 0          | 180        | d      | Holgura ± alrededor de `launchDate`       |
-| `classes`              | lista                      | las 3 de § 2.1                           | 1          | —          | —      | Clases de trayectoria admitidas           |
-| `commModes`            | lista                      | los 4 de § 2.3                           | 1          | —          | —      | Modos de comunicación a evaluar           |
-| `relays`               | lista                      | Queqiao‑2, Lunar Pathfinder (terceros)   | 0          | —          | —      | Relés disponibles con su cobertura y Δv   |
-| `minCovPct`            | número                     | 30 (= `minDtePct` actual)                | 0          | 100        | %      | Cobertura mínima de comunicación          |
-| `maxOutageH`           | número                     | 336 (14 días)                            | 1          | 720        | h      | Corte de comunicación más largo admisible |
-| `maxLoiterDays`        | entero                     | 60                                       | 0          | 180        | d      | Espera máxima en órbita                   |
-| `minSunDays` (`N_luz`) | número                     | 15                                       | 1          | 60         | d      | Luz continua mínima tras aterrizar        |
-| `missionDays` (`D`)    | entero                     | 14                                       | 1          | 60         | d      | Duración en superficie                    |
-| `hardware`             | objeto                     | `DEFAULT_LIMITS` (15°, 120 h, 30 %, 20°) | —          | —          | —      | Límites del vehículo                      |
-| `energy`               | id de perfil               | `lander`                                 | —          | —          | —      | Perfil energético                         |
-| `linkMarginDeg`        | número                     | 3                                        | 0          | 10         | °      | Margen DTE sobre el relieve               |
-| `weights`              | `[w₁, w₂, w₃]`             | `[0,4, 0,4, 0,2]`                        | 0          | 1          | —      | Pesos para el punto recomendado (suman 1) |
-| `mode`                 | enum                       | `fast`                                   | —          | —          | —      | `fast` o `exact`                          |
+| Nombre                       | Tipo                       | Defecto                                  | Mín        | Máx        | Unidad | Descripción                                                         |
+| ---------------------------- | -------------------------- | ---------------------------------------- | ---------- | ---------- | ------ | ------------------------------------------------------------------- |
+| `target`                     | id de sitio o `{lat, lon}` | `shackleton-floor`                       | —          | —          | —      | PSR del catálogo o coordenadas nuevas                               |
+| `launchWindows`              | lista de intervalos        | vacía (→ regla estimada)                 | —          | —          | UTC    | Ventanas del proveedor de lanzamiento                               |
+| `loiterSkPerDay`             | número                     | 0,1                                      | 0          | 1          | m/s/d  | Mantenimiento de órbita por día de espera                           |
+| `boilOffPctPerMonth`         | número                     | 0 (almacenables)                         | 0          | 10         | %/mes  | Evaporación de propelente criogénico                                |
+| `radiusM`                    | número                     | 2 000                                    | 500        | 5 000      | m      | Radio de búsqueda del punto de aterrizaje                           |
+| `launchDate`                 | fecha                      | hoy + 90 d                               | 2026‑01‑01 | 2030‑12‑31 | UTC    | Fecha deseada de lanzamiento                                        |
+| `launchSlackDays`            | entero                     | 30                                       | 0          | 180        | d      | Holgura ± alrededor de `launchDate`                                 |
+| `classes`                    | lista                      | las 3 de § 2.1                           | 1          | —          | —      | Clases de trayectoria admitidas                                     |
+| `commModes`                  | lista                      | los 4 de § 2.3                           | 1          | —          | —      | Modos de comunicación a evaluar                                     |
+| `relays`                     | lista                      | Queqiao‑2, Lunar Pathfinder (terceros)   | 0          | —          | —      | Relés disponibles con su cobertura y Δv                             |
+| `minCovPct`                  | número                     | 30 (= `minDtePct` actual)                | 0          | 100        | %      | Cobertura mínima de comunicación                                    |
+| `maxOutageH`                 | número                     | 336 (14 días)                            | 1          | 720        | h      | Corte de comunicación más largo admisible                           |
+| `maxLoiterDays`              | entero                     | 60                                       | 0          | 180        | d      | Espera máxima en órbita                                             |
+| `minSunDays` (`N_luz`)       | número                     | 15                                       | 1          | 60         | d      | Luz continua mínima tras aterrizar                                  |
+| `missionDays` (`D`)          | entero                     | 14                                       | 1          | 60         | d      | Duración en superficie                                              |
+| `rover`                      | id de perfil               | `csa-rover` (utilitario, 350 kg)         | —          | —          | —      | Rover que hace el viaje al hielo; alternativa: micro-rover de 40 kg |
+| `samples` (`N_m`)            | entero                     | 3                                        | 1          | 10         | —      | Muestras a recoger en el hielo                                      |
+| `sampleH` (`h_m`)            | número                     | 2                                        | 0,5        | 6          | h      | Tiempo por muestra (taladrar y analizar)                            |
+| `minRoverSocPct` (`SOC_min`) | número                     | 20                                       | 0          | 100        | %      | Batería mínima del rover en todo el viaje                           |
+| `hardware`                   | objeto                     | `DEFAULT_LIMITS` (15°, 120 h, 30 %, 20°) | —          | —          | —      | Límites del vehículo                                                |
+| `energy`                     | id de perfil               | `lander`                                 | —          | —          | —      | Perfil energético                                                   |
+| `linkMarginDeg`              | número                     | 3                                        | 0          | 10         | °      | Margen DTE sobre el relieve                                         |
+| `weights`                    | `[w₁, w₂, w₃]`             | `[0,4, 0,4, 0,2]`                        | 0          | 1          | —      | Pesos para el punto recomendado (suman 1)                           |
+| `mode`                       | enum                       | `fast`                                   | —          | —          | —      | `fast` o `exact`                                                    |
 
 ---
 
@@ -304,6 +314,20 @@ por dominancia, no por una sola cifra.
   tiles curados, 480 m en el campo lejano, snapping de coordenadas en las crestas).
 - **Objetivo puntual**: `T` es un punto. Si el hielo es una región, se puede usar la celda PSR más
   cercana a `p` (ya lo hace `computeIceAccess`).
+- **Viaje del rover (ida, muestreo y regreso)**:
+  - **Consumo del instrumento**: durante el muestreo el rover gasta su consumo activo más el del
+    taladro y el análisis: **30 W** en el micro-rover y **150 W** en el utilitario. Son supuestos
+    configurables, igual que el tiempo por muestra; no son datos de un instrumento concreto.
+  - **Sin recarga en sombra permanente**: en el hielo no hay Sol y el muestreo se paga solo con
+    batería. Si baja del umbral de hibernación durante el muestreo, el viaje fracasa (en la ida y
+    en el regreso el rover sí puede parar al Sol a recargar).
+  - **Plazo = fin de la misión**: el rover debe estar junto al módulo antes de `t_A + D`.
+  - **Regreso por la misma ruta**, en sentido inverso: se recalculan la energía (las subidas pasan
+    a ser bajadas) y el Sol a esa hora. No se busca una ruta de vuelta distinta.
+  - **No se simulan** la entrega de las muestras al módulo ni el despegue de retorno a la Tierra:
+    la misión se da por cumplida cuando el rover se detiene junto al módulo dentro del plazo.
+  - El frío de la sombra permanente se muestra como dato; lo que limita el viaje es la batería.
+  - Sin hundimiento ni patinaje de las ruedas; la potencia de tracción es por peso y rodadura.
 
 **Camino de mejora sin cambiar la formulación**: sustituir `f₃` y g5 por un módulo externo de
 mecánica orbital (Lambert / cónicas empalmadas, estilo porkchop) que devuelva `τ` y Δv reales
@@ -342,16 +366,27 @@ para cada `(t_L, t_O)`. La interfaz `evaluateMission` no cambia; solo la funció
 
 **Implementada la fase de superficie** (paso «Planificar», `src/astro/planner.ts`): variables `t_A`
 (día de aterrizaje dentro de un rango) y `p` (punto alrededor del objetivo con hielo), restricciones
-g1 (luz continua), g2 (pendiente), g3 (enlace), g6 (ruta y, además, que el rover llegue con una
-batería mínima) y g8 (cobertura de terreno), y objetivo = puntuación de misión con filtro de
-viabilidad. Salida: mejor punto por día, diagnóstico cuando no hay solución y los 5 mejores días.
+g1 (luz continua), g2 (pendiente), g3 (enlace), g6 (ruta y, además, que el rover llegue al hielo,
+recoja todas las muestras y vuelva al módulo antes del fin de la misión sin bajar de la batería
+mínima) y g8 (cobertura de terreno), y objetivo = puntuación de misión con filtro de viabilidad.
+Entre días con la misma puntuación gana el que deja más margen de tiempo al regreso y, después,
+más batería. Salida: mejor punto por día, diagnóstico cuando no hay solución (para el rover: no
+llega, no completa las muestras, no vuelve, vuelve tarde o batería bajo el mínimo) y los 5 mejores
+días.
+
+**Rover por defecto: el utilitario.** Con el trabajo por defecto (3 muestras de 2 h) el micro-rover
+de 40 kg no completa el viaje desde ningún sitio: tiene 600 Wh de batería y en la sombra
+permanente no puede recargar. Por eso el rover por defecto es el utilitario de 350 kg; el
+micro-rover sigue disponible para misiones con menos trabajo (tabla del Anexo A).
 
 **Pendiente**: fecha de lanzamiento, clase de trayectoria, espera en órbita, Δv como objetivo,
 modos de comunicación con relé y el frente de Pareto (hoy se ordena por una sola puntuación).
 
 Con datos reales (hielo junto al borde de Shackleton, marzo de 2027, misión de 14 días): con 15
 días de luz continua exigidos hay solución 3 de 30 días; con 10, 10 de 30; con 5, 14 de 30. En el
-verano polar (noviembre) la exigencia no restringe.
+verano polar (noviembre) la exigencia no restringe. Estas cuentas se midieron cuando al rover solo
+se le pedía llegar al hielo; con el viaje de ida y vuelta la exigencia es mayor y los días con
+solución pueden ser menos.
 
 ### Plan original de implementación
 
@@ -420,9 +455,31 @@ de este documento dejan de ser supuestos y pasan a calcularse por sitio:
 - **Δv de la aproximación final**: ~300 m/s desde 3,5 km de altura y 170 m/s (módulo tipo CLPS,
   guiado ZEM/ZEV), más ~24 m/s si hay desvío de 300 m a terreno seguro. Sumado al frenado desde
   una órbita de 100 km (~1 700 m/s, no simulado) da el ≈ 2 000 m/s de descenso usado en `f₃`.
-- **`f₂` con energía**: la distancia transitable al objetivo se acompaña del resultado del
-  recorrido (si el rover llega, batería mínima, horas en sombra, enlace). La restricción g6 puede
-  endurecerse a «llega con batería ≥ X %».
+- **`f₂` con energía, de ida y vuelta**: la distancia transitable al objetivo se acompaña del
+  resultado del viaje completo del rover: si llega al hielo, cuántas muestras recoge, si vuelve al
+  módulo, cuánto dura todo, el margen hasta el fin de la misión, la batería mínima y final, las
+  horas en sombra y el enlace. La restricción g6 es ya «llega, recoge todas las muestras y vuelve
+  antes del fin de la misión con batería ≥ X %» (20 % por defecto).
+
+**Medición: muestras que cada rover puede traer de vuelta.** Número máximo de muestras con el que
+el rover completa el viaje (llega, muestrea, vuelve a tiempo) con batería mínima ≥ 20 %. Datos
+reales, alunizaje el 1 de marzo de 2027, misión de 14 días:
+
+| Sitio                | Micro-rover, 2 h por muestra | Micro-rover, 1 h | Utilitario, 2 h por muestra | Utilitario, 1 h |
+| -------------------- | ---------------------------- | ---------------- | --------------------------- | --------------- |
+| Borde de Shackleton  | 0                            | 1                | 4                           | 8               |
+| Cresta de conexión   | 1                            | 3                | 4                           | 9               |
+| Borde de de Gerlache | 2                            | 4                | 5                           | 10              |
+| Macizo Malapert      | 1                            | 3                | 4                           | 9               |
+| Mons Mouton          | 0                            | 0                | 4                           | 8               |
+| Borde de Nobile      | 0                            | 0                | 3                           | 7               |
+
+La zona de Chang'e‑7 no tiene ruta hasta el hielo. Caso de referencia, borde de Shackleton (ruta
+de 1 390 m solo ida) con 3 muestras de 2 h: el utilitario recoge las 3 y vuelve en 13,1 h, con un
+margen de 322,9 h hasta el fin de la misión, batería mínima del 47,1 % y final del 54,7 %; el
+micro-rover llega al hielo, pero solo completa 1 de 3 muestras: a las 10,1 h su batería está en el
+19,7 % y ahí no puede recargar. Conclusión: el micro-rover no puede con 3 muestras de 2 h en
+ningún sitio, y por eso el utilitario es el rover por defecto.
 
 ### Referencias
 

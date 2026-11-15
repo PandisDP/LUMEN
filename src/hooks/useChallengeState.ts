@@ -56,7 +56,14 @@ export function useChallengeState(needsRover = false): ChallengeState {
           .verdict,
       slopeP90Deg,
       ice: ice && { reachable: ice.reachable, routeM: ice.routeM, insidePsr: ice.insidePsr },
-      rover: rover && { reaches: rover.reaches, minSocPct: rover.minSocPct },
+      rover: rover && {
+        reaches: rover.reaches,
+        samples: rover.samples,
+        samplesDone: rover.samplesDone,
+        returns: rover.returns,
+        onTime: rover.onTime,
+        minSocPct: rover.minSocPct,
+      },
       descent: {
         landed,
         physics: flight.flown === 'physics',

@@ -3026,6 +3026,12 @@ body.picking .stage canvas {
   display: grid;
 }
 
+/* Seven readings in a row between the side panels: a little tighter than the descent cards. */
+.rhud__telemetry > div {
+  min-width: 80px;
+  padding-inline: 8px;
+}
+
 .rhud .rhud__small {
   font-size: var(--text-body);
 }
@@ -3037,6 +3043,7 @@ body.picking .stage canvas {
   gap: 4px;
   background: none;
   padding: 0;
+  border: 0;
 }
 
 .rhud__chips > span {
@@ -3122,9 +3129,99 @@ body.picking .stage canvas {
   height: 40px;
 }
 
+/* Trip state: glyph + text; the band colour only reinforces them. */
+.rhud__chips > .rhud__state {
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--primary) / 0.5);
+}
+
+.rhud__chips > .rhud__state[data-band='ok'] {
+  color: hsl(var(--band-ok));
+  border-color: hsl(var(--band-ok) / 0.6);
+}
+
+.rhud__chips > .rhud__state[data-band='deficit'] {
+  color: hsl(var(--band-deficit));
+  border-color: hsl(var(--band-deficit) / 0.6);
+}
+
+.rhud__chips > .rhud__samples {
+  color: hsl(var(--foreground));
+  font-variant-numeric: tabular-nums;
+}
+
+/* Elevation profile: lander and ice marks, and the cursor with the way it is driving. */
+.rhud__mark {
+  fill: hsl(var(--foreground));
+}
+
+.rhud__marktext {
+  fill: hsl(var(--muted-foreground));
+  font-size: 9px;
+  font-family: var(--font-sans);
+}
+
+.rhud__arrow {
+  fill: hsl(var(--primary));
+}
+
+.rhud__dock .rhud__notice {
+  width: min(560px, 100%);
+  margin: 0;
+  padding: 6px 12px;
+  font-size: var(--text-micro);
+  background-color: hsl(var(--card) / 0.9);
+  backdrop-filter: blur(18px);
+}
+
+/* Progress slider with ticks where the rover reaches and leaves the ice. */
+.rhud__slider {
+  position: relative;
+  width: min(420px, 90%);
+}
+
+.rhud__slider .dhud__progress {
+  display: block;
+  width: 100%;
+}
+
+.rhud__tick {
+  position: absolute;
+  top: 0;
+  /* The thumb is 16 px wide: its centre travels from 8 px to 100 % − 8 px. */
+  left: calc(8px + var(--at) * (100% - 16px));
+  width: 2px;
+  height: 100%;
+  margin-left: -1px;
+  background: hsl(var(--foreground) / 0.7);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
 @media (max-width: 820px) {
   .rhud__dock {
     position: static;
+  }
+
+  /* On a phone the HUD shares a short stage with the scene: the drawing speaks for itself. */
+  .rhud__profile .hint {
+    display: none;
+  }
+
+  /* A failed trip brings its notice and its fixes: they take the place of the profile. */
+  .rhud__dock:has(.rhud__notice) .rhud__profile {
+    display: none;
+  }
+
+  .rhud__dock .rhud__notice .btn {
+    padding-inline: 8px;
+    font-size: var(--text-micro);
+  }
+
+  /* The time bar under the scene already shows the mission clock. */
+  .rhud__chips > .rhud__clock {
+    display: none;
   }
 }
 

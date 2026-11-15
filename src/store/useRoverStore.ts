@@ -86,7 +86,7 @@ export const useRoverStore = create<RoverState>()((set) => ({
   run: 0,
   cam: 'follow',
   phase: 'egress',
-  roverId: 'rover',
+  roverId: 'csa-rover',
   ...loadRoverSampling(),
   setAutoDeploy: (autoDeploy) => set({ autoDeploy }),
   restart: () =>

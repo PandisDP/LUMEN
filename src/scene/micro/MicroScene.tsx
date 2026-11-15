@@ -499,16 +499,15 @@ export function MicroScene() {
   const roving = landing && landed && landerCam === 'rover'
   const traverse = useRoverTraverse(landing)
   const autoDeploy = useRoverStore((s) => s.autoDeploy)
-  // The rover path on the ground, in scene coordinates (for the close-range ground).
-  const roverRoute = useMemo(
-    () =>
-      detail && traverse.data
-        ? traverse.data.plan.points.map(
-            (p) => latLonToScene(detail.site, p.lat, p.lon, p.heightM) as [number, number, number],
-          )
-        : undefined,
-    [detail, traverse.data],
-  )
+  // The rover path on the ground, in scene coordinates (for the close-range ground): the way
+  // out is enough, the way back runs over the same ground.
+  const roverRoute = useMemo(() => {
+    if (!detail || !traverse.data) return undefined
+    const { points, turnIndex } = traverse.data.plan
+    return (turnIndex < 0 ? points : points.slice(0, turnIndex + 1)).map(
+      (p) => latLonToScene(detail.site, p.lat, p.lon, p.heightM) as [number, number, number],
+    )
+  }, [detail, traverse.data])
   // "Full mission": once down (and the route is known), hand over to the rover.
   useEffect(() => {
     if (!landing || !landed || autoDeploy === 'no' || !traverse.data) return

@@ -132,13 +132,25 @@ export function planSummary(result: PlanResult): PlanSummary {
 // ---------------------------------------------------------------- table
 
 export type SortKey =
-  'date' | 'route' | 'score' | 'energy' | 'dte' | 'night' | 'light' | 'battery' | 'verdict'
+  | 'date'
+  | 'route'
+  | 'samples'
+  | 'return'
+  | 'score'
+  | 'energy'
+  | 'dte'
+  | 'night'
+  | 'light'
+  | 'battery'
+  | 'verdict'
 export type SortDir = 'asc' | 'desc'
 
-/** Direction a column starts with: best first (scores down, nights and routes up). */
+/** Direction a column starts with: best first (scores and margins down, nights and routes up). */
 export const DEFAULT_DIR: Record<SortKey, SortDir> = {
   date: 'asc',
   route: 'asc',
+  samples: 'desc',
+  return: 'desc',
   score: 'desc',
   energy: 'desc',
   dte: 'desc',
@@ -150,6 +162,9 @@ export const DEFAULT_DIR: Record<SortKey, SortDir> = {
 
 const VALUE: Record<Exclude<SortKey, 'date'>, (p: NonNullable<PlanDay['best']>) => number> = {
   route: (p) => p.routeM,
+  samples: (p) => p.rover.samplesDone,
+  // "Return" sorts by the time left when the rover is back: the widest margin first.
+  return: (p) => p.rover.marginH ?? -Infinity,
   score: (p) => p.score,
   energy: (p) => p.energyPct,
   dte: (p) => p.dtePct,
@@ -172,6 +187,22 @@ export function sortDays(days: readonly PlanDay[], key: SortKey, dir: SortDir): 
     return sign * (value(a.best) - value(b.best)) || a.dayMs - b.dayMs
   })
 }
+
+// ---------------------------------------------------------------- round trip
+
+/** Metres the rover drives in all: to the ice and back by the same route. */
+export const roundTripM = (pick: Pick<NonNullable<PlanDay['best']>, 'routeM'>) => 2 * pick.routeM
+
+/** "3 muestras" / "1 muestra": the key that agrees with the number. */
+export const samplesKey = (n: number): MsgKey =>
+  n === 1 ? 'plan.samples.one' : 'plan.samples.many'
+
+/** Under a day of spare time when the rover is back at the lander: worth a warning. */
+export const MARGIN_WARN_H = 24
+
+/** How the time left at the end of the round trip reads: tight under a day, fine otherwise. */
+export const marginLevel = (marginH: number | null): Level =>
+  marginH !== null && marginH >= MARGIN_WARN_H ? 'good' : 'warn'
 
 // ---------------------------------------------------------------- violations
 
@@ -198,10 +229,9 @@ export const VIOLATION_KEY: Record<PlanViolation, MsgKey> = {
   dte: 'plan.why.dte',
   slope: 'plan.why.slope',
   'rover-unreachable': 'plan.why.roverUnreachable',
-  // PLACEHOLDER (ida y vuelta): the three below reuse the rover-battery text until theirs exist.
-  'rover-samples': 'plan.why.roverBattery',
-  'rover-no-return': 'plan.why.roverBattery',
-  'rover-late': 'plan.why.roverBattery',
+  'rover-samples': 'plan.why.roverSamples',
+  'rover-no-return': 'plan.why.roverNoReturn',
+  'rover-late': 'plan.why.roverLate',
   'rover-battery': 'plan.why.roverBattery',
 }
 export const VIOLATION_FIX: Record<PlanViolation, MsgKey> = {
@@ -212,10 +242,9 @@ export const VIOLATION_FIX: Record<PlanViolation, MsgKey> = {
   dte: 'plan.fix.dte',
   slope: 'plan.fix.slope',
   'rover-unreachable': 'plan.fix.roverUnreachable',
-  // PLACEHOLDER (ida y vuelta): the three below reuse the rover-battery text until theirs exist.
-  'rover-samples': 'plan.fix.roverBattery',
-  'rover-no-return': 'plan.fix.roverBattery',
-  'rover-late': 'plan.fix.roverBattery',
+  'rover-samples': 'plan.fix.roverSamples',
+  'rover-no-return': 'plan.fix.roverNoReturn',
+  'rover-late': 'plan.fix.roverLate',
   'rover-battery': 'plan.fix.roverBattery',
 }
 
@@ -262,6 +291,14 @@ export function violationHistogram(days: readonly PlanDay[]): ViolationBar[] {
     .sort((a, b) => b.count - a.count)
 }
 
+/**
+ * The reasons in the order the fixes should attack them: first what sinks the best point of
+ * most days (the day's main reason: with the rover it is the last hurdle, after the cheap
+ * filters have thinned the candidates), then whatever rejects most points.
+ */
+export const violationsByDay = (bars: readonly ViolationBar[]): PlanViolation[] =>
+  [...bars].sort((a, b) => b.days - a.days || b.count - a.count).map((b) => b.violation)
+
 // ---------------------------------------------------------------- stale results
 
 const LIMIT_KEYS: (keyof HardwareLimits)[] = [
@@ -303,6 +340,7 @@ export const PLAN_CSV_COLUMNS = [
   'height_m',
   'landing_slope_deg',
   'route_to_ice_m',
+  'route_round_trip_m',
   'score',
   'engineering_score',
   'science_score',
@@ -315,6 +353,11 @@ export const PLAN_CSV_COLUMNS = [
   'rover_min_battery_pct',
   'rover_travel_h',
   'rover_hours_in_shadow',
+  'rover_samples_done',
+  'rover_returns',
+  'rover_total_h',
+  'rover_margin_h',
+  'rover_end_battery_pct',
   'verdict',
   'tight_limits',
   'top_rank',
@@ -339,6 +382,8 @@ export function planCsv(result: PlanResult): string {
     `mission_days: ${p.missionDays}`,
     `min_continuous_sun_days: ${p.minSunDays}`,
     `rover: ${p.roverId}`,
+    `samples_requested: ${p.samples}`,
+    `sample_hours: ${p.sampleH}`,
     `rover_min_battery_pct: ${p.minRoverSocPct}`,
     `search_radius_m: ${p.radiusM}`,
     `candidate_landing_points: ${result.candidates.length}`,
@@ -373,6 +418,7 @@ export function planCsv(result: PlanResult): string {
         fix(b.heightM, 1),
         fix(b.slopeDeg, 2),
         fix(b.routeM, 0),
+        fix(roundTripM(b), 0),
         fix(b.score, 1),
         fix(b.engineeringScore, 1),
         fix(b.scienceScore, 1),
@@ -385,6 +431,11 @@ export function planCsv(result: PlanResult): string {
         fix(b.rover.minSocPct, 1),
         fix(b.rover.travelH, 1),
         fix(b.rover.hoursInShadow, 1),
+        String(b.rover.samplesDone),
+        b.rover.returns ? '1' : '0',
+        fix(b.rover.totalH, 1),
+        b.rover.marginH === null ? '' : fix(b.rover.marginH, 1),
+        fix(b.rover.endSocPct, 1),
         b.verdict,
         b.tight.join('|'),
         String(rank.get(d.dayMs) ?? ''),
@@ -430,6 +481,9 @@ export const formatSpan = (hours: number) =>
     : hours < 48
       ? `${Math.round(hours)} h`
       : `${(hours / 24).toFixed(1)} d`
+/** Hours of work per sample, in half-hour steps: "2 h", "1.5 h". */
+export const formatSampleHours = (hours: number) =>
+  Number.isFinite(hours) ? `${+hours.toFixed(1)} h` : '—'
 export const formatPlanMonth = (ms: number, lang: PlanLang) =>
   fmt(lang, 'month', { month: 'short' }).format(ms)
 

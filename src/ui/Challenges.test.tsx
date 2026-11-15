@@ -75,7 +75,7 @@ describe('challenge list', () => {
       'No pierdas a la Tierra',
       'Sobrevive a la noche',
       'Aterriza con margen',
-      'Llega al hielo',
+      'Trae hielo de vuelta',
     ])
       expect(screen.getByRole('heading', { name: title })).toBeInTheDocument()
     expect(screen.getByText('Puntuación: 0 / 500')).toBeInTheDocument()
@@ -171,7 +171,9 @@ describe('playing a challenge', () => {
     expect(useUiStore.getState().challengeId).toBe('ice')
     expect(useUiStore.getState().challengeResult).toBeNull()
     expect(useMissionStore.getState().scenarios[0].siteId).toBe('change-7')
-    expect(screen.getByRole('heading', { name: /Reto 5.*Llega al hielo/ })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /Reto 5.*Trae hielo de vuelta/ }),
+    ).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /Reto superado/ })).toBeNull()
   })
 

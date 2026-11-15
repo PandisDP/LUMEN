@@ -46,6 +46,26 @@ export const TRACK_BIAS_M = PATCH_BIAS_M + 0.02
  * the light and the other goes dark. That is what shows a track from afar near the poles.
  */
 export const TRACK_WALL_TILT = 0.08
+/**
+ * The way back runs over the way out. So that both pairs of tracks can be told apart (and their
+ * ribbons never lie on the same surface), the rover returns this many tread widths to the right
+ * of its outbound line — like keeping to its side of a road — and its ribbons sit a hair higher.
+ * The shift builds up over the first metres after the turn-around, on the rover and its tracks.
+ */
+export const RETURN_SHIFT_TREADS = 1.4
+export const RETURN_SHIFT_EASE_M = 4
+export const RETURN_LIFT_M = 0.002
+
+/**
+ * Sideways shift of the return leg, m to the right of the direction of travel, `backM` metres
+ * after turning around at the ice (0 on the way out and at the turn itself).
+ */
+export function returnShiftM(spec: Pick<TrackSpec, 'treadM'>, backM: number): number {
+  if (!(backM > 0)) return 0
+  const t = Math.min(1, backM / RETURN_SHIFT_EASE_M)
+  return RETURN_SHIFT_TREADS * spec.treadM * t * t * (3 - 2 * t)
+}
+
 /** Indices drawn per step of the route: two ribbons, one quad (two triangles) each. */
 export const TRACK_INDICES_PER_STEP = 12
 /** Vertices per cross-section: both edges of the left and of the right ribbon. */
@@ -177,6 +197,8 @@ export function buildTrackRibbons(
   surfaceY: (x: number, z: number) => number,
   biasM = TRACK_BIAS_M,
   wallTilt = TRACK_WALL_TILT,
+  /** Shift of the whole pair of ribbons to the right of travel, m, by distance driven. */
+  lateralM: (distM: number) => number = () => 0,
 ): TrackRibbons {
   const n = samples.length
   const positions = new Float32Array(n * 4 * 3)
@@ -203,11 +225,12 @@ export function buildTrackRibbons(
     const dydz = (surfaceY(p.x, p.z + d) - surfaceY(p.x, p.z - d)) / (2 * d)
     const nl = Math.hypot(dydx, 1, dydz)
     sampleDist[k] = p.distM
+    const shift = lateralM(p.distM)
     for (let j = 0; j < 4; j++) {
       const [off, side] = lanes[j]
       const i = k * 4 + j
-      const x = p.x + rx * off
-      const z = p.z + rz * off
+      const x = p.x + rx * (off + shift)
+      const z = p.z + rz * (off + shift)
       positions[i * 3] = x
       positions[i * 3 + 1] = surfaceY(x, z) + biasM
       positions[i * 3 + 2] = z
@@ -254,6 +277,35 @@ export function trackDrawCount(sampleDist: ArrayLike<number>, distM: number): nu
     else hi = mid
   }
   return Math.min(steps, lo) * TRACK_INDICES_PER_STEP
+}
+
+export interface TrackReveal {
+  /** Visible stretch of each leg's ribbons, in metres driven (nothing when to ≤ from). */
+  out: { fromM: number; toM: number }
+  back: { fromM: number; toM: number }
+}
+
+/**
+ * What to show of the two sets of tracks with the rover drawn `poseDistM` along its round trip
+ * (the odometer: it keeps growing on the way back). Each leg is revealed by its own distance:
+ * the outbound ribbons from where the ramps touch the ground (`startM`) up to the front wheels
+ * and whole once the rover has turned around; the return ribbons from the ice up to the front
+ * wheels, and not at all before the turn.
+ */
+export function trackReveal(
+  poseDistM: number,
+  outLengthM: number,
+  spec: Pick<TrackSpec, 'frontM' | 'rearM'>,
+  startM: number,
+): TrackReveal {
+  const fromM = startM - spec.rearM
+  if (!Number.isFinite(poseDistM))
+    return { out: { fromM, toM: fromM }, back: { fromM: outLengthM, toM: outLengthM } }
+  const returning = poseDistM > outLengthM
+  return {
+    out: { fromM, toM: returning ? outLengthM : Math.max(fromM, poseDistM + spec.frontM) },
+    back: { fromM: outLengthM, toM: returning ? poseDistM + spec.frontM : outLengthM },
+  }
 }
 
 /**

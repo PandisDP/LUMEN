@@ -17,7 +17,7 @@ export const fixtureProblem = (over: Partial<PlanProblem> = {}): PlanProblem => 
   days: 10,
   missionDays: 14,
   minSunDays: 15,
-  roverId: 'rover',
+  roverId: 'csa-rover',
   samples: 3,
   sampleH: 2,
   minRoverSocPct: 20,

@@ -4,6 +4,9 @@ import { groundSampler } from '../../astro/descent.ts'
 import { buildTerrainGeometry } from '../../astro/terrainMesh.ts'
 import {
   type PathPoint,
+  RETURN_LIFT_M,
+  RETURN_SHIFT_EASE_M,
+  RETURN_SHIFT_TREADS,
   ROVER_TRACKS,
   TRACK_BIAS_M,
   TRACK_INDICES_PER_STEP,
@@ -11,8 +14,10 @@ import {
   TRACK_VERTS_PER_SAMPLE,
   buildTrackRibbons,
   resamplePath,
+  returnShiftM,
   terrainMeshHeight,
   trackDrawCount,
+  trackReveal,
 } from './trackGeometry.ts'
 
 /** Plan-like polyline: points every 10 m, `distM` a little longer than the ground distance. */
@@ -192,6 +197,141 @@ describe('buildTrackRibbons', () => {
       }
     })
   }
+})
+
+describe('the tracks of the way back', () => {
+  /** 40 m out along +x and back over the same points, the odometer still growing. */
+  const outLengthM = straight[straight.length - 1].distM
+  const back: PathPoint[] = [...straight]
+    .reverse()
+    .map((p) => ({ x: p.x, z: p.z, distM: 2 * outLengthM - p.distM }))
+
+  for (const id of ['rover', 'csa-rover'] as const) {
+    const spec = ROVER_TRACKS[id]
+    const shift = RETURN_SHIFT_TREADS * spec.treadM
+    const outR = buildTrackRibbons(resamplePath(straight), spec, hill)
+    const samples = resamplePath(back)
+    const backR = buildTrackRibbons(
+      samples,
+      spec,
+      hill,
+      TRACK_BIAS_M + RETURN_LIFT_M,
+      undefined,
+      (d) => returnShiftM(spec, d - outLengthM),
+    )
+    /** z of the four wheel-line edges at sample k (the route runs along x, at z = 0). */
+    const lanes = (r: typeof outR, k: number) =>
+      [0, 1, 2, 3].map((j) => r.positions[(k * 4 + j) * 3 + 2])
+
+    it(`${id}: start on the outbound line at the ice and pull aside within a few metres`, () => {
+      expect(returnShiftM(spec, 0)).toBe(0)
+      expect(returnShiftM(spec, -3)).toBe(0)
+      expect(returnShiftM(spec, RETURN_SHIFT_EASE_M)).toBeCloseTo(shift, 9)
+      expect(returnShiftM(spec, 500)).toBeCloseTo(shift, 9)
+      let last = 0
+      for (let d = 0; d <= RETURN_SHIFT_EASE_M; d += 0.25) {
+        const v = returnShiftM(spec, d)
+        expect(v).toBeGreaterThanOrEqual(last)
+        last = v
+      }
+      // More than a tread aside (the two imprints do not overlap), yet inside the corridor
+      // of flat ground kept along the route.
+      expect(shift).toBeGreaterThan(spec.treadM)
+      expect(shift).toBeLessThan(0.5)
+    })
+
+    it(`${id}: run parallel to the outbound tracks, shifted to the right of travel`, () => {
+      const first = lanes(backR, 0)
+      const centre0 = (first[0] + first[3]) / 2
+      expect(centre0).toBeCloseTo(0, 5)
+      for (let k = 0; k < samples.length; k++) {
+        const backM = samples[k].distM - outLengthM
+        if (backM < RETURN_SHIFT_EASE_M) continue
+        const z = lanes(backR, k)
+        // Driving towards −x, the right-hand side is −z (north).
+        expect((z[0] + z[3]) / 2).toBeCloseTo(-shift, 5)
+        // Same gauge and tread as on the way out.
+        expect(Math.abs(z[3] - z[0])).toBeCloseTo(2 * spec.halfWidthM + spec.treadM, 5)
+        expect(Math.abs(z[1] - z[0])).toBeCloseTo(spec.treadM, 5)
+      }
+    })
+
+    it(`${id}: no wheel line of the way back lies on one of the way out`, () => {
+      const outLines = [-spec.halfWidthM, spec.halfWidthM]
+      const backLines = outLines.map((z) => z - shift)
+      for (const a of outLines)
+        for (const b of backLines) expect(Math.abs(a - b)).toBeGreaterThan(spec.treadM)
+    })
+
+    it(`${id}: lie a hair above the outbound ribbons, on the same ground`, () => {
+      for (let k = 0; k < samples.length; k++)
+        for (let j = 0; j < 4; j++) {
+          const i = (k * 4 + j) * 3
+          const y = backR.positions[i + 1]
+          expect(y - hill(backR.positions[i], backR.positions[i + 2])).toBeCloseTo(
+            TRACK_BIAS_M + RETURN_LIFT_M,
+            4,
+          )
+        }
+      expect(RETURN_LIFT_M).toBeGreaterThan(0)
+      expect(outR.positions[1] - hill(outR.positions[0], outR.positions[2])).toBeCloseTo(
+        TRACK_BIAS_M,
+        4,
+      )
+    })
+
+    it(`${id}: keep the odometer of the return leg, from the ice to the lander`, () => {
+      expect(backR.sampleDist[0]).toBeCloseTo(outLengthM, 4)
+      expect(backR.sampleDist[samples.length - 1]).toBeCloseTo(2 * outLengthM, 4)
+      for (let k = 1; k < samples.length; k++)
+        expect(backR.sampleDist[k]).toBeGreaterThan(backR.sampleDist[k - 1])
+    })
+  }
+})
+
+describe('trackReveal', () => {
+  const spec = ROVER_TRACKS['csa-rover']
+  const out = 1390
+  const startM = 4.6
+
+  it('shows the outbound tracks up to the front wheels and none of the way back', () => {
+    const r = trackReveal(600, out, spec, startM)
+    expect(r.out).toEqual({ fromM: startM - spec.rearM, toM: 600 + spec.frontM })
+    expect(r.back.toM).toBeLessThanOrEqual(r.back.fromM)
+  })
+
+  it('shows nothing while the rover is still on the ramps', () => {
+    const r = trackReveal(NaN, out, spec, startM)
+    expect(r.out.toM).toBeLessThanOrEqual(r.out.fromM)
+    expect(r.back.toM).toBeLessThanOrEqual(r.back.fromM)
+  })
+
+  it('holds the outbound tracks while sampling at the ice', () => {
+    const r = trackReveal(out, out, spec, startM)
+    expect(r.out.toM).toBe(out + spec.frontM)
+    expect(r.back.toM).toBeLessThanOrEqual(r.back.fromM)
+  })
+
+  it('keeps the whole way out and reveals the way back by its own distance', () => {
+    const r = trackReveal(out + 500, out, spec, startM)
+    expect(r.out).toEqual({ fromM: startM - spec.rearM, toM: out })
+    expect(r.back).toEqual({ fromM: out, toM: out + 500 + spec.frontM })
+    // Every index of the outbound ribbons is drawn; the return ones up to the rover.
+    const outDist = Float32Array.from({ length: 11 }, (_, k) => (k * out) / 10)
+    const backDist = Float32Array.from({ length: 11 }, (_, k) => out + (k * out) / 10)
+    expect(trackDrawCount(outDist, r.out.toM)).toBe(10 * TRACK_INDICES_PER_STEP)
+    expect(trackDrawCount(backDist, r.back.toM)).toBe(4 * TRACK_INDICES_PER_STEP)
+  })
+
+  it('grows with the rover on both legs', () => {
+    let last = -Infinity
+    for (let d = 5; d <= 2 * out; d += 37) {
+      const r = trackReveal(d, out, spec, startM)
+      const shown = Math.max(0, r.out.toM - r.out.fromM) + Math.max(0, r.back.toM - r.back.fromM)
+      expect(shown).toBeGreaterThanOrEqual(last)
+      last = shown
+    }
+  })
 })
 
 describe('trackDrawCount', () => {

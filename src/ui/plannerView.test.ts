@@ -5,6 +5,8 @@ import { scoreLevel } from './levels.ts'
 import { FIXTURE_FROM, fixtureProblem, fixtureResult } from './plannerFixture.ts'
 import { assembleProblem, effectiveFromMs } from './plannerInputs.ts'
 import {
+  DEFAULT_DIR,
+  MARGIN_WARN_H,
   PLAN_CSV_COLUMNS,
   PLAN_RANGE,
   type SortKey,
@@ -16,19 +18,24 @@ import {
   clampFrom,
   dayState,
   formatPlanDate,
+  formatSampleHours,
   formatSpan,
   fromDateInput,
+  marginLevel,
   planCsv,
   planSummary,
   problemChanged,
   rangeEndMs,
   rankByDay,
+  roundTripM,
+  samplesKey,
   scoreColor,
   scoreStroke,
   sortDays,
   toDateInput,
   topDays,
   violationHistogram,
+  violationsByDay,
   weekdayNames,
 } from './plannerView.ts'
 import { es } from '../i18n/es.ts'
@@ -134,6 +141,41 @@ describe('colours and levels', () => {
   })
 })
 
+describe('violationsByDay', () => {
+  it('puts first what stops most days, then what rejects most points', () => {
+    // Many dark candidates every day, but each day ends at the rover: the rover comes first.
+    const r = fixtureResult(['rover-samples', 'rover-samples', 'night'])
+    for (const d of r.days) d.rejected = { ...d.rejected, 'no-sun-at-landing': 200 }
+    const bars = violationHistogram(r.days)
+    expect(bars[0].violation).toBe('no-sun-at-landing')
+    expect(violationsByDay(bars)).toEqual(['rover-samples', 'night', 'no-sun-at-landing', 'slope'])
+  })
+})
+
+describe('round trip', () => {
+  it('doubles the route and flags a return with less than a day to spare', () => {
+    expect(roundTripM({ routeM: 1390 })).toBe(2780)
+    expect(marginLevel(322.9)).toBe('good')
+    expect(marginLevel(MARGIN_WARN_H)).toBe('good')
+    expect(marginLevel(23.9)).toBe('warn')
+    expect(marginLevel(null)).toBe('warn')
+    expect(samplesKey(1)).toBe('plan.samples.one')
+    expect(samplesKey(3)).toBe('plan.samples.many')
+    expect(formatSampleHours(2)).toBe('2 h')
+    expect(formatSampleHours(0.5)).toBe('0.5 h')
+  })
+
+  it('sorts by the samples and by the margin of the return, unsolved days last', () => {
+    const r = fixtureResult([40, 'night', 88, 61])
+    r.days[0].best!.rover = { ...r.days[0].best!.rover, marginH: 10, samplesDone: 2 }
+    r.days[3].best!.rover = { ...r.days[3].best!.rover, marginH: 400 }
+    const order = (key: SortKey) =>
+      sortDays(r.days, key, DEFAULT_DIR[key]).map((d) => d.best?.score ?? null)
+    expect(order('return')).toEqual([61, 88, 40, null])
+    expect(order('samples')).toEqual([88, 61, 40, null])
+  })
+})
+
 describe('sortDays', () => {
   const r = fixtureResult([40, 'night', 88, 61, 'short-light', 75])
   const scores = (key: SortKey, dir: 'asc' | 'desc') =>
@@ -205,6 +247,13 @@ describe('violationHistogram', () => {
       expect(es[VIOLATION_FIX[v]], v).toBeTruthy()
     }
     expect(es[VIOLATION_FIX['short-light']]).toMatch(/luz continua mínima.*rango de fechas/)
+    // The five ways the rover's round trip fails each have their own words.
+    const rover = VIOLATIONS.filter((v) => v.startsWith('rover-'))
+    expect(rover).toHaveLength(5)
+    expect(new Set(rover.map((v) => VIOLATION_KEY[v])).size).toBe(5)
+    expect(new Set(rover.map((v) => VIOLATION_FIX[v])).size).toBe(5)
+    expect(es[VIOLATION_KEY['rover-samples']]).toMatch(/no hay Sol para recargar/)
+    expect(es[VIOLATION_KEY['rover-late']]).toMatch(/después del fin de la misión/)
   })
 })
 
@@ -218,6 +267,9 @@ describe('planCsv', () => {
     expect(meta).toContain('# first_landing_utc: 2026-11-25T00:00:00.000Z')
     expect(meta).toContain('# min_continuous_sun_days: 15')
     expect(meta).toContain('# max_night_h: 120')
+    expect(meta).toContain('# rover: csa-rover')
+    expect(meta).toContain('# samples_requested: 3')
+    expect(meta).toContain('# sample_hours: 2')
     const body = lines.slice(meta.length)
     expect(body[0]).toBe(PLAN_CSV_COLUMNS.join(','))
     expect(body).toHaveLength(1 + 3)
@@ -230,6 +282,16 @@ describe('planCsv', () => {
     expect(rows[0][col('tight_limits')]).toBe('night|dte')
     expect(rows[0][col('top_rank')]).toBe('2')
     expect(rows[2][col('top_rank')]).toBe('1')
+    // The round trip: both distances, the samples and how the rover gets back.
+    expect(rows[0][col('route_to_ice_m')]).toBe('1600')
+    expect(rows[0][col('route_round_trip_m')]).toBe('3200')
+    expect(rows[0][col('rover_samples_done')]).toBe('3')
+    expect(rows[0][col('rover_returns')]).toBe('1')
+    expect(rows[0][col('rover_total_h')]).toBe('16.0')
+    expect(rows[0][col('rover_margin_h')]).toBe('320.0')
+    expect(rows[0][col('rover_end_battery_pct')]).toBe('45.0')
+    expect(rows[0][col('rover_travel_h')]).toBe('5.0')
+    expect(PLAN_CSV_COLUMNS[PLAN_CSV_COLUMNS.length - 1]).toBe('rejection_reason')
     // No solution: empty cells and the reason.
     expect(rows[1][col('has_solution')]).toBe('0')
     expect(rows[1][col('rejection_reason')]).toBe('night')

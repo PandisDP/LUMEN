@@ -14,11 +14,17 @@ import { terrainSegments } from './nearGroundField.ts'
 import { roverTelemetry } from './roverTelemetry.ts'
 import { surfaceHalfSize } from './surface.ts'
 import {
+  type PathPoint,
+  RETURN_LIFT_M,
   ROVER_TRACKS,
+  TRACK_BIAS_M,
+  type TrackSpec,
   buildTrackRibbons,
   resamplePath,
+  returnShiftM,
   terrainMeshHeight,
   trackDrawCount,
+  trackReveal,
 } from './trackGeometry.ts'
 import { createTrackMaterial } from './trackMaterial.ts'
 
@@ -27,9 +33,38 @@ const DEG = Math.PI / 180
 const DUST_MAX = 400
 const DUST_RATE = 150
 
+/** The ribbons of one leg as a geometry that starts hidden. */
+function ribbonGeometry(
+  path: readonly PathPoint[],
+  spec: TrackSpec,
+  surfaceY: (x: number, z: number) => number,
+  biasM: number,
+  lateralM?: (distM: number) => number,
+) {
+  const ribbons = buildTrackRibbons(
+    resamplePath(path, undefined, Math.max(0.6, 1.6 * spec.halfWidthM)),
+    spec,
+    surfaceY,
+    biasM,
+    undefined,
+    lateralM,
+  )
+  const geometry = new BufferGeometry()
+  geometry.setAttribute('position', new BufferAttribute(ribbons.positions, 3))
+  geometry.setAttribute('normal', new BufferAttribute(ribbons.normals, 3))
+  geometry.setAttribute('uv', new BufferAttribute(ribbons.uvs, 2))
+  geometry.setAttribute('dist', new BufferAttribute(ribbons.dist, 1))
+  geometry.setAttribute('edge', new BufferAttribute(ribbons.edge, 2))
+  geometry.setIndex(new BufferAttribute(ribbons.indices, 1))
+  geometry.setDrawRange(0, 0)
+  return { geometry, sampleDist: ribbons.sampleDist }
+}
+
 /**
  * What the rover leaves behind: the tracks of its wheels, laid once along the whole route and
- * revealed up to where it is, and the regolith its rear wheels throw. There is no air, so the
+ * revealed up to where it is, and the regolith its rear wheels throw. The round trip leaves two
+ * sets of tracks: the way out and, a little to its side, the way back (each revealed by the
+ * distance driven on its own leg). There is no air, so the
  * dust makes no cloud: each grain flies a low ballistic arc and falls back within a second.
  * The dust is simulated in real time around the rover whatever the playback speed (at hundreds
  * of simulated seconds per second it would otherwise be noise). Purely cosmetic.
@@ -66,29 +101,43 @@ export function RoverTracks({
   }, [detail, grids])
 
   const tracks = useMemo(() => {
-    const path = traverse.plan.points.map((p) => {
+    const { points, turnIndex, outLengthM } = traverse.plan
+    const path = points.map((p) => {
       const [x, , z] = latLonToScene(detail.site, p.lat, p.lon, p.heightM)
       return { x, z, distM: p.distM }
     })
-    const ribbons = buildTrackRibbons(
-      resamplePath(path, undefined, Math.max(0.6, 1.6 * spec.halfWidthM)),
-      spec,
-      surfaceY,
-    )
-    const geometry = new BufferGeometry()
-    geometry.setAttribute('position', new BufferAttribute(ribbons.positions, 3))
-    geometry.setAttribute('normal', new BufferAttribute(ribbons.normals, 3))
-    geometry.setAttribute('uv', new BufferAttribute(ribbons.uvs, 2))
-    geometry.setAttribute('dist', new BufferAttribute(ribbons.dist, 1))
-    geometry.setAttribute('edge', new BufferAttribute(ribbons.edge, 2))
-    geometry.setIndex(new BufferAttribute(ribbons.indices, 1))
-    geometry.setDrawRange(0, 0)
-    return { geometry, sampleDist: ribbons.sampleDist }
+    const turn = turnIndex < 0 ? path.length - 1 : turnIndex
+    return {
+      out: ribbonGeometry(path.slice(0, turn + 1), spec, surfaceY, TRACK_BIAS_M),
+      back: ribbonGeometry(
+        path.slice(turn + 1),
+        spec,
+        surfaceY,
+        TRACK_BIAS_M + RETURN_LIFT_M,
+        (d) => returnShiftM(spec, d - outLengthM),
+      ),
+    }
   }, [traverse, detail, spec, surfaceY])
-  useEffect(() => () => tracks.geometry.dispose(), [tracks])
+  useEffect(
+    () => () => {
+      tracks.out.geometry.dispose()
+      tracks.back.geometry.dispose()
+    },
+    [tracks],
+  )
 
-  const look = useMemo(() => createTrackMaterial(spec.treadM), [spec])
-  useEffect(() => () => look.material.dispose(), [look])
+  // One material per leg: each has its own visible stretch.
+  const look = useMemo(
+    () => ({ out: createTrackMaterial(spec.treadM), back: createTrackMaterial(spec.treadM) }),
+    [spec],
+  )
+  useEffect(
+    () => () => {
+      look.out.material.dispose()
+      look.back.material.dispose()
+    },
+    [look],
+  )
 
   const sim = useMemo(
     () => new DustSim({ max: DUST_MAX, seed: 29, peakAlpha: 0.6, settle: true, settleS: 0.35 }),
@@ -106,12 +155,20 @@ export function RoverTracks({
     const store = useRoverStore.getState()
     const onGround = tm.active && tm.egress >= 1 && Number.isFinite(tm.distM)
 
-    // Tracks: from where the ramps touch the ground up to the front wheels.
-    const reach = onGround ? tm.distM + spec.frontM : 0
-    const from = EGRESS.groundR - spec.rearM
-    tracks.geometry.setDrawRange(0, reach > from ? trackDrawCount(tracks.sampleDist, reach) : 0)
-    const fovScale = frame.camera.projectionMatrix.elements[5]
-    look.update(from, reach, 2 / (fovScale * frame.size.height))
+    // Tracks: from where the ramps touch the ground up to the front wheels, leg by leg.
+    const reveal = trackReveal(
+      onGround ? tm.poseDistM : NaN,
+      traverse.plan.outLengthM,
+      spec,
+      EGRESS.groundR,
+    )
+    const pixelAngle = 2 / (frame.camera.projectionMatrix.elements[5] * frame.size.height)
+    for (const leg of ['out', 'back'] as const) {
+      const { fromM, toM } = reveal[leg]
+      const { geometry, sampleDist } = tracks[leg]
+      geometry.setDrawRange(0, toM > fromM ? trackDrawCount(sampleDist, toM) : 0)
+      look[leg].update(fromM, toM, pixelAngle)
+    }
 
     // Dust, in a frame that rides with the rover (y up, axes as the scene).
     if (still) return
@@ -160,11 +217,18 @@ export function RoverTracks({
   return (
     <>
       <mesh
-        geometry={tracks.geometry}
-        material={look.material}
+        geometry={tracks.out.geometry}
+        material={look.out.material}
         frustumCulled={false}
         receiveShadow
         renderOrder={2}
+      />
+      <mesh
+        geometry={tracks.back.geometry}
+        material={look.back.material}
+        frustumCulled={false}
+        receiveShadow
+        renderOrder={3}
       />
       {!still && (
         <points
