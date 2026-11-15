@@ -13,8 +13,8 @@ The interface is available in Spanish, English and Quechua (the Quechua translat
 | Name                  | In Killa Landing                                | Background                                                                                                                                                               |
 | --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Jorge Lozano**      | Mathematical models and optimisation algorithms | Computer scientist and mining engineer; MSc researcher in reinforcement learning for mine planning                                                                       |
-| **Erick Lozano**      | User experience and front-end design            |                                                                                                                                                                          |
-| **Melissa Amado**     | Use case and startup development                | Serial entrepreneur; NASA Challenge winner and Women in Tech LATAM awardee                                                                                               |
+| **Erick Lozano**      | User experience and front-end design            | Software developer with more than 5 years of professional experience                                                                                                     |
+| **Melissa Amado**     | Use case and startup development                | Serial entrepreneur; NASA Challenge Global Nominee 2024 (Cusco) and Women in Tech LATAM awardee                                                                          |
 | **Fernando Figueroa** | Mission control and aerospace knowledge         | 25 years at NASA Stennis; Discipline Lead for Autonomous Systems and Operations and founder of its Autonomous Systems Lab; NASA Exceptional Technology Achievement Medal |
 
 Related documents:
