@@ -1,11 +1,36 @@
-import { useT } from '../i18n/index.ts'
+import { type MsgKey, useT } from '../i18n/index.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
-import { useUiStore } from '../store/useUiStore.ts'
+import { AUDIENCES, useUiStore } from '../store/useUiStore.ts'
 import { IconCompare, IconLander, IconMountain, IconOrbit } from './icons.tsx'
 import { STEPS } from './steps.ts'
 import { TopSites } from './TopSites.tsx'
 
 const ICONS = [IconOrbit, IconMountain, IconLander, IconCompare]
+
+/** Who is using the tool: picks how much detail the panels will show. */
+function AudiencePicker() {
+  const t = useT()
+  const audience = useUiStore((s) => s.audience)
+  const setAudience = useUiStore((s) => s.setAudience)
+  return (
+    <fieldset className="intro__audience">
+      <legend className="panel__label">{t('audience.who')}</legend>
+      {AUDIENCES.map((a) => (
+        <label key={a} className="intro__audience-card" data-selected={audience === a}>
+          <input
+            type="radio"
+            name="audience"
+            value={a}
+            checked={audience === a}
+            onChange={() => setAudience(a)}
+          />
+          <strong>{t(`audience.${a}` as MsgKey)}</strong>
+          <span>{t(`audience.${a}.desc` as MsgKey)}</span>
+        </label>
+      ))}
+    </fieldset>
+  )
+}
 
 /** First screen after the splash: the goal in one sentence and the four steps. */
 export function Welcome() {
@@ -33,6 +58,7 @@ export function Welcome() {
             )
           })}
         </ol>
+        <AudiencePicker />
         <div className="intro__actions">
           <button
             type="button"

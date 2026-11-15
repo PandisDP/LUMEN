@@ -25,6 +25,18 @@ export const es = {
   'topbar.guide': 'Guía',
   'topbar.guideTitle': 'Recorrido guiado por la interfaz',
   'topbar.tools': 'Herramientas',
+  'topbar.audience': 'Modo',
+
+  // Audience mode (what is shown, never what is computed)
+  'audience.planner': 'Planificador',
+  'audience.educator': 'Educador',
+  'audience.public': 'Público',
+  'audience.planner.desc':
+    'Todos los datos: DSN, térmico, elipse de aterrizaje, filtro de hardware y exportación.',
+  'audience.educator.desc':
+    'La física del lugar: Sol, Tierra, horizonte, iluminación y hielo, sin los detalles de ingeniería.',
+  'audience.public.desc': 'Lo esencial: ¿hay Sol?, ¿se ve la Tierra?, y por qué eso importa.',
+  'audience.who': '¿Quién eres?',
 
   // Collapsible panels
   'panel.left': 'Sitios de alunizaje',
@@ -291,6 +303,20 @@ export const es = {
   'sweep.item': 'energía {e} · DTE {d} · noche máx. {n}',
   'sweep.noEarth': 'sin Tierra al alunizar',
 
+  // Seasons (2026–2030 by month)
+  'season.hint':
+    'Mes a mes, 2026–2030, en {site}: barras = energía media de una misión de {days} días que alunice ese mes (más tenues cuando pocos días tienen Sol al tocar suelo); línea azul = Tierra visible (DTE); línea blanca = altura máxima del Sol. Haz clic en un mes para fijar esa fecha.',
+  'season.computing': 'Calculando 60 meses…',
+  'season.noDetail': 'Esperando el horizonte del sitio…',
+  'season.aria': 'Energía, enlace con la Tierra y altura máxima del Sol por mes, 2026–2030',
+  'season.legend.energy': 'Energía (%)',
+  'season.legend.dte': 'DTE (%)',
+  'season.legend.sunEl': 'Sol máx. (°)',
+  'season.best': 'Mejor mes: {month} ({e} de energía, Sol hasta {el}).',
+  'season.worst': 'Peor mes: {month} ({e}, Sol hasta {el}).',
+  'season.why':
+    'El eje de la Luna está inclinado solo 1,54°, así que en el polo sur el Sol de «verano» sube hasta +1,54° y el de «invierno» se queda en −1,54°, en un ciclo anual. Esa diferencia tan pequeña decide cuánto asoma el Sol sobre las montañas del horizonte y, con ello, la energía de cada mes.',
+
   // Site picker
   'picker.remove': 'Quitar escenario {label}',
   'picker.addTitle': 'Duplicar el escenario activo para compararlo',
@@ -298,7 +324,9 @@ export const es = {
   'picker.lat': 'Latitud (°)',
   'picker.lon': 'Longitud (°E)',
   'picker.use': 'Usar',
-  'links.title': 'Ver este punto en los visores del LRO',
+  'links.title': 'Ver este punto en los visores del LRO y en JPL Horizons',
+  'links.horizonsTitle':
+    'Consulta en JPL Horizons el acimut y la elevación aparentes de este cuerpo desde el sitio, hora a hora, para la ventana de misión actual (texto, misma API que usa LUMEN).',
   'links.quickmapTitle':
     'Abre las mismas coordenadas en LROC QuickMap (ASU): imágenes NAC, iluminación, PSR y topografía del LRO.',
   'links.trekTitle':
@@ -545,6 +573,8 @@ export const es = {
   'bottom.timeline': 'Línea temporal',
   'bottom.horizon': 'Horizonte 360°',
   'bottom.dates': 'Fechas alternativas',
+  'bottom.seasons': 'Estaciones',
+  'bottom.map': 'Mapa polar',
   'bottom.computing': 'Calculando efemérides…',
   'bottom.loadingHorizon': 'Cargando horizonte…',
 
@@ -588,6 +618,19 @@ export const es = {
   'picker.current': 'Tu sitio',
   'locator.pole': 'Polo sur lunar',
   'locator.nearSide': 'Cara visible de la Luna',
+  'polar.aria': 'Mapa del polo sur lunar',
+  'polar.illum': 'Iluminación anual',
+  'polar.psr': 'Sombra permanente (PSR)',
+  'polar.lit': 'Sol medio anual: 0 % → 100 %',
+  'polar.relief': 'Relieve (LOLA 960 m/px)',
+  'polar.active': 'Sitio activo',
+  'polar.scenarios': 'Sitios de los escenarios (A, B…)',
+  'polar.sites': 'Otros sitios: clic para seleccionar',
+  'polar.loading': 'Cargando el relieve polar…',
+  'polar.noDem': 'Sin relieve: ejecuta `npm run data` para generar el DEM polar.',
+  'polar.noIllum': 'Sin mapas de iluminación anual: ejecuta `npm run data`.',
+  'polar.hint':
+    'Proyección estereográfica polar, 80°S-90°S; la Tierra queda hacia 0° (arriba). Anillos cada 2°.',
   'scene.southPole': 'Polo Sur lunar',
   'frame.aria': 'Encuadre de la vista',
   'frame.label': 'Ver con fondo:',

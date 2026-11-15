@@ -62,6 +62,24 @@ const EN: Record<string, SiteText> = {
     mission: 'LCROSS (NASA, 2009)',
     description: 'Where LCROSS confirmed water ice in 2009 by impacting a shadowed area.',
   },
+  'change-7': {
+    name: "Chang'e-7 (candidate area)",
+    mission: 'CNSA, planned 2026',
+    description:
+      'Orbiter, lander, rover and hopping probe to look for ice at the south pole. Approximate area near the Shackleton rim; refined to the best-lit point.',
+  },
+  'im-1': {
+    name: 'IM-1 Odysseus (Malapert A)',
+    mission: 'Intuitive Machines, CLPS 2024',
+    description:
+      'First commercial landing, at 80°S next to Malapert A crater. It tipped over on touchdown but still returned data. Horizon without relief.',
+  },
+  'luna-25': {
+    name: 'Luna-25 (planned site)',
+    mission: 'Roscosmos, 2023',
+    description:
+      'Planned site north of Boguslawsky crater, at 69.5°S; the probe crashed before descent. Horizon without relief.',
+  },
   'chandrayaan-3': {
     name: 'Chandrayaan-3',
     mission: 'ISRO, 2023',
@@ -71,6 +89,18 @@ const EN: Record<string, SiteText> = {
     name: "Chang'e-4",
     mission: 'CNSA, 2019 (far side)',
     description: 'On the far side the Earth never rises: a relay satellite (Queqiao) is needed.',
+  },
+  'change-6': {
+    name: "Chang'e-6",
+    mission: 'CNSA, 2024 (far side)',
+    description:
+      'First samples from the far side, in the Apollo basin (41.6°S). No Earth in the sky: link through the Queqiao-2 relay. Horizon without relief.',
+  },
+  'blue-ghost-m1': {
+    name: 'Blue Ghost M1',
+    mission: 'Firefly Aerospace, CLPS 2025',
+    description:
+      'Mare Crisium, 18.6°N. Operated a full lunar day with the Earth high in the sky. Horizon without relief.',
   },
   slim: {
     name: 'SLIM',

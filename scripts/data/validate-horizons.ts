@@ -26,8 +26,14 @@ interface SiteRow {
   heightM: number
 }
 
-/** 12 instants: the 15th of each month, cycling through 2026-2030 and four hours of day. */
-const DATES_MS = Array.from({ length: 12 }, (_, m) => Date.UTC(2026 + (m % 5), m, 15, (m % 4) * 6))
+/**
+ * 12 instants: the 15th of each month, cycling through 2026-2030 and four hours of day, at
+ * hh:37 so none coincides with a 2 h sample of the published table (this validates the
+ * interpolation, not just the frame conversion).
+ */
+const DATES_MS = Array.from({ length: 12 }, (_, m) =>
+  Date.UTC(2026 + (m % 5), m, 15, (m % 4) * 6 + 1, 37),
+)
 const BODIES = [
   { key: 'sun', command: '10' },
   { key: 'earth', command: '399' },
@@ -86,13 +92,14 @@ async function main() {
       const refs = await query(site, b.command)
       const siteWorst = { iau: 0, table: 0 }
       for (const ref of refs) {
-        const date = new Date(ref.ms)
+        // Horizons echoes the JD rounded to 6 decimals (~0.1 s): snap back to the whole second.
+        const date = new Date(Math.round(ref.ms / 1000) * 1000)
         fixtures.push({
           site: site.id,
           lat: site.lat,
           lon: site.lon,
           heightM: site.heightM,
-          date: date.toISOString().slice(0, 16),
+          date: date.toISOString().slice(0, 19),
           body: b.key,
           az: ref.az,
           el: ref.el,

@@ -171,6 +171,43 @@
   }
  },
  {
+  "id": "change-7",
+  "lat": -88.80762,
+  "lon": 123.79115,
+  "heightM": 1648,
+  "accuracy": "lola",
+  "maskMaxDeg": -0.28,
+  "hasTerrain": true,
+  "slopeCenterDeg": 2.04,
+  "slopeP90Deg": 8.55,
+  "ice": {
+   "straightM": null,
+   "routeM": null,
+   "maxSlopeDeg": null,
+   "reachable": false,
+   "insidePsr": false,
+   "roverMaxSlopeDeg": 20
+  }
+ },
+ {
+  "id": "im-1",
+  "lat": -80.13,
+  "lon": 1.44,
+  "heightM": 0,
+  "accuracy": "spherical",
+  "maskMaxDeg": -0.09,
+  "hasTerrain": false
+ },
+ {
+  "id": "luna-25",
+  "lat": -69.545,
+  "lon": 43.544,
+  "heightM": 0,
+  "accuracy": "spherical",
+  "maskMaxDeg": -0.09,
+  "hasTerrain": false
+ },
+ {
   "id": "chandrayaan-3",
   "lat": -69.3733,
   "lon": 32.3191,
@@ -183,6 +220,24 @@
   "id": "change-4",
   "lat": -45.4446,
   "lon": 177.5991,
+  "heightM": 0,
+  "accuracy": "spherical",
+  "maskMaxDeg": -0.09,
+  "hasTerrain": false
+ },
+ {
+  "id": "change-6",
+  "lat": -41.6385,
+  "lon": -153.9852,
+  "heightM": 0,
+  "accuracy": "spherical",
+  "maskMaxDeg": -0.09,
+  "hasTerrain": false
+ },
+ {
+  "id": "blue-ghost-m1",
+  "lat": 18.56,
+  "lon": 61.81,
   "heightM": 0,
   "accuracy": "spherical",
   "maskMaxDeg": -0.09,

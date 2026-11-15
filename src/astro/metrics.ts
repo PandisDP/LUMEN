@@ -108,6 +108,10 @@ export interface DateCandidate {
   sunAtLanding: boolean
   earthAtLanding: boolean
   score: number
+  /** Highest Sun elevation inside the window, degrees (shows the ±1.54° seasonal swing). */
+  maxSunEl: number
+  /** Mean Sun elevation while lit, degrees (NaN when the window is never lit). */
+  meanSunElLit: number
 }
 
 /**
@@ -133,11 +137,19 @@ export function sweepLandingDates(
     const i1 = i0 + win
     let dark = 0
     let maxDark = 0
+    let maxSunEl = -90
+    let lit = 0
+    let elLitSum = 0
     for (let i = i0; i < i1; i++) {
       if (s.sunFrac[i] < VISIBLE_THRESHOLD) {
         dark++
         if (dark > maxDark) maxDark = dark
-      } else dark = 0
+      } else {
+        dark = 0
+        lit++
+        elLitSum += s.sunEl[i]
+      }
+      if (s.sunEl[i] > maxSunEl) maxSunEl = s.sunEl[i]
     }
     const energyPct = (100 * (pe[i1] - pe[i0])) / win
     const dtePct = (100 * (pd[i1] - pd[i0])) / win
@@ -150,6 +162,8 @@ export function sweepLandingDates(
       sunAtLanding: s.sunFrac[i0] >= VISIBLE_THRESHOLD,
       earthAtLanding: s.earthFrac[i0] >= VISIBLE_THRESHOLD,
       score: scoreOf(energyPct, dtePct, longestDarkH),
+      maxSunEl,
+      meanSunElLit: lit ? elLitSum / lit : NaN,
     })
   }
   return out

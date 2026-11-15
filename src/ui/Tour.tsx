@@ -8,7 +8,7 @@ const PAD = 8
 
 /** Step-by-step walkthrough: dims the page, spotlights one element and explains it. */
 /** Full user guide (docs/GUIA.md), opened from the last step of the tour. */
-const GUIDE_URL = 'https://github.com/ErickLozFer/LUMEN_3D/blob/main/docs/GUIA.md'
+const GUIDE_URL = 'https://github.com/PandisDP/LUMEN/blob/main/docs/GUIA.md'
 
 export function Tour() {
   const t = useT()

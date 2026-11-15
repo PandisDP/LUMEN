@@ -27,6 +27,17 @@ export const en: Record<keyof typeof es, string> = {
   'topbar.guide': 'Guide',
   'topbar.guideTitle': 'Guided tour of the interface',
   'topbar.tools': 'Tools',
+  'topbar.audience': 'Mode',
+
+  // Audience mode (what is shown, never what is computed)
+  'audience.planner': 'Planner',
+  'audience.educator': 'Educator',
+  'audience.public': 'Public',
+  'audience.planner.desc': 'Everything: DSN, thermal, landing ellipse, hardware filter and export.',
+  'audience.educator.desc':
+    'The physics of the place: Sun, Earth, horizon, illumination and ice, without the engineering detail.',
+  'audience.public.desc': 'The essentials: is there Sun? can you see Earth? and why that matters.',
+  'audience.who': 'Who are you?',
 
   // Collapsible panels
   'panel.left': 'Landing sites',
@@ -289,6 +300,20 @@ export const en: Record<keyof typeof es, string> = {
   'sweep.item': 'energy {e} · DTE {d} · max night {n}',
   'sweep.noEarth': 'no Earth at landing',
 
+  // Seasons (2026–2030 by month)
+  'season.hint':
+    'Month by month, 2026–2030, at {site}: bars = mean energy of a {days}-day mission landing that month (fainter when few days have the Sun up at touchdown); blue line = Earth visible (DTE); white line = maximum Sun elevation. Click a month to set that date.',
+  'season.computing': 'Computing 60 months…',
+  'season.noDetail': 'Waiting for the site horizon…',
+  'season.aria': 'Energy, Earth link and maximum Sun elevation by month, 2026–2030',
+  'season.legend.energy': 'Energy (%)',
+  'season.legend.dte': 'DTE (%)',
+  'season.legend.sunEl': 'Max Sun (°)',
+  'season.best': 'Best month: {month} ({e} energy, Sun up to {el}).',
+  'season.worst': 'Worst month: {month} ({e}, Sun up to {el}).',
+  'season.why':
+    "The Moon's axis is tilted only 1.54°, so at the south pole the 'summer' Sun climbs to +1.54° and the 'winter' Sun stays at −1.54°, in a yearly cycle. That tiny difference decides how much of the Sun clears the mountains on the horizon and, with it, each month's energy.",
+
   // Site picker
   'picker.remove': 'Remove scenario {label}',
   'picker.addTitle': 'Duplicate the active scenario to compare it',
@@ -296,7 +321,9 @@ export const en: Record<keyof typeof es, string> = {
   'picker.lat': 'Latitude (°)',
   'picker.lon': 'Longitude (°E)',
   'picker.use': 'Use',
-  'links.title': 'See this point in the LRO map viewers',
+  'links.title': 'See this point in the LRO map viewers and in JPL Horizons',
+  'links.horizonsTitle':
+    'Query JPL Horizons for the apparent azimuth and elevation of this body from the site, hourly, over the current mission window (plain text, the same API LUMEN uses).',
   'links.quickmapTitle':
     'Opens the same coordinates in LROC QuickMap (ASU): LRO NAC images, illumination, PSRs and topography.',
   'links.trekTitle':
@@ -541,6 +568,8 @@ export const en: Record<keyof typeof es, string> = {
   'bottom.timeline': 'Timeline',
   'bottom.horizon': '360° horizon',
   'bottom.dates': 'Alternative dates',
+  'bottom.seasons': 'Seasons',
+  'bottom.map': 'Polar map',
   'bottom.computing': 'Computing ephemerides…',
   'bottom.loadingHorizon': 'Loading horizon…',
 
@@ -584,6 +613,19 @@ export const en: Record<keyof typeof es, string> = {
   'picker.current': 'Your site',
   'locator.pole': 'Lunar south pole',
   'locator.nearSide': 'Near side of the Moon',
+  'polar.aria': 'Map of the lunar south pole',
+  'polar.illum': 'Yearly illumination',
+  'polar.psr': 'Permanently shadowed (PSR)',
+  'polar.lit': 'Mean yearly Sun: 0 % → 100 %',
+  'polar.relief': 'Relief (LOLA 960 m/px)',
+  'polar.active': 'Active site',
+  'polar.scenarios': 'Scenario sites (A, B…)',
+  'polar.sites': 'Other sites: click to select',
+  'polar.loading': 'Loading the polar relief…',
+  'polar.noDem': 'No relief: run `npm run data` to generate the polar DEM.',
+  'polar.noIllum': 'No yearly illumination maps: run `npm run data`.',
+  'polar.hint':
+    'Polar stereographic projection, 80°S-90°S; the Earth lies towards 0° (up). Rings every 2°.',
   'scene.southPole': 'Lunar South Pole',
   'frame.aria': 'View framing',
   'frame.label': 'Background:',

@@ -19,6 +19,7 @@ import {
   useMissionStore,
 } from '../store/useMissionStore.ts'
 import { ExportMenu } from './ExportMenu.tsx'
+import { useShow } from './audience.ts'
 import {
   formatDateTime,
   formatDeg,
@@ -403,6 +404,7 @@ function Takeaways({ best, scenario }: { best: ColumnSummary; scenario: Scenario
  */
 export function CompareView() {
   const t = useT()
+  const showExport = useShow('export')
   const open = useMissionStore((s) => s.compareOpen)
   const scenarios = useMissionStore((s) => s.scenarios)
   const sites = useMissionStore((s) => s.sites)
@@ -477,10 +479,12 @@ export function CompareView() {
         {!winner && ranked[0] && scenarios.length === 1 && (
           <Takeaways best={ranked[0].s} scenario={ranked[0].sc} />
         )}
-        <div className="compare__export">
-          <p className="hint">{t('export.finalHint')}</p>
-          <ExportMenu final />
-        </div>
+        {showExport && (
+          <div className="compare__export">
+            <p className="hint">{t('export.finalHint')}</p>
+            <ExportMenu final />
+          </div>
+        )}
       </footer>
       {editor && <ScenarioEditor scenarioId={editor.id} onClose={() => setEditor(null)} />}
     </section>

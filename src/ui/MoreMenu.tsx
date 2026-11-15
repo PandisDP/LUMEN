@@ -3,6 +3,7 @@ import { useT } from '../i18n/index.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
 import { useUiStore } from '../store/useUiStore.ts'
 import { IconBook, IconEye, IconEyeOff, IconFilter, IconPin } from './icons.tsx'
+import { useShow } from './audience.ts'
 
 /** "⋯ More": the secondary tools, out of the way of the four steps. */
 export function MoreMenu() {
@@ -15,6 +16,7 @@ export function MoreMenu() {
     fn()
   }
   const s = useMissionStore.getState()
+  const showHardware = useShow('hardware')
 
   return (
     <details className="menu" ref={menu} data-tour="more">
@@ -25,9 +27,11 @@ export function MoreMenu() {
         <button type="button" role="menuitem" onClick={run(() => setStage('choose'))}>
           <IconPin /> {t('more.changeSite')}
         </button>
-        <button type="button" role="menuitem" onClick={run(() => s.setHardwareOpen(true))}>
-          <IconFilter /> {t('topbar.hardware')}
-        </button>
+        {showHardware && (
+          <button type="button" role="menuitem" onClick={run(() => s.setHardwareOpen(true))}>
+            <IconFilter /> {t('topbar.hardware')}
+          </button>
+        )}
         <button type="button" role="menuitem" onClick={run(() => s.setExplainOpen(true))}>
           <IconBook /> {t('topbar.why')}
         </button>

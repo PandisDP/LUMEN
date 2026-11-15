@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { loadSiteIndex } from './data/catalog.ts'
 import { usePanelShortcuts } from './hooks/usePanelShortcuts.ts'
 import { usePlayback } from './hooks/usePlayback.ts'
@@ -10,6 +10,7 @@ import { useSiteText } from './i18n/sites.ts'
 import { findSite, selectActiveScenario, useMissionStore } from './store/useMissionStore.ts'
 import { useUiStore } from './store/useUiStore.ts'
 import { AssistantFab } from './ui/AssistantFab.tsx'
+import { useShow } from './ui/audience.ts'
 import { BottomPanel } from './ui/BottomPanel.tsx'
 import { CollapsiblePanel } from './ui/CollapsiblePanel.tsx'
 import { CompareView } from './ui/CompareView.tsx'
@@ -40,8 +41,18 @@ export default function App() {
   const panelsHidden = useMissionStore((s) => s.panelsHidden)
   const panels = useUiStore((s) => s.panels)
   const stage = useUiStore((s) => s.stage)
+  const audience = useUiStore((s) => s.audience)
+  const explainAuto = useShow('explainAuto')
   const t = useT()
   const exploring = stage === 'explore'
+
+  // Educators and the public get the "Why?" cards first; once per session, not on every visit.
+  const explained = useRef(false)
+  useEffect(() => {
+    if (!exploring || !explainAuto || explained.current) return
+    explained.current = true
+    useMissionStore.getState().setExplainOpen(true)
+  }, [exploring, explainAuto])
 
   useEffect(() => {
     loadSiteIndex().then((sites) => {
@@ -55,6 +66,7 @@ export default function App() {
 
   const cls = [
     'app',
+    `app--${audience}`,
     !exploring && 'app--intro',
     panelsHidden && 'app--focus',
     exploring && panels.left && 'app--left-open',

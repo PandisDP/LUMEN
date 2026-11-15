@@ -124,6 +124,40 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     snapRadiusM: 0,
   },
   {
+    id: 'change-7',
+    name: "Chang'e-7 (zona candidata)",
+    mission: 'CNSA, previsto 2026',
+    description:
+      'Orbitador, módulo de aterrizaje, rover y sonda saltadora para buscar hielo en el polo sur. Zona aproximada junto al borde de Shackleton; se refina al punto mejor iluminado.',
+    category: 'south-pole',
+    lat: -88.8,
+    lon: 123.4,
+    snapRadiusM: 2000,
+    snapMode: 'sun',
+  },
+  {
+    id: 'im-1',
+    name: 'IM-1 Odysseus (Malapert A)',
+    mission: 'Intuitive Machines, CLPS 2024',
+    description:
+      'Primer alunizaje comercial, a 80°S junto al cráter Malapert A. Volcó al tocar suelo, pero transmitió datos. Horizonte sin relieve.',
+    category: 'reference',
+    lat: -80.13,
+    lon: 1.44,
+    snapRadiusM: 0,
+  },
+  {
+    id: 'luna-25',
+    name: 'Luna-25 (sitio previsto)',
+    mission: 'Roscosmos, 2023',
+    description:
+      'Sitio previsto al norte del cráter Boguslawsky, a 69,5°S; la sonda se estrelló antes del descenso. Horizonte sin relieve.',
+    category: 'reference',
+    lat: -69.545,
+    lon: 43.544,
+    snapRadiusM: 0,
+  },
+  {
     id: 'chandrayaan-3',
     name: 'Chandrayaan-3',
     mission: 'ISRO, 2023',
@@ -142,6 +176,28 @@ export const SITE_SEEDS: readonly SiteSeed[] = [
     category: 'reference',
     lat: -45.4446,
     lon: 177.5991,
+    snapRadiusM: 0,
+  },
+  {
+    id: 'change-6',
+    name: "Chang'e-6",
+    mission: 'CNSA, 2024 (cara oculta)',
+    description:
+      'Primeras muestras de la cara oculta, en la cuenca Apolo (41,6°S). Sin Tierra a la vista: enlace vía el relé Queqiao-2. Horizonte sin relieve.',
+    category: 'reference',
+    lat: -41.6385,
+    lon: -153.9852,
+    snapRadiusM: 0,
+  },
+  {
+    id: 'blue-ghost-m1',
+    name: 'Blue Ghost M1',
+    mission: 'Firefly Aerospace, CLPS 2025',
+    description:
+      'Mare Crisium, 18,6°N. Operó un día lunar completo con la Tierra alta en el cielo. Horizonte sin relieve.',
+    category: 'reference',
+    lat: 18.56,
+    lon: 61.81,
     snapRadiusM: 0,
   },
   {
