@@ -197,22 +197,48 @@ Notas sobre la suite de tests:
 
 ---
 
-## 8. Recomendaciones priorizadas (no implementadas)
+## 8. Recomendaciones priorizadas y su estado
 
-Ordenadas por impacto estimado en el cumplimiento del reto frente al esfuerzo.
+Ordenadas por impacto estimado en el cumplimiento del reto frente al esfuerzo. Estado al
+15 de noviembre de 2026 en la rama `feature/audiencia-y-mision`.
 
-| Prioridad | Acción                                                                                                                                                                                  | Ítem que mejora         | Esfuerzo |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | -------- |
-| 1         | Añadir un **selector de audiencia** (Planificador / Educador / Público) que oculte tarjetas técnicas y active explicaciones; reutilizar `ExplainPanel` y `levels.ts`                    | 8 (70 → ~90)            | Medio    |
-| 2         | Mostrar siempre los **enlaces a QuickMap y Moon Trek** junto al sitio activo y añadir un **enlace a Horizons prellenado** (`COMMAND=10`/`399`, `CENTER=coord@301`, fecha del escenario) | 10, Recursos (75 → ~90) | Bajo     |
-| 3         | **Mapa 2D polar** con la capa de iluminación anual ya calculada (`public/data/illum/`) y los sitios encima; puede reutilizar `MoonLocator` ampliado                                     | 6 (85 → ~95)            | Medio    |
-| 4         | **Vista estacional**: gráfico de elevación solar máxima por mes 2026–2030 reutilizando `sweepLandingDates`                                                                              | 3 (80 → ~90)            | Bajo     |
-| 5         | Ampliar el **catálogo** con IM‑1, Blue Ghost M1, Luna‑25, Chang'e‑6/7 y Chandrayaan‑4 (coordenadas públicas)                                                                            | 1 (85 → ~95)            | Bajo     |
-| 6         | Corregir en la **validación de efemérides** las fechas para que caigan entre muestras de la tabla (p. ej. minuto 37) y publicar el error de interpolación real                          | Datos (credibilidad)    | Bajo     |
-| 7         | Alinear doc y código: 12 pasos de tour, «círculo/zona de dispersión» en vez de elipse, describir el asistente, actualizar ARCHITECTURE § 3; eliminar `cap.xml`                          | Coherencia              | Muy bajo |
-| 8         | Activar `strict: true` en los tsconfig y corregir lo que aparezca; añadir un workflow de CI que ejecute typecheck, lint y test                                                          | Calidad                 | Medio    |
-| 9         | Incluir la **visibilidad DSN** como opción en el cálculo de DTE % (checkbox «exigir estación DSN»)                                                                                      | 5                       | Bajo     |
-| 10        | Glosario dentro de la app (reutilizar los textos de `docs/GUIA.md` § 15 vía i18n)                                                                                                       | 8                       | Bajo     |
+| Prioridad | Acción                                                                                 | Ítem que mejora | Estado                                                                                                                                                                                 |
+| --------- | -------------------------------------------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1         | **Selector de audiencia** (Planificador / Educador / Público)                          | 8               | ✅ Hecho: `useUiStore.audience`, `ui/audience.ts`, selector en bienvenida y barra superior, `?mode=` en la URL                                                                         |
+| 2         | **Enlaces a QuickMap y Moon Trek** siempre visibles y **enlace a Horizons prellenado** | 10, Recursos    | ✅ Hecho: `horizonsUrl()` con sitio, cuerpo y ventana de misión (API pública, cantidad 4)                                                                                              |
+| 3         | **Mapa 2D polar** con iluminación anual y sitios                                       | 6               | ✅ Hecho: pestaña _Mapa polar_ (`ui/PolarMap.tsx`), relieve del DEM de 960 m, parches PSR/iluminación, sitios clicables                                                                |
+| 4         | **Vista estacional** 2026–2030                                                         | 3               | ✅ Hecho: pestaña _Estaciones_ (`ui/SeasonChart.tsx`, `astro/seasons.ts`)                                                                                                              |
+| 5         | Ampliar el **catálogo**                                                                | 1               | ✅ Hecho: Chang'e‑7 (con tile LOLA e iluminación), IM‑1, Luna‑25, Chang'e‑6, Blue Ghost M1. Pendiente Chandrayaan‑4 (sitio aún no público)                                             |
+| 6         | **Validación de efemérides** fuera de la malla de 2 h                                  | Datos           | ✅ Hecho: instantes a las hh:37, 20 sitios, 480 posiciones, 1,4″                                                                                                                       |
+| 7         | Alinear doc y código                                                                   | Coherencia      | 🟡 Parcial: 12 pasos ✅, asistente documentado ✅, `cap.xml` eliminado ✅. Falta renombrar «elipse» → «zona de dispersión» y actualizar ARCHITECTURE § 3 (`ephemeris.ts` ya usa DE441) |
+| 8         | `strict: true` y **CI**                                                                | Calidad         | 🟡 Parcial: strict activado sin errores ✅; workflows de CI y Pages escritos ✅ pero **no se ejecutan** porque GitHub Actions está bloqueado en la cuenta (facturación)                |
+| 9         | **Visibilidad DSN** como opción del DTE %                                              | 5               | ⬜ Pendiente                                                                                                                                                                           |
+| 10        | **Glosario** dentro de la app                                                          | 8               | ⬜ Pendiente                                                                                                                                                                           |
+
+Siguen abiertas de la sección 7, sin recomendación propia:
+
+- Veredicto explícito «viable / marginal / descartado» solo en el filtro de hardware, no en el
+  panel principal (ítem 5).
+- Sensibilidad a un cambio de **fecha** visible solo vía preset y barrido (ítem 9).
+- `illumValidation.test.ts` sigue siendo circular (solo lee el JSON de validación).
+- Peso de `public/data` ≈ 40 MB tras añadir Chang'e‑7; conviene medir la primera carga en
+  conexiones lentas.
+- No se ha revisado la app en móvil ni en Safari.
+
+Con las acciones 1 a 6 hechas, el cumplimiento estimado pasa del 85 % a **≈ 93 %**. Las
+pendientes (7 a 10) suman unos 3 puntos más.
+
+--------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | -------- |
+| 1 | Añadir un **selector de audiencia** (Planificador / Educador / Público) que oculte tarjetas técnicas y active explicaciones; reutilizar `ExplainPanel` y `levels.ts` | 8 (70 → ~90) | Medio |
+| 2 | Mostrar siempre los **enlaces a QuickMap y Moon Trek** junto al sitio activo y añadir un **enlace a Horizons prellenado** (`COMMAND=10`/`399`, `CENTER=coord@301`, fecha del escenario) | 10, Recursos (75 → ~90) | Bajo |
+| 3 | **Mapa 2D polar** con la capa de iluminación anual ya calculada (`public/data/illum/`) y los sitios encima; puede reutilizar `MoonLocator` ampliado | 6 (85 → ~95) | Medio |
+| 4 | **Vista estacional**: gráfico de elevación solar máxima por mes 2026–2030 reutilizando `sweepLandingDates` | 3 (80 → ~90) | Bajo |
+| 5 | Ampliar el **catálogo** con IM‑1, Blue Ghost M1, Luna‑25, Chang'e‑6/7 y Chandrayaan‑4 (coordenadas públicas) | 1 (85 → ~95) | Bajo |
+| 6 | Corregir en la **validación de efemérides** las fechas para que caigan entre muestras de la tabla (p. ej. minuto 37) y publicar el error de interpolación real | Datos (credibilidad) | Bajo |
+| 7 | Alinear doc y código: 12 pasos de tour, «círculo/zona de dispersión» en vez de elipse, describir el asistente, actualizar ARCHITECTURE § 3; eliminar `cap.xml` | Coherencia | Muy bajo |
+| 8 | Activar `strict: true` en los tsconfig y corregir lo que aparezca; añadir un workflow de CI que ejecute typecheck, lint y test | Calidad | Medio |
+| 9 | Incluir la **visibilidad DSN** como opción en el cálculo de DTE % (checkbox «exigir estación DSN») | 5 | Bajo |
+| 10 | Glosario dentro de la app (reutilizar los textos de `docs/GUIA.md` § 15 vía i18n) | 8 | Bajo |
 
 Con las acciones 1 a 5 el cumplimiento estimado subiría del 85 % a aproximadamente el 93 %.
 
