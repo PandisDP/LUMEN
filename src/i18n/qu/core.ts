@@ -72,9 +72,9 @@ export const core: QuDict = {
   'tour.welcome.title': 'Allin hamusqayki Killa Landingman',
   'tour.welcome.body':
     "Huk tapuylla: kaypi, kay p'unchawpi uraykuspa, ¿kallpapaq Intiyuqchu kanki, rimanaykipaq Tiqsimuyuta rikunkichu?",
-  'tour.steps.title': '4 paso',
+  'tour.steps.title': 'Pasokuna',
   'tour.steps.body':
-    "Órbita → Pampa → Uraykuy → Tukuchay. Qatiq pasoman riy, utaq mayqin pasomanpas p'itay.",
+    "Órbita → Pampa → Uraykuy → Tukuchay; Wakichiq modopi ñawpaqta Wakichiy. Qatiq pasoman riy, utaq mayqin pasomanpas p'itay.",
   'tour.scene.title': '3D escena',
   'tour.scene.body':
     "Muyuchinapaq aysay, kayllachanapaq ruedata muyuchiy. Huk chiqanta ñit'iy chay k'itiman phawanapaq. Fondopaq Intita utaq Tiqsimuyuta akllay.",

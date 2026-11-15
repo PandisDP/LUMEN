@@ -79,9 +79,9 @@ export const en: Record<keyof typeof es, string> = {
   'tour.welcome.title': 'Welcome to Killa Landing',
   'tour.welcome.body':
     'One question: if you land here on this date, will you have sunlight for power and the Earth in view to communicate?',
-  'tour.steps.title': '4 steps',
+  'tour.steps.title': 'The steps',
   'tour.steps.body':
-    'Orbit → Surface → Landing → Decide. Move on with “Go to…” or jump to any step.',
+    'Orbit → Surface → Landing → Decide; in Planner mode, Plan comes first. Move on with “Go to…” or jump to any step.',
   'tour.scene.title': 'The 3D scene',
   'tour.scene.body':
     'Drag to rotate, scroll to zoom. Click a dot to fly to that site. Try “Background: Sun / Earth”.',
@@ -788,7 +788,7 @@ export const en: Record<keyof typeof es, string> = {
   'welcome.kicker': 'Mission to the Moon’s south pole',
   'welcome.title': 'Make the best landing decision',
   'welcome.sub':
-    'Choose where to land to get sunlight and contact with Earth. You’ll see it in 4 steps.',
+    'Choose where to land to get sunlight and contact with Earth. You’ll see it in {n} steps.',
   'welcome.start': 'Start',
   'welcome.tour': 'Take the guided tour',
   'choose.kicker': 'Before you start',
