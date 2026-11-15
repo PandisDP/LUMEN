@@ -1,5 +1,5 @@
 /**
- * **Killa** ("Moon" in Quechua), the LUMEN mascot and sister of Wayra: same geometry and pieces
+ * **Killa** ("Moon" in Quechua), the Killa Landing mascot and sister of Wayra: same geometry and pieces
  * (white helmet with a gold lamp, dark visor, chest screen); only the body colour (copper, two
  * tones) and the chest icon (a crescent moon) change.
  *

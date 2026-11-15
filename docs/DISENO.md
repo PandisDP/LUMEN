@@ -1,6 +1,6 @@
-# Sistema visual de LUMEN
+# Sistema visual de Killa Landing
 
-LUMEN usa el sistema visual de la familia **Genius Mining AI** (origen: Operational AI). El
+Killa Landing usa el sistema visual de la familia **Genius Mining AI** (origen: Operational AI). El
 documento de referencia asume Tailwind 4; aquí se aplica la regla de «otro stack»: se conservan
 los valores exactos (colores HSL, radios, tipografía, sombras, tiempos) y se traducen las clases a
 CSS propio. No se inventan colores.
@@ -30,7 +30,7 @@ CSS propio. No se inventan colores.
 
 ## Reparto de color
 
-| Trabajo                             | Token                                    | En LUMEN                                    |
+| Trabajo                             | Token                                    | En Killa Landing                            |
 | ----------------------------------- | ---------------------------------------- | ------------------------------------------- |
 | Dato, enlace, foco, selección       | violeta `--primary`, `--accent`          | enlaces, foco, fila o tarjeta elegida       |
 | Acción principal, **una por vista** | degradado `--bg-action` (`.btn--accent`) | Empezar, Planificar, siguiente paso         |

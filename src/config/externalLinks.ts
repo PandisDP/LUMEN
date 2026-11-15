@@ -24,7 +24,7 @@ const horizonsTime = (ms: number) => new Date(ms).toISOString().slice(0, 16).rep
  * JPL Horizons query, pre-filled for the site and the mission window: apparent azimuth and
  * elevation (quantity 4) of the Sun or the Earth seen from the surface point, hourly, as plain
  * text. The web app has no deep-link format, so this calls the public API directly: the same
- * numbers LUMEN uses, straight from the source (see `npm run validate`).
+ * numbers Killa Landing uses, straight from the source (see `npm run validate`).
  */
 export function horizonsUrl(
   body: HorizonsBody,

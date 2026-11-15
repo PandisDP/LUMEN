@@ -1,6 +1,6 @@
 # Planificación de misión como problema de optimización
 
-Formulación del problema «aterrizar con éxito con el mínimo de recursos» para LUMEN 3D.
+Formulación del problema «aterrizar con éxito con el mínimo de recursos» para Killa Landing.
 Documento de trabajo para revisar con el asesor antes de implementar el optimizador.
 
 Estado: **propuesta v0.2** (14 de noviembre de 2026). Incorpora las respuestas del equipo a la
@@ -19,14 +19,14 @@ geometría Sol‑Tierra‑Luna.
 > **elegir** la trayectoria, la fecha de aterrizaje y el punto de aterrizaje
 > **que cumplan la misión con el mínimo de recursos**.
 
-LUMEN hoy evalúa un escenario (sitio + fecha) y permite compararlos a mano. Este documento define
+Killa Landing hoy evalúa un escenario (sitio + fecha) y permite compararlos a mano. Este documento define
 el paso siguiente: que el sistema **busque** el escenario en lugar de que el usuario lo adivine.
 
 ---
 
 ## 2. Datos del problema (fijos, no se deciden)
 
-| Símbolo                | Dato                                                                                                    | Fuente en LUMEN                                                                                                                                                          |
+| Símbolo                | Dato                                                                                                    | Fuente en Killa Landing                                                                                                                                                  |
 | ---------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `T = (lat_T, lon_T)`   | Objetivo con hielo: un lugar **nuevo**, región de sombra permanente o punto con características propias | PSR del catálogo (Shackleton floor, Haworth, Cabeus) **o coordenadas introducidas** (`customSiteInfo`); si cae en una PSR, la celda PSR más cercana (`computeIceAccess`) |
 | `R`                    | Radio de búsqueda del punto de aterrizaje alrededor de `T`                                              | Parámetro (500 m – 5 km); limitado por el tile LOLA de 20 m (±10 km)                                                                                                     |
@@ -43,7 +43,7 @@ el paso siguiente: que el sistema **busque** el escenario en lugar de que el usu
 
 ### 2.1 Clases de trayectoria (modelo paramétrico)
 
-LUMEN no calcula trayectorias. El viaje se modela con clases de referencia tomadas de misiones
+Killa Landing no calcula trayectorias. El viaje se modela con clases de referencia tomadas de misiones
 reales. Valores aproximados, a validar:
 
 | Clase `c`                  | Duración `τ(c)` | Δv aprox. TLI + inserción | Ventanas de lanzamiento                             | Ejemplos                    |
@@ -86,7 +86,7 @@ dato. Cada modo define cómo se calcula la cobertura y qué coste añade:
 
 | Modo `m`                      | Cobertura `cov(m, p, t)`                                                                                           | Coste añadido                                                                                       | Ejemplos                                                             |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| **DTE** (directo a la Tierra) | `DTE%(p, t)` de LUMEN: Tierra ≥ `θ_enlace` sobre el relieve y estación DSN visible                                 | Ninguno en Δv; multitrayecto y cortes de hasta 2 semanas (Anexo A)                                  | IM‑1, SLIM, Chandrayaan‑3 (con su orbitador como apoyo)              |
+| **DTE** (directo a la Tierra) | `DTE%(p, t)` de Killa Landing: Tierra ≥ `θ_enlace` sobre el relieve y estación DSN visible                         | Ninguno en Δv; multitrayecto y cortes de hasta 2 semanas (Anexo A)                                  | IM‑1, SLIM, Chandrayaan‑3 (con su orbitador como apoyo)              |
 | **Relé de terceros**          | `relay%(p, t)` de la órbita del relé: fracción del tiempo en que el relé está ≥ `θ_relé` sobre el horizonte de `p` | Ninguno en Δv; coste económico y **dependencia** externa (disponibilidad, tarifas, compatibilidad)  | Queqiao‑2 (CNSA), Lunar Pathfinder / Moonlight (ESA), LunaNet (NASA) |
 | **Relé propio**               | Igual que el anterior, con la órbita que se elija                                                                  | **Δv y masa**: el relé viaja con la misión y necesita su propia inserción; se suma `Δv_relé` a `f₃` | Chang'e‑4 + Queqiao, VIPER (previsto con relé comercial)             |
 | **Híbrido** (DTE + relé)      | Unión de ventanas: `max(DTE, relay)` en cada instante                                                              | El del relé elegido; a cambio, la cobertura más alta y redundancia                                  | Artemis (DTE + Gateway/LunaNet), misiones CLPS con relé de respaldo  |
@@ -103,7 +103,7 @@ Valores de referencia para un sitio polar sur:
 | Constelación 3–4 satélites                     | ≈ 100 %                                   | Moonlight / LunaNet         |
 
 ❓ Los porcentajes son de orden de magnitud. Cuando se conozca la órbita del relé candidato, la
-cobertura se puede calcular con las mismas rutinas de horizonte de LUMEN a partir de su efeméride.
+cobertura se puede calcular con las mismas rutinas de horizonte de Killa Landing a partir de su efeméride.
 
 ---
 
@@ -151,7 +151,7 @@ Los tres objetivos están en unidades distintas (días, metros, km/s). Para el p
 ## 5. Restricciones duras
 
 Un candidato que viole cualquiera de estas se descarta antes de comparar objetivos. Cada una se
-evalúa con código que ya existe en LUMEN, salvo g5.
+evalúa con código que ya existe en Killa Landing, salvo g5.
 
 | Id     | Restricción                                                                                                                                  | Expresión                                                                  | Cómo se evalúa                                                                                                                                                                                                    |
 | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -180,7 +180,7 @@ Restricciones opcionales (parametrizables, apagadas por defecto):
 3. **Punto recomendado** `x* = argmin_{x ∈ P*} Σ wᵢ · f̂ᵢ(x)` con pesos por defecto
    `w = (0,4, 0,4, 0,2)` ajustables por el usuario. Los pesos **no cambian `P*`**; solo eligen qué
    punto destacar.
-4. Para cada `x ∈ P*`: las métricas completas de LUMEN (`ScenarioMetrics`, batería, térmico, DSN,
+4. Para cada `x ∈ P*`: las métricas completas de Killa Landing (`ScenarioMetrics`, batería, térmico, DSN,
    pendiente, ruta al hielo), para que el escenario pueda abrirse en Comparar con un clic.
 5. **Diagnóstico si `F = ∅`**: conteo de candidatos descartados por cada restricción, para saber
    qué relajar (igual que `violations[]` en PlanningAI).
@@ -256,7 +256,7 @@ congelado, un evaluador único y un ranking «factible primero». El mismo esque
 | Ranking: factibles → mayor VAN → desempates                                    | Factibles → no dominados → punto recomendado por pesos                                                                                                                       |
 | Modos `fast / auto / search / exact / learned`                                 | `fast / exact` (§ 7); `search` futuro                                                                                                                                        |
 | `PlanResult` con `provenance` (hash de datos, parámetros, commit)              | `MissionPlan` con versión del DE441, tiles LOLA usados, parámetros y fecha de cálculo                                                                                        |
-| Servidor MCP (`Create_Mine_Plan`, `Get_Planning_Result`)                       | Job `planMission` en el worker de LUMEN; opcionalmente endpoint MCP si se expone fuera de la app                                                                             |
+| Servidor MCP (`Create_Mine_Plan`, `Get_Planning_Result`)                       | Job `planMission` en el worker de Killa Landing; opcionalmente endpoint MCP si se expone fuera de la app                                                                     |
 
 Diferencia clave: PlanningAI tiene un objetivo escalar y penalizaciones blandas para guiar el
 aprendizaje. Aquí los objetivos son tres y las restricciones son duras, así que la ordenación es
@@ -299,7 +299,7 @@ por dominancia, no por una sola cifra.
 - **Sin perturbaciones ni maniobras intermedias**; sin inclinación ni fase de la órbita de
   aparcamiento. Un cambio de plano para un aterrizaje polar no se modela.
 - **Enlace**: solo geometría (línea de vista con margen). Sin presupuesto de enlace ni relés.
-- **Energía**: el modelo de batería de LUMEN, sin pérdidas térmicas ni degradación.
+- **Energía**: el modelo de batería de Killa Landing, sin pérdidas térmicas ni degradación.
 - **Horizonte y terreno**: las limitaciones ya documentadas en el README (LOLA 20 m solo en los
   tiles curados, 480 m en el campo lejano, snapping de coordenadas en las crestas).
 - **Objetivo puntual**: `T` es un punto. Si el hielo es una región, se puede usar la celda PSR más
@@ -392,12 +392,12 @@ de la Tierra puede eliminar días de enlace. Las dificultades concretas:
 
 1. **Elevación baja**: las antenas apuntan a 2–10° sobre el horizonte. Parte de la señal rebota en
    el regolito y llega desfasada (**multitrayecto**), con desvanecimientos que pueden superar
-   20 dB. Por eso LUMEN exige un margen `θ_enlace` (3° por defecto) sobre el relieve, y no solo
+   20 dB. Por eso Killa Landing exige un margen `θ_enlace` (3° por defecto) sobre el relieve, y no solo
    línea de vista.
 2. **Interrupciones largas**: no son cortes de minutos sino de días o semanas. El vehículo debe
    almacenar datos y sobrevivir sin comandos.
 3. **Estaciones en Tierra**: hace falta que una antena de la red de espacio profundo (Goldstone,
-   Madrid, Canberra) vea la Luna en ese momento. LUMEN ya lo calcula (`src/astro/dsn.ts`).
+   Madrid, Canberra) vea la Luna en ese momento. Killa Landing ya lo calcula (`src/astro/dsn.ts`).
 4. **Alternativa**: un satélite relé en órbita lunar (como el que usan las misiones chinas al lado
    oculto). Elimina g3 pero añade coste y dependencia de otro sistema.
 
@@ -412,7 +412,7 @@ de la Tierra puede eliminar días de enlace. Las dificultades concretas:
 La elección de clase es el primer gran trade‑off tiempo ↔ Δv de la misión, y por eso es una
 variable de decisión y no un dato.
 
-### Lo que LUMEN ya calcula del descenso y del rover
+### Lo que Killa Landing ya calcula del descenso y del rover
 
 Desde la versión con simulación (`src/astro/descentPhysics.ts`, `traverse.ts`) dos de los datos
 de este documento dejan de ser supuestos y pasan a calcularse por sitio:

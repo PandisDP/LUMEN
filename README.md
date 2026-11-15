@@ -1,4 +1,6 @@
-# LUMEN 3D
+# Killa Landing
+
+> Antes «LUMEN 3D». Killa significa «Luna» en quechua. El repositorio y la dirección del sitio conservan el nombre anterior.
 
 Herramienta web para **comparar sitios y fechas de alunizaje en el polo sur de la Luna** y decidir si una misión es viable. Para cada combinación de sitio y fecha muestra dónde están el Sol y la Tierra respecto al **horizonte real** (topografía LOLA del Lunar Reconnaissance Orbiter) y calcula:
 
@@ -76,7 +78,7 @@ reparto de color, los tokens y las piezas están en [docs/DISENO.md](docs/DISENO
 
 ## Recursos de la NASA y la CSA
 
-El reto pide usar cuatro recursos. Así los usa LUMEN 3D (detalle técnico en [ARCHITECTURE.md § 6](ARCHITECTURE.md#6-integración-de-los-recursos-externos)):
+El reto pide usar cuatro recursos. Así los usa Killa Landing (detalle técnico en [ARCHITECTURE.md § 6](ARCHITECTURE.md#6-integración-de-los-recursos-externos)):
 
 | Recurso                                                                                 | Dónde se ve en la app                                                                                                                                                                                                | Cómo se usa                                                                                                                                                                                             | Cómo se comprueba                                                                                                                                                            |
 | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -237,7 +239,7 @@ VS Code y algunas terminales entregan la ruta del proyecto con la letra de unida
 
 ## English summary
 
-**LUMEN 3D** is a web tool to compare landing sites and dates at the lunar south pole and judge mission viability. For any site and date it places the Sun and the Earth against the **real horizon** (LOLA topography, 20 m/px near the site and 240 m/px out to 300 km) and reports:
+**Killa Landing** is a web tool to compare landing sites and dates at the lunar south pole and judge mission viability. For any site and date it places the Sun and the Earth against the **real horizon** (LOLA topography, 20 m/px near the site and 240 m/px out to 300 km) and reports:
 
 - **Power**: Sun elevation, visible fraction of the solar disc, longest night, and **battery state of charge** for a configurable power profile (tracking, box-shaped or fixed arrays; operating/survival loads). It warns when the craft runs out of power before sunrise.
 - **Direct-to-Earth link**: Earth visibility with a **minimum elevation margin** above the terrain (multipath), link windows and outages.

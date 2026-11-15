@@ -63,7 +63,7 @@ describe('Tour', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Empezar recorrido' }))
     expect(screen.queryByText(/Primera vez/)).not.toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'Recorrido guiado' })).toHaveTextContent(
-      'Bienvenido a LUMEN 3D',
+      'Bienvenido a Killa Landing',
     )
     for (let i = 1; i < TOUR_STEPS.length; i++) {
       fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }))

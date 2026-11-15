@@ -1,10 +1,10 @@
-# Arquitectura de LUMEN 3D
+# Arquitectura de Killa Landing
 
 Este documento explica cómo está organizada la aplicación, por qué se tomaron las decisiones principales y cómo extenderla. Para instalar el proyecto, ver [README.md](README.md); para usarlo, la [guía de usuario](docs/GUIA.md).
 
 ## 1. Visión general
 
-LUMEN 3D es una SPA estática (sin backend). Toda la evaluación de escenarios ocurre en el navegador. Los datos pesados (topografía LOLA) se preprocesan una vez con scripts de Node y se publican como archivos estáticos.
+Killa Landing es una SPA estática (sin backend). Toda la evaluación de escenarios ocurre en el navegador. Los datos pesados (topografía LOLA) se preprocesan una vez con scripts de Node y se publican como archivos estáticos.
 
 ```mermaid
 flowchart LR

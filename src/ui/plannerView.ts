@@ -314,7 +314,7 @@ const fix = (v: number, digits: number) => (Number.isFinite(v) ? v.toFixed(digit
 export function planCsv(result: PlanResult): string {
   const p = result.problem
   const meta = [
-    'LUMEN 3D export: mission plan',
+    'Killa Landing export: mission plan',
     `ice_target_lat_deg: ${p.target.lat}`,
     `ice_target_lon_deg: ${p.target.lon}`,
     `ice_cell_lat_deg: ${result.ice.lat}`,

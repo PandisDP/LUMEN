@@ -205,7 +205,7 @@ describe('planCsv', () => {
     const r = fixtureResult([40, 'night', 88])
     const lines = planCsv(r).trimEnd().split('\n')
     const meta = lines.filter((l) => l.startsWith('# '))
-    expect(meta[0]).toBe('# LUMEN 3D export: mission plan')
+    expect(meta[0]).toBe('# Killa Landing export: mission plan')
     expect(meta).toContain('# ice_target_lat_deg: -89.44033')
     expect(meta).toContain('# first_landing_utc: 2026-11-25T00:00:00.000Z')
     expect(meta).toContain('# min_continuous_sun_days: 15')
