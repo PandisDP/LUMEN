@@ -43,7 +43,7 @@ La primera vez aparece abajo una invitación al **recorrido guiado** (1 minuto).
 
 | Zona                | Qué contiene                                                                                                                |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **Barra superior**  | Selector de vista (Órbita · Superficie · Aterrizaje), Exportar, Comparar, Ocultar paneles, ¿Por qué?, Guía e idioma (ES/EN) |
+| **Barra superior**  | Selector de vista (Órbita · Superficie · Aterrizaje), Exportar, Comparar, Ocultar paneles, ¿Por qué?, Guía e idioma (ES/EN/QU) |
 | **Escena 3D**       | Ocupa toda la ventana; encima van los controles de la vista actual (HUD)                                                    |
 | **Panel izquierdo** | Sitios y escenarios                                                                                                         |
 | **Panel derecho**   | Estado del sitio en el instante actual y resumen de la misión                                                               |
@@ -351,9 +351,9 @@ El mismo glosario está dentro de la app, al final del panel **¿Por qué?**.
 Killa Landing answers one question: _if we land at this site on this date, will there be sunlight for power, Earth in view for communications, and safe terrain?_ It compares the real Sun and Earth positions with each site's **real horizon** (NASA LOLA topography).
 
 - **Start**: a logo splash while the site catalogue loads (click or Enter/Space/Esc to skip), then an optional 1-minute guided tour (**Guide** button replays it).
-- **Layout**: top bar (views, Export, Compare, Hide panels, Why?, Guide, ES/EN), full-window 3D scene with its HUD, and three panels that start minimised (keys **1**, **2**, **3**). Every panel and the HUD have a **?** help popover.
+- **Layout**: top bar (views, Export, Compare, Hide panels, Why?, Guide, ES/EN/QU), full-window 3D scene with its HUD, and three panels that start minimised (keys **1**, **2**, **3**). Every panel and the HUD have a **?** help popover.
 - **Orbit view**: the lit Moon (Moon Trek LRO WAC mosaics) with LOLA relief, Sun, Earth and clickable sites.
 - **Surface view**: a lander's-eye camera at 2 m on 20 m/px terrain with regolith detail; heading tape with Sun/Earth markers; look at the Sun or Earth, horizon line, sky paths, aerial view, slope layer (< 10° safe, 10–15° marginal, > 15° hazardous), real LRO image layer (LROC NAC via QuickMap), landing ellipse (17 probability-weighted points) and click-to-relocate.
-- **Landing view**: an illustrative descent with a phase stepper, altitude/range/vertical-speed cards, a slope-coded reticle (colour and shape), Sun-in-camera warning, engine dust in the last 30 m, and an orbit camera around the detailed lander after touchdown.
+- **Landing view**: a physics-based descent with a phase stepper, altitude/range/vertical-speed cards, a slope-coded reticle (colour and shape), Sun-in-camera warning, engine dust in the last 30 m, and an orbit camera around the detailed lander after touchdown.
 - **Panels**: sites and scenarios (up to 4, plus custom coordinates); site status (Sun, Earth link, score, battery, terrain, ellipse sensitivity); time controls with timeline, 360° horizon and a 12-month landing-date sweep.
 - **Compare** up to 4 scenarios at the same mission time, with one-click presets. **Export** CSV/JSON series, horizon profile or all scenarios. The **URL** keeps the full state, so the address bar is the share link.
