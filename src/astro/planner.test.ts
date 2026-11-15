@@ -20,13 +20,14 @@ import {
   prepareCandidates,
   rankDays,
   refinePick,
+  roverViolation,
   withRefined,
 } from './planner.ts'
 import { fixtureDem, fixtureIllum, fixturePoint, fixtureProblem } from './plannerFixture.ts'
 import { PLAN_TOP, type PlanDay, type PlanPick, type PlanViolation } from './plannerTypes.ts'
 import { computeDateSweep, computeScenario } from './scenario.ts'
 import { SLOPE_SAFE_DEG, slopeAt, slopeStats } from './slope.ts'
-import { computeTraverse } from './traverse.ts'
+import { type TraverseSummary, computeTraverse } from './traverse.ts'
 
 // Horizons and traverses on a loaded machine: well past the 5 s default.
 vi.setConfig({ testTimeout: 30_000 })
@@ -127,7 +128,16 @@ describe('planDay', () => {
     for (const d of days) {
       if (d.best) {
         expect(d.mainViolation).toBeNull()
+        // The whole mission: to the ice, every sample, and back before the mission ends.
         expect(d.best.rover.reaches).toBe(true)
+        expect(d.best.rover.samplesDone).toBe(problem.samples)
+        expect(d.best.rover.returns).toBe(true)
+        expect(d.best.rover.marginH!).toBeGreaterThanOrEqual(0)
+        expect(d.best.rover.totalH).toBeCloseTo(problem.missionDays * 24 - d.best.rover.marginH!, 6)
+        expect(d.best.rover.totalH).toBeGreaterThan(
+          d.best.rover.travelH + problem.samples * problem.sampleH,
+        )
+        expect(d.best.rover.endSocPct).toBeGreaterThanOrEqual(d.best.rover.minSocPct)
         expect(d.best.rover.minSocPct).toBeGreaterThanOrEqual(problem.minRoverSocPct)
         expect(d.best.sunFromLandingH).toBeGreaterThanOrEqual(problem.minSunDays * 24)
         expect(d.best.sunFromLandingH).toBeLessThanOrEqual(lightSpanDays(problem) * 24)
@@ -228,6 +238,110 @@ describe('planDay', () => {
     expect(strict.rejected['rover-battery']).toBeGreaterThanOrEqual(1)
   })
 
+  // The cached trips of a problem that differs from the base one in `samples × sampleH`.
+  const trips = (samples: number, sampleH: number, missionDays = base.missionDays) =>
+    [...prepared.internals.roverCache]
+      .filter(([key]) => key.includes(`:${samples}:${sampleH}:${missionDays}:`))
+      .map(([, summary]) => summary)
+
+  it('rejects for the samples when the work in the shadow drains the battery', () => {
+    // The app's default workload, 3 × 2 h at 100 W: more than the micro-rover's 600 Wh allow.
+    const r = daysOf({ samples: 3, sampleH: 2 })
+    days.forEach((ok, i) => {
+      const d = r.days[i]
+      expect(d.best).toBeNull()
+      if (!ok.best) return
+      expect(d.mainViolation).toBe('rover-samples')
+      expect(d.rejected['rover-samples']).toBeGreaterThanOrEqual(1)
+      expect(d.rejected['rover-samples']).toBeLessThanOrEqual(PLAN_ROVER_TRIES)
+    })
+    const sims = trips(3, 2)
+    expect(sims.length).toBeGreaterThanOrEqual(1)
+    for (const s of sims) {
+      expect(s).toMatchObject({ reaches: true, reason: 'samples', returns: false, success: false })
+      expect(s.samplesDone).toBeLessThan(3)
+      expect(roverViolation(s, 0)).toBe('rover-samples')
+    }
+  })
+
+  it('rejects for the return when the battery left after the work does not get it home', () => {
+    // One 4.5 h sample is finished with ~20 %: the first metres back, still in the shadow, are
+    // too many.
+    const r = daysOf({ days: 1, samples: 1, sampleH: 4.5 })
+    const [d] = r.days
+    expect(d.best).toBeNull()
+    expect(d.mainViolation).toBe('rover-no-return')
+    expect(d.rejected['rover-no-return']).toBeGreaterThanOrEqual(1)
+    const sims = trips(1, 4.5).filter((s) => !s.returns)
+    expect(sims.length).toBeGreaterThanOrEqual(1)
+    for (const s of sims) {
+      expect(s).toMatchObject({ reaches: true, samplesDone: 1, reason: 'battery', onTime: false })
+      expect(s.marginH).toBeNull()
+      expect(roverViolation(s, 0)).toBe('rover-no-return')
+    }
+  })
+
+  it('rejects for the deadline when it is back after the end of the mission', () => {
+    // A 3 h mission and a 3 h sample: the rover does everything, but the drive makes it late.
+    const r = daysOf({ missionDays: 0.125, samples: 1, sampleH: 3 })
+    const solved = r.days.filter((d) => (d.rejected['rover-late'] ?? 0) > 0)
+    expect(solved.length).toBeGreaterThanOrEqual(3)
+    for (const d of solved) {
+      expect(d.best).toBeNull()
+      expect(d.mainViolation).toBe('rover-late')
+    }
+    const sims = trips(1, 3, 0.125)
+    expect(sims.length).toBeGreaterThanOrEqual(1)
+    for (const s of sims) {
+      expect(s).toMatchObject({ reaches: true, samplesDone: 1, returns: true, onTime: false })
+      expect(s).toMatchObject({ reason: 'late', success: false })
+      expect(s.marginH!).toBeLessThan(0)
+      expect(s.totalH).toBeCloseTo(3 - s.marginH!, 6)
+      expect(s.minSocPct).toBeGreaterThan(base.minRoverSocPct)
+      expect(roverViolation(s, 0)).toBe('rover-late')
+    }
+    // The same trip with a day to do it in is a pick, with the margin to show for it.
+    const roomy = daysOf({ days: 1, missionDays: 1, samples: 1, sampleH: 3 }).days[0].best!
+    expect(roomy.rover).toMatchObject({ reaches: true, samplesDone: 1, returns: true })
+    expect(roomy.rover.marginH!).toBeCloseTo(24 - roomy.rover.totalH, 6)
+    expect(roomy.rover.marginH!).toBeGreaterThan(18)
+  })
+
+  it('names the first requirement of the round trip that fails', () => {
+    const ok = {
+      reaches: true,
+      samples: 3,
+      samplesDone: 3,
+      returns: true,
+      onTime: true,
+      minSocPct: 35,
+    } as TraverseSummary
+    expect(roverViolation(ok, 20)).toBeNull()
+    expect(roverViolation(ok, 35)).toBeNull()
+    expect(roverViolation(ok, 36)).toBe('rover-battery')
+    expect(roverViolation({ ...ok, onTime: false }, 36)).toBe('rover-late')
+    expect(roverViolation({ ...ok, returns: false, onTime: false }, 36)).toBe('rover-no-return')
+    expect(roverViolation({ ...ok, samplesDone: 2, returns: false }, 36)).toBe('rover-samples')
+    expect(roverViolation({ ...ok, reaches: false, samplesDone: 0 }, 36)).toBe('rover-unreachable')
+  })
+
+  it('plans the route once per candidate, whatever the samples, the mission or the day', () => {
+    const plans = prepared.internals.traverses.size
+    const sims = prepared.internals.roverCache.size
+    const a = daysOf({ days: 2, samples: 2, sampleH: 0.5 })
+    expect(prepared.internals.roverCache.size).toBeGreaterThan(sims)
+    // Same candidates as the base problem: their plans and horizons were already there.
+    expect(a.days[0].best!.candidateId).toBe(days[0].best!.candidateId)
+    expect(prepared.internals.traverses.size).toBe(plans)
+    // More work, same day and point: a longer trip, less margin, less battery.
+    expect(a.days[0].best!.rover.samplesDone).toBe(2)
+    const light = daysOf({ days: 1, samples: 1, sampleH: 0.5 }).days[0].best!
+    expect(a.days[0].best!.rover.totalH).toBeCloseTo(light.rover.totalH + 0.5, 6)
+    expect(a.days[0].best!.rover.marginH!).toBeCloseTo(light.rover.marginH! - 0.5, 6)
+    expect(a.days[0].best!.rover.minSocPct).toBeLessThan(light.rover.minSocPct)
+    expect(a.days[0].best!.rover.travelH).toBe(light.rover.travelH)
+  })
+
   it('blends the science score in by weight', () => {
     const sci = daysOf({ days: 1, scienceWeight: 1, minRoverSocPct: 0 }).days[0].best!
     const c = prepared.candidates[sci.candidateId]
@@ -247,8 +361,8 @@ describe('planDay', () => {
 })
 
 describe('rankDays and withRefined', () => {
-  const pick = (score: number, routeM: number, minSocPct: number) =>
-    ({ score, routeM, rover: { minSocPct } }) as PlanPick
+  const pick = (score: number, marginH: number | null, minSocPct: number, routeM = 500) =>
+    ({ score, routeM, rover: { marginH, minSocPct } }) as PlanPick
   const day = (i: number, best: PlanPick | null): PlanDay => ({
     dayMs: i * DAY_MS,
     best,
@@ -256,19 +370,29 @@ describe('rankDays and withRefined', () => {
     mainViolation: best ? null : 'short-light',
   })
 
-  it('sorts by score, then shorter route, then battery, and keeps PLAN_TOP', () => {
+  it('sorts by score, then larger time margin, then battery, and keeps PLAN_TOP', () => {
     const days = [
-      day(0, pick(70, 500, 50)),
+      day(0, pick(70, 200, 50)),
       day(1, null),
-      day(2, pick(90, 900, 40)),
-      day(3, pick(90, 300, 40)),
-      day(4, pick(90, 300, 60)),
-      day(5, pick(80, 100, 10)),
-      day(6, pick(60, 100, 10)),
-      day(7, pick(90, 300, 60)),
+      day(2, pick(90, 30, 40)),
+      day(3, pick(90, 60, 40)),
+      day(4, pick(90, 60, 60)),
+      day(5, pick(80, 300, 10)),
+      day(6, pick(60, 300, 10)),
+      day(7, pick(90, 60, 60)),
     ]
     expect(rankDays(days)).toEqual([4, 7, 3, 2, 5])
     expect(rankDays([day(0, null)])).toEqual([])
+  })
+
+  it('does not let the length of the route break a tie any more', () => {
+    // Same score: the day with more time to spare wins, however long its route.
+    const days = [day(0, pick(90, 10, 80, 100)), day(1, pick(90, 40, 30, 900))]
+    expect(rankDays(days)).toEqual([1, 0])
+    // Same score and margin: the fuller battery.
+    expect(rankDays([day(0, pick(90, 40, 30, 100)), day(1, pick(90, 40, 31, 900))])).toEqual([1, 0])
+    // A pick without a margin (no deadline) counts as none to spare.
+    expect(rankDays([day(0, pick(90, null, 99)), day(1, pick(90, 1, 20))])).toEqual([1, 0])
   })
 
   it('patches the refined picks and re-sorts the shortlist among itself', () => {
@@ -297,7 +421,7 @@ describe('computePlan', () => {
     for (let i = 1; i < picks.length; i++) {
       expect(picks[i - 1].score).toBeGreaterThanOrEqual(picks[i].score)
       if (picks[i - 1].score === picks[i].score)
-        expect(picks[i - 1].routeM).toBeLessThanOrEqual(picks[i].routeM)
+        expect(picks[i - 1].rover.marginH!).toBeGreaterThanOrEqual(picks[i].rover.marginH!)
     }
     // Nothing left out scores higher than the last of the shortlist (hourly figures).
     if (result.top.length < PLAN_TOP)
@@ -357,13 +481,32 @@ describe('computePlan', () => {
         roverMaxSlopeDeg: base.hardware.roverMaxSlopeDeg,
         linkMarginDeg: base.linkMarginDeg,
         requireDsn: base.requireDsn,
+        samples: base.samples,
+        sampleH: base.sampleH,
+        deadlineMs: day.dayMs + base.missionDays * DAY_MS,
       },
       illum,
     ).summary
-    expect(pick.rover.reaches).toBe(t.reaches)
-    expect(pick.rover.minSocPct).toBe(t.minSocPct)
-    expect(pick.rover.travelH).toBe(t.driveH + t.waitH)
-    expect(pick.rover.hoursInShadow).toBe(t.hoursInShadow)
+    expect(t.success).toBe(true)
+    // The one-way route of the card is the outbound leg of the trip (same path, resampled).
+    expect(t.lengthM).toBeCloseTo(2 * t.outLengthM, 6)
+    expect(Math.abs(t.outLengthM - pick.routeM)).toBeLessThan(0.1 * pick.routeM + 20)
+    expect(pick.rover).toEqual({
+      reaches: t.reaches,
+      samplesDone: t.samplesDone,
+      returns: t.returns,
+      minSocPct: t.minSocPct,
+      endSocPct: t.endSocPct,
+      travelH: t.outDriveH + t.outWaitH,
+      totalH: t.totalH,
+      marginH: t.marginH,
+      hoursInShadow: t.hoursInShadow,
+      dtePct: t.dtePct,
+    })
+    expect(pick.rover.samplesDone).toBe(base.samples)
+    expect(pick.rover.travelH).toBeCloseTo((t.arrivalMs! - day.dayMs) / 3_600_000, 6)
+    expect(pick.rover.totalH).toBeCloseTo((t.returnMs! - day.dayMs) / 3_600_000, 6)
+    expect(pick.rover.marginH).toBe(base.missionDays * 24 - (t.returnMs! - day.dayMs) / 3_600_000)
   })
 
   it('keeps the hourly pick close to its refined figures', () => {

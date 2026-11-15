@@ -3,7 +3,8 @@ import type { MsgKey } from '../i18n/index.ts'
 
 /**
  * Illustrative power budgets (orders of magnitude for small polar landers/rovers, not the
- * specs of any real vehicle). Everything is editable in the UI ("custom").
+ * specs of any real vehicle). Everything is editable in the UI ("custom"). The two rovers also
+ * carry `sampleW`, the assumed draw of their sampling instrument while working at the ice.
  */
 export interface EnergyPreset {
   id: string
@@ -38,6 +39,8 @@ export const ENERGY_PRESETS: readonly EnergyPreset[] = [
       hibernateW: 18,
       hibernateBelowPct: 20,
       initialSocPct: 100,
+      // Assumption: a small drill and an analysis instrument (order of magnitude).
+      sampleW: 30,
     },
   },
   {
@@ -54,6 +57,8 @@ export const ENERGY_PRESETS: readonly EnergyPreset[] = [
       hibernateW: 10,
       hibernateBelowPct: 30,
       initialSocPct: 100,
+      // Assumption: a metre-class drill and its analysis suite (order of magnitude).
+      sampleW: 150,
     },
   },
   {

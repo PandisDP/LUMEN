@@ -48,10 +48,17 @@ type PlannerInputs = Pick<
   'target' | 'tileSiteId' | 'fromMs' | 'days' | 'minSunDays' | 'minRoverSocPct' | 'radiusM'
 >
 
+/** The rover and its work at the ice (useRoverStore). */
+export interface RoverInputs {
+  roverId: RoverId
+  samples: number
+  sampleH: number
+}
+
 export function assembleProblem(
   p: PlannerInputs,
   m: MissionInputs,
-  roverId: RoverId,
+  rover: RoverInputs,
   nowMs = Date.now(),
 ): PlanProblem | null {
   if (!p.target || !p.tileSiteId) return null
@@ -63,7 +70,9 @@ export function assembleProblem(
     days,
     missionDays: m.missionDays,
     minSunDays: p.minSunDays,
-    roverId,
+    roverId: rover.roverId,
+    samples: rover.samples,
+    sampleH: rover.sampleH,
     minRoverSocPct: p.minRoverSocPct,
     radiusM: p.radiusM,
     hardware: { ...m.hardwareLimits },
@@ -88,12 +97,14 @@ export function usePlanProblem(): PlanProblem | null {
   const requireDsn = useMissionStore((s) => s.requireDsn)
   const scienceWeight = useMissionStore((s) => s.scienceWeight)
   const roverId = useRoverStore((s) => s.roverId)
+  const samples = useRoverStore((s) => s.samples)
+  const sampleH = useRoverStore((s) => s.sampleH)
   return useMemo(
     () =>
       assembleProblem(
         { target, tileSiteId, fromMs, days, minSunDays, minRoverSocPct, radiusM },
         { missionDays, hardwareLimits, linkMarginDeg, requireDsn, scienceWeight },
-        roverId,
+        { roverId, samples, sampleH },
       ),
     [
       target,
@@ -109,6 +120,8 @@ export function usePlanProblem(): PlanProblem | null {
       requireDsn,
       scienceWeight,
       roverId,
+      samples,
+      sampleH,
     ],
   )
 }

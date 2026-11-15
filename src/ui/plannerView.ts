@@ -183,6 +183,9 @@ export const VIOLATIONS: readonly PlanViolation[] = [
   'dte',
   'slope',
   'rover-unreachable',
+  'rover-samples',
+  'rover-no-return',
+  'rover-late',
   'rover-battery',
 ]
 
@@ -195,6 +198,10 @@ export const VIOLATION_KEY: Record<PlanViolation, MsgKey> = {
   dte: 'plan.why.dte',
   slope: 'plan.why.slope',
   'rover-unreachable': 'plan.why.roverUnreachable',
+  // PLACEHOLDER (ida y vuelta): the three below reuse the rover-battery text until theirs exist.
+  'rover-samples': 'plan.why.roverBattery',
+  'rover-no-return': 'plan.why.roverBattery',
+  'rover-late': 'plan.why.roverBattery',
   'rover-battery': 'plan.why.roverBattery',
 }
 export const VIOLATION_FIX: Record<PlanViolation, MsgKey> = {
@@ -205,6 +212,10 @@ export const VIOLATION_FIX: Record<PlanViolation, MsgKey> = {
   dte: 'plan.fix.dte',
   slope: 'plan.fix.slope',
   'rover-unreachable': 'plan.fix.roverUnreachable',
+  // PLACEHOLDER (ida y vuelta): the three below reuse the rover-battery text until theirs exist.
+  'rover-samples': 'plan.fix.roverBattery',
+  'rover-no-return': 'plan.fix.roverBattery',
+  'rover-late': 'plan.fix.roverBattery',
   'rover-battery': 'plan.fix.roverBattery',
 }
 
@@ -271,6 +282,8 @@ export function problemChanged(a: PlanProblem, b: PlanProblem): boolean {
     a.missionDays !== b.missionDays ||
     a.minSunDays !== b.minSunDays ||
     a.roverId !== b.roverId ||
+    a.samples !== b.samples ||
+    a.sampleH !== b.sampleH ||
     a.minRoverSocPct !== b.minRoverSocPct ||
     a.radiusM !== b.radiusM ||
     a.linkMarginDeg !== b.linkMarginDeg ||

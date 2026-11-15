@@ -226,6 +226,8 @@ describe('buildProblem', () => {
     m.setScienceWeight(0.4)
     m.setHardwareLimits({ maxNightH: 60, roverMaxSlopeDeg: 15 })
     useRoverStore.getState().setRover('csa-rover')
+    useRoverStore.getState().setSamples(5)
+    useRoverStore.getState().setSampleH(1.5)
     const p = plan()
     p.setTarget({ lat: -89.4044, lon: -140.0766 }, 'shackleton-rim')
     p.setRange(from, 12)
@@ -242,6 +244,8 @@ describe('buildProblem', () => {
         missionDays: 20,
         minSunDays: 7,
         roverId: 'csa-rover',
+        samples: 5,
+        sampleH: 1.5,
         minRoverSocPct: 35,
         radiusM: 1000,
         hardware: { ...useMissionStore.getState().hardwareLimits, maxNightH: 60 },
@@ -252,5 +256,7 @@ describe('buildProblem', () => {
     })
     expect(useMissionStore.getState().hardwareLimits.roverMaxSlopeDeg).toBe(15)
     useRoverStore.getState().setRover('rover')
+    useRoverStore.getState().setSamples(3)
+    useRoverStore.getState().setSampleH(2)
   })
 })

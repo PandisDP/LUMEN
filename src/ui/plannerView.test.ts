@@ -68,14 +68,22 @@ describe('date range', () => {
       requireDsn: false,
       scienceWeight: 0,
     }
-    expect(assembleProblem(inputs, mission, 'rover', now)).toBeNull()
+    expect(
+      assembleProblem(inputs, mission, { roverId: 'rover', samples: 3, sampleH: 2 }, now),
+    ).toBeNull()
     const p = assembleProblem(
       { ...inputs, target: { lat: -89.4, lon: 10 }, tileSiteId: 'x' },
       mission,
-      'csa-rover',
+      { roverId: 'csa-rover', samples: 4, sampleH: 1.5 },
       now,
     )
-    expect(p).toMatchObject({ fromMs: Date.UTC(2027, 4, 4), days: 30, roverId: 'csa-rover' })
+    expect(p).toMatchObject({
+      fromMs: Date.UTC(2027, 4, 4),
+      days: 30,
+      roverId: 'csa-rover',
+      samples: 4,
+      sampleH: 1.5,
+    })
   })
 })
 

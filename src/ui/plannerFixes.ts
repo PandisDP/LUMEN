@@ -41,6 +41,10 @@ const FIXES_FOR: Record<PlanViolation, readonly PlanFixId[]> = {
   dte: ['widenRange'],
   slope: ['widenRadius'],
   'rover-unreachable': ['narrowRadius'],
+  // PLACEHOLDER (ida y vuelta): the three below reuse the rover-battery fixes until theirs exist.
+  'rover-samples': ['lowerSoc', 'narrowRadius'],
+  'rover-no-return': ['lowerSoc', 'narrowRadius'],
+  'rover-late': ['lowerSoc', 'narrowRadius'],
   'rover-battery': ['lowerSoc', 'narrowRadius'],
 }
 /** With nothing to go by: the three that open the search most. */
