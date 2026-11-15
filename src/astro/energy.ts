@@ -71,6 +71,51 @@ export interface BatteryResult {
   energyOutWh: number
 }
 
+export interface BatteryStep {
+  /** Stored energy after the step (Wh), clamped to [0, capacity]. */
+  energyWh: number
+  /** Array output and load integrated over the step (Wh), before any clamping. */
+  inWh: number
+  outWh: number
+  /**
+   * Fraction of the step (0..1) at which the battery hit zero with the load not covered, or
+   * null when it did not run out.
+   */
+  emptyAtFraction: number | null
+  /** Time of this step spent at 0 % with an uncovered load (h). */
+  hoursAtZero: number
+}
+
+/**
+ * One explicit-Euler step of the battery: `energyWh` plus (input − load)·dt, clamped to
+ * [0, capacityWh] (surplus is curtailed, deficit is "dead time"). Shared by `simulateBattery`
+ * and by the rover traverse so both use exactly the same bookkeeping.
+ */
+export function stepBattery(
+  energyWh: number,
+  powerInW: number,
+  loadW: number,
+  dtH: number,
+  capacityWh: number,
+): BatteryStep {
+  const e = energyWh
+  const next = e + (powerInW - loadW) * dtH
+  let emptyAtFraction: number | null = null
+  let hoursAtZero = 0
+  if (next <= 0 && powerInW < loadW) {
+    // Interpolate the crossing inside the step.
+    emptyAtFraction = e / Math.max(1e-9, (loadW - powerInW) * dtH)
+    hoursAtZero = e > 0 ? dtH * (1 - e / ((loadW - powerInW) * dtH)) : dtH
+  }
+  return {
+    energyWh: Math.min(capacityWh, Math.max(0, next)),
+    inWh: powerInW * dtH,
+    outWh: loadW * dtH,
+    emptyAtFraction,
+    hoursAtZero,
+  }
+}
+
 /**
  * Integrates the battery over the series (explicit Euler on the series step). The craft
  * operates while the Sun is up and the battery is above the survival threshold; otherwise it
@@ -103,18 +148,14 @@ export function simulateBattery(series: SiteSeries, p: EnergyProfile): BatteryRe
     if (operating) activeCount++
     minSoc = Math.min(minSoc, soc)
     if (i === n - 1) break
-    const next = e + (pw - load) * dtH
-    energyIn += pw * dtH
-    energyOut += load * dtH
-    if (next <= 0 && pw < load) {
-      if (depletedAtMs === null) {
-        // Interpolate the crossing inside the step.
-        const f = e / Math.max(1e-9, (load - pw) * dtH)
-        depletedAtMs = sampleTime(series, i) + f * series.stepMs
-      }
-      hoursAtZero += e > 0 ? dtH * (1 - e / ((load - pw) * dtH)) : dtH
+    const step = stepBattery(e, pw, load, dtH, capWh)
+    energyIn += step.inWh
+    energyOut += step.outWh
+    if (step.emptyAtFraction !== null && depletedAtMs === null) {
+      depletedAtMs = sampleTime(series, i) + step.emptyAtFraction * series.stepMs
     }
-    e = Math.min(capWh, Math.max(0, next))
+    hoursAtZero += step.hoursAtZero
+    e = step.energyWh
   }
   return {
     socPct,

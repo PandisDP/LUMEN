@@ -3,6 +3,7 @@ import type { ScenarioInput, ScenarioResult, SweepInput } from '../astro/scenari
 import type { DispersionInput, DispersionResult } from '../astro/dispersion.ts'
 import type { IceAccess } from '../astro/iceAccess.ts'
 import type { OptimizeInput, OptimizeResult } from '../astro/optimize.ts'
+import type { TraverseJobInput, TraverseResult } from '../astro/traverse.ts'
 import type {
   AstroRequest,
   AstroResponse,
@@ -65,3 +66,7 @@ export const runOptimize = (input: OptimizeInput, dems: DemRef[], illum?: IllumR
 
 export const runIceAccess = (input: IceInput, dem: DemRef, illum: IllumRef) =>
   call({ kind: 'iceAccess', input, dem, illum }) as Promise<IceAccess>
+
+/** Rover traverse along an ice-access route: plan, per-anchor horizons and battery (worker). */
+export const runTraverse = (input: TraverseJobInput, dems: DemRef[], illum?: IllumRef) =>
+  call({ kind: 'traverse', input, dems, illum }) as Promise<TraverseResult>
