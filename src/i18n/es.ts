@@ -32,7 +32,7 @@ export const es = {
   'audience.educator': 'Educador',
   'audience.public': 'Público',
   'audience.planner.desc':
-    'Todos los datos: DSN, térmico, zona de dispersión del aterrizaje, filtro de hardware y exportación.',
+    'Todos los datos: DSN, térmico, elipse de aterrizaje, filtro de hardware y exportación.',
   'audience.educator.desc':
     'La física del lugar: Sol, Tierra, horizonte, iluminación y hielo, sin los detalles de ingeniería.',
   'audience.public.desc': 'Lo esencial: ¿hay Sol?, ¿se ve la Tierra?, y por qué eso importa.',
@@ -61,7 +61,7 @@ export const es = {
   'help.charts':
     'Mueve el tiempo de la misión con el deslizador o pulsa Reproducir. «Línea temporal» muestra Sol, Tierra y batería a lo largo de los días; «Horizonte 360°» dibuja el relieve con las trayectorias; «Fechas alternativas» puntúa cada día de alunizaje de los próximos 12 meses.',
   'help.hud':
-    'Controles de la vista 3D. En Órbita: arrastra para girar, rueda para acercar y clic en un punto para viajar al sitio. En Superficie: mira al Sol o a la Tierra, activa la línea de horizonte, las pendientes, la zona de dispersión del aterrizaje o reubica el sitio con un clic.',
+    'Controles de la vista 3D. En Órbita: arrastra para girar, rueda para acercar y clic en un punto para viajar al sitio. En Superficie: mira al Sol o a la Tierra, activa la línea de horizonte, las pendientes, la elipse de aterrizaje o reubica el sitio con un clic.',
 
   // Guided tour
   'tour.aria': 'Recorrido guiado',
@@ -244,7 +244,7 @@ export const es = {
   'opt.button': 'Sugerir mejor punto',
   'opt.loading': 'Buscando terreno seguro y evaluando la misión en cada punto…',
   'opt.summary': '{safe} puntos con pendiente < 10° · se evaluaron los {n} más altos',
-  'opt.none': 'No hay terreno con pendiente < 10° dentro de la zona de dispersión.',
+  'opt.none': 'No hay terreno con pendiente < 10° dentro de la elipse de aterrizaje.',
   'opt.where': 'a {d} al {dir}',
   'opt.stats': 'pendiente {slope} · luz {sun} · DTE {dte} · noche {night}',
   'opt.go': 'Ir a este punto',
@@ -421,9 +421,9 @@ export const es = {
   'glossary.dsn.term': 'DSN',
   'glossary.dsn.def':
     'Deep Space Network: las antenas de la NASA en Goldstone, Madrid y Canberra. Para hablar con la Luna, al menos una debe tenerla a la vista.',
-  'glossary.dispersion.term': 'Zona de dispersión',
+  'glossary.dispersion.term': 'Elipse de aterrizaje',
   'glossary.dispersion.def':
-    'Círculo alrededor del sitio donde puede acabar el módulo por la imprecisión del guiado (500 m, 1 km o 2 km de radio).',
+    'Zona donde puede acabar el módulo por la imprecisión del guiado (3σ). Es alargada: el error a lo largo de la trayectoria de aproximación es mayor que el transversal.',
   'glossary.psr.term': 'PSR',
   'glossary.psr.def':
     'Región en sombra permanente: fondos de cráter donde nunca da el Sol y puede conservarse hielo.',
@@ -506,8 +506,12 @@ export const es = {
   'hud.aerialView': 'Vista aérea',
   'hud.landerView': 'Vista del lander',
   'hud.slope': 'Pendientes',
-  'hud.ellipse': 'Dispersión',
-  'hud.ellipseOff': 'sin zona',
+  'hud.ellipse': 'Elipse',
+  'hud.ellipseOff': 'sin elipse',
+  'hud.ellipseAspect': 'Forma de la elipse',
+  'hud.ellipseAspectTitle':
+    'Relación entre el error a lo largo de la trayectoria de aproximación y el transversal. El eje mayor sigue el acimut de aproximación.',
+  'hud.ellipseCircle': 'círculo',
   'hud.pick': 'Reubicar con clic',
   'hud.pickActive': 'Haz clic en el terreno…',
   'hud.pickTitle':
@@ -565,17 +569,20 @@ export const es = {
     'DEM de {res} m/px: la pendiente queda suavizada y subestima la real a escala del lander.',
 
   // Dispersion
-  'dispersion.title': 'Sensibilidad en la zona de dispersión (r = {r})',
-  'dispersion.loading': 'Calculando horizontes de los puntos de la zona…',
+  'dispersion.title': 'Elipse de aterrizaje 3σ ({a} × {b})',
+  'dispersion.loading': 'Calculando horizontes de los puntos de la elipse…',
   'dispersion.spread': 'Puntuación entre {min} y {max} en {n} puntos de aterrizaje posibles.',
   'dispersion.range': 'mín · mediana · máx',
+  'dispersion.expected': 'Puntuación esperada',
+  'dispersion.pGood': 'Prob. de puntuación ≥ {score}',
+  'dispersion.pSafe': 'Prob. de pendiente < {deg}°',
   'dispersion.score': 'Puntuación',
   'dispersion.sun': 'Tiempo con Sol',
   'dispersion.dte': 'Enlace DTE',
   'dispersion.night': 'Noche más larga',
   'dispersion.slope': 'Pendiente',
   'dispersion.note':
-    'Análisis rápido: horizonte a 1° y paso de 30 min por punto. Los marcadores de la vista de superficie muestran cada punto; haz clic en uno para mover el sitio ahí.',
+    'Elipse 3σ con el eje mayor en la dirección de aproximación; cada punto pesa según la probabilidad de caer ahí. Análisis rápido: horizonte a 1° y paso de 30 min por punto. Los marcadores de la vista de superficie muestran cada punto; haz clic en uno para mover el sitio ahí.',
   // Energy / battery
   'energy.title': 'Energía · batería',
   'energy.profile': 'Perfil energético',

@@ -7,7 +7,12 @@ import { useInstant } from '../hooks/useScenario.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { SLOPE_COLORS } from '../scene/micro/slopeColors.ts'
 import { ILLUM_COLORS } from '../scene/micro/illumColors.ts'
-import { ELLIPSE_RADII, selectActiveScenario, useMissionStore } from '../store/useMissionStore.ts'
+import {
+  ELLIPSE_ASPECTS,
+  ELLIPSE_RADII,
+  selectActiveScenario,
+  useMissionStore,
+} from '../store/useMissionStore.ts'
 import { useDescentStore } from '../store/useDescentStore.ts'
 import { type MacroFrame, useViewStore } from '../store/useViewStore.ts'
 import { DescentHud } from './DescentHud.tsx'
@@ -106,6 +111,7 @@ export function ViewHud() {
   const aerial = useMissionStore((s) => s.aerial)
   const pickMode = useMissionStore((s) => s.pickMode)
   const ellipseRadiusM = useMissionStore((s) => s.ellipseRadiusM)
+  const ellipseAspect = useMissionStore((s) => s.ellipseAspect)
   const showIllum = useMissionStore((s) => s.showIllum)
   const showNac = useMissionStore((s) => s.showNac)
   const scenario = useMissionStore(selectActiveScenario)
@@ -119,6 +125,7 @@ export function ViewHud() {
     setAerial,
     setPickMode,
     setEllipseRadius,
+    setEllipseAspect,
     setView,
   } = useMissionStore.getState()
   const landerCam = useMissionStore((s) => s.landerCam)
@@ -344,6 +351,20 @@ export function ViewHud() {
                 </option>
               ))}
             </select>
+            {ellipseRadiusM > 0 && (
+              <select
+                value={ellipseAspect}
+                aria-label={t('hud.ellipseAspect')}
+                title={t('hud.ellipseAspectTitle')}
+                onChange={(e) => setEllipseAspect(Number(e.target.value))}
+              >
+                {ELLIPSE_ASPECTS.map((a) => (
+                  <option key={a} value={a}>
+                    {a === 1 ? t('hud.ellipseCircle') : `${a}:1`}
+                  </option>
+                ))}
+              </select>
+            )}
           </label>
           <button
             type="button"

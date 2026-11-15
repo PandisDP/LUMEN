@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { DemGrid } from '../astro/dem.ts'
-import type { DispersionResult } from '../astro/dispersion.ts'
+import { sunBehindApproach } from '../astro/descent.ts'
+import { type DispersionResult, type LandingEllipse, landingEllipse } from '../astro/dispersion.ts'
 import { slopeStats } from '../astro/slope.ts'
 import { type SiteDetail, demRefs, loadTerrainGrids } from '../data/catalog.ts'
 import { type Scenario, useMissionStore } from '../store/useMissionStore.ts'
@@ -32,16 +33,34 @@ export function useSlopeStats(detail: SiteDetail | undefined) {
 /** Shared between the metrics panel and the 3D markers so the work runs once. */
 const dispersionCache = new Map<string, Promise<DispersionResult>>()
 
+/**
+ * The landing ellipse of the active settings: the major axis lies along the approach track
+ * (the chosen azimuth, or the automatic one: the Sun behind the craft at touchdown).
+ */
+export function useLandingEllipse(scenario: Scenario): LandingEllipse | null {
+  const { result } = useScenarioData(scenario)
+  const radiusM = useMissionStore((s) => s.ellipseRadiusM)
+  const aspect = useMissionStore((s) => s.ellipseAspect)
+  const approachAz = useMissionStore((s) => s.approachAz)
+  const sunAz = result ? Math.round(result.series.sunAz[0]) : 0
+  return useMemo(
+    () =>
+      radiusM > 0 ? landingEllipse(radiusM, aspect, approachAz ?? sunBehindApproach(sunAz)) : null,
+    [radiusM, aspect, approachAz, sunAz],
+  )
+}
+
 export function useDispersion(scenario: Scenario) {
   const { detail, result, loading } = useScenarioData(scenario)
   const radiusM = useMissionStore((s) => s.ellipseRadiusM)
+  const ellipse = useLandingEllipse(scenario)
   const missionDays = useMissionStore((s) => s.missionDays)
   const linkMarginDeg = useMissionStore((s) => s.linkMarginDeg)
   const requireDsn = useMissionStore((s) => s.requireDsn)
   const dems = detail ? demRefs(detail) : []
   const key =
     detail && result && !loading && radiusM > 0 && dems.length
-      ? `${siteKey(detail)}|${scenario.startMs}|${missionDays}|${linkMarginDeg}|${requireDsn}|${radiusM}`
+      ? `${siteKey(detail)}|${scenario.startMs}|${missionDays}|${linkMarginDeg}|${requireDsn}|${radiusM}|${ellipse?.semiMinorM}|${ellipse?.orientationDeg}`
       : null
   const r = useAsync(key, () => {
     let p = dispersionCache.get(key!)
@@ -51,6 +70,8 @@ export function useDispersion(scenario: Scenario) {
           lat: detail!.site.lat,
           lon: detail!.site.lon,
           radiusM,
+          semiMinorM: ellipse?.semiMinorM,
+          orientationDeg: ellipse?.orientationDeg,
           startMs: scenario.startMs,
           missionDays,
           linkMarginDeg,
@@ -76,7 +97,9 @@ export function useDispersion(scenario: Scenario) {
     i.missionDays === missionDays &&
     i.linkMarginDeg === linkMarginDeg &&
     (i.requireDsn ?? false) === requireDsn &&
-    i.radiusM === radiusM
+    i.radiusM === radiusM &&
+    i.semiMinorM === ellipse?.semiMinorM &&
+    i.orientationDeg === ellipse?.orientationDeg
   const wanted = radiusM > 0 && dems.length > 0
   return {
     data: current ? r.data : undefined,

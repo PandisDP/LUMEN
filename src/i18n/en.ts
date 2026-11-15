@@ -33,8 +33,7 @@ export const en: Record<keyof typeof es, string> = {
   'audience.planner': 'Planner',
   'audience.educator': 'Educator',
   'audience.public': 'Public',
-  'audience.planner.desc':
-    'Everything: DSN, thermal, landing dispersion zone, hardware filter and export.',
+  'audience.planner.desc': 'Everything: DSN, thermal, landing ellipse, hardware filter and export.',
   'audience.educator.desc':
     'The physics of the place: Sun, Earth, horizon, illumination and ice, without the engineering detail.',
   'audience.public.desc': 'The essentials: is there Sun? can you see Earth? and why that matters.',
@@ -63,7 +62,7 @@ export const en: Record<keyof typeof es, string> = {
   'help.charts':
     'Move mission time with the slider or press Play. “Timeline” shows Sun, Earth and battery over the days; “360° horizon” draws the terrain with the paths; “Alternative dates” scores every landing day over the next 12 months.',
   'help.hud':
-    '3D view controls. In Orbit: drag to rotate, scroll to zoom and click a dot to fly to the site. On the Surface: look at the Sun or the Earth, toggle the horizon line, slopes, landing dispersion zone, or relocate the site with a click.',
+    '3D view controls. In Orbit: drag to rotate, scroll to zoom and click a dot to fly to the site. On the Surface: look at the Sun or the Earth, toggle the horizon line, slopes, landing ellipse, or relocate the site with a click.',
 
   // Guided tour
   'tour.aria': 'Guided tour',
@@ -243,7 +242,7 @@ export const en: Record<keyof typeof es, string> = {
   'opt.button': 'Suggest a better point',
   'opt.loading': 'Looking for safe ground and evaluating the mission at each point…',
   'opt.summary': '{safe} points with slope < 10° · the {n} highest were evaluated',
-  'opt.none': 'No ground below 10° of slope inside the dispersion zone.',
+  'opt.none': 'No ground below 10° of slope inside the landing ellipse.',
   'opt.where': '{d} to the {dir}',
   'opt.stats': 'slope {slope} · light {sun} · DTE {dte} · night {night}',
   'opt.go': 'Go to this point',
@@ -419,9 +418,9 @@ export const en: Record<keyof typeof es, string> = {
   'glossary.dsn.term': 'DSN',
   'glossary.dsn.def':
     'Deep Space Network: NASA’s antennas at Goldstone, Madrid and Canberra. To talk to the Moon at least one must have it in view.',
-  'glossary.dispersion.term': 'Dispersion zone',
+  'glossary.dispersion.term': 'Landing ellipse',
   'glossary.dispersion.def':
-    'Circle around the site where the lander may end up because of guidance error (500 m, 1 km or 2 km radius).',
+    'Area where the lander may end up because of guidance error (3σ). It is elongated: the error along the approach track is larger than the cross-track one.',
   'glossary.psr.term': 'PSR',
   'glossary.psr.def':
     'Permanently shadowed region: crater floors the Sun never reaches, where ice can survive.',
@@ -502,8 +501,12 @@ export const en: Record<keyof typeof es, string> = {
   'hud.aerialView': 'Aerial view',
   'hud.landerView': 'Lander view',
   'hud.slope': 'Slopes',
-  'hud.ellipse': 'Dispersion',
-  'hud.ellipseOff': 'no zone',
+  'hud.ellipse': 'Ellipse',
+  'hud.ellipseOff': 'no ellipse',
+  'hud.ellipseAspect': 'Ellipse shape',
+  'hud.ellipseAspectTitle':
+    'Ratio of the error along the approach track to the cross-track one. The major axis follows the approach azimuth.',
+  'hud.ellipseCircle': 'circle',
   'hud.pick': 'Click to relocate',
   'hud.pickActive': 'Click the terrain…',
   'hud.pickTitle':
@@ -560,17 +563,20 @@ export const en: Record<keyof typeof es, string> = {
     '{res} m/px DEM: slopes are smoothed and underestimate the real one at lander scale.',
 
   // Dispersion
-  'dispersion.title': 'Sensitivity in the dispersion zone (r = {r})',
-  'dispersion.loading': 'Computing horizons for the zone points…',
+  'dispersion.title': '3σ landing ellipse ({a} × {b})',
+  'dispersion.loading': 'Computing horizons for the ellipse points…',
   'dispersion.spread': 'Score between {min} and {max} across {n} possible touchdown points.',
   'dispersion.range': 'min · median · max',
+  'dispersion.expected': 'Expected score',
+  'dispersion.pGood': 'Prob. of score ≥ {score}',
+  'dispersion.pSafe': 'Prob. of slope < {deg}°',
   'dispersion.score': 'Score',
   'dispersion.sun': 'Time in sunlight',
   'dispersion.dte': 'DTE link',
   'dispersion.night': 'Longest night',
   'dispersion.slope': 'Slope',
   'dispersion.note':
-    'Quick analysis: 1° horizon and 30-min step per point. Markers in the surface view show each point; click one to move the site there.',
+    '3σ ellipse with the major axis along the approach; each point is weighted by the probability of landing there. Quick analysis: 1° horizon and 30-min step per point. Markers in the surface view show each point; click one to move the site there.',
   // Energy / battery
   'energy.title': 'Power · battery',
   'energy.profile': 'Power profile',

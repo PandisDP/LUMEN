@@ -54,6 +54,8 @@ export const FOV = { min: 2, max: 75, default: 60 } as const
 export const LINK_MARGIN = { min: 0, max: 10, default: 3 } as const
 /** Landing-dispersion radii offered in the UI (m); 0 disables the ellipse analysis. */
 export const ELLIPSE_RADII = [0, 500, 1000, 2000] as const
+/** Along-track / cross-track ratio of the landing ellipse (1 = circle). */
+export const ELLIPSE_ASPECTS = [1, 2, 3] as const
 /** Camera height of the aerial (map-like) surface view, m. */
 export const AERIAL_HEIGHT_M = 3_000
 
@@ -158,7 +160,9 @@ export interface MissionState extends ScenarioParams {
   look: LookRequest | null
   /** Colour the terrain by slope (landing safety layer). */
   showSlope: boolean
+  /** Semi-major axis (3σ, along the approach track) of the landing ellipse; 0 = off. */
   ellipseRadiusM: number
+  ellipseAspect: number
   /** Surface view from above instead of the lander's eye. */
   aerial: boolean
   /** Next click on the terrain relocates the site. */
@@ -205,6 +209,7 @@ export interface MissionState extends ScenarioParams {
   setRequireDsn: (on: boolean) => void
   setShowSlope: (show: boolean) => void
   setEllipseRadius: (m: number) => void
+  setEllipseAspect: (aspect: number) => void
   setAerial: (aerial: boolean) => void
   setPickMode: (on: boolean) => void
   setEnergyPreset: (id: string) => void
@@ -248,6 +253,7 @@ const initialState = () => {
     look: null as LookRequest | null,
     showSlope: false,
     ellipseRadiusM: 500 as number,
+    ellipseAspect: 2 as number,
     aerial: false,
     pickMode: false,
     approachAz: null as number | null,
@@ -422,6 +428,9 @@ export const useMissionStore = create<MissionState>()((set, get) => {
     setShowSlope: (showSlope) => set({ showSlope }),
     setEllipseRadius: (m) => {
       if ((ELLIPSE_RADII as readonly number[]).includes(m)) set({ ellipseRadiusM: m })
+    },
+    setEllipseAspect: (a) => {
+      if ((ELLIPSE_ASPECTS as readonly number[]).includes(a)) set({ ellipseAspect: a })
     },
     setAerial: (aerial) => set({ aerial }),
     setPickMode: (pickMode) => set({ pickMode }),

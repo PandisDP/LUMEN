@@ -85,6 +85,6 @@ describe('glossary', () => {
     render(<ExplainPanel />)
     expect(screen.getByRole('heading', { name: 'Glosario' })).toBeInTheDocument()
     expect(screen.getAllByRole('term')).toHaveLength(10)
-    expect(screen.getByText('Zona de dispersión')).toBeInTheDocument()
+    expect(screen.getByText('Elipse de aterrizaje')).toBeInTheDocument()
   })
 })

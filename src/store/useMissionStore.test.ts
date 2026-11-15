@@ -162,3 +162,15 @@ describe('lunar day playback', () => {
     expect(useMissionStore.getState().missionDays).toBe(45)
   })
 })
+
+describe('landing ellipse settings', () => {
+  it('accepts only the listed aspect ratios', () => {
+    const s = useMissionStore.getState()
+    s.reset()
+    expect(useMissionStore.getState().ellipseAspect).toBe(2)
+    s.setEllipseAspect(3)
+    expect(useMissionStore.getState().ellipseAspect).toBe(3)
+    s.setEllipseAspect(7)
+    expect(useMissionStore.getState().ellipseAspect).toBe(3)
+  })
+})

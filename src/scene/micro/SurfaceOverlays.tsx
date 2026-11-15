@@ -8,7 +8,7 @@ import { SLOPE_CAUTION_DEG } from '../../astro/slope.ts'
 import { latLonToScene } from '../../astro/terrainMesh.ts'
 import type { SiteDetail } from '../../data/catalog.ts'
 import { useIceAccess } from '../../hooks/useScience.ts'
-import { useDispersion } from '../../hooks/useTerrain.ts'
+import { useDispersion, useLandingEllipse } from '../../hooks/useTerrain.ts'
 import { useT } from '../../i18n/index.ts'
 import { selectActiveScenario, useMissionStore } from '../../store/useMissionStore.ts'
 import { scoreLevel } from '../../ui/levels.ts'
@@ -16,15 +16,19 @@ import { relocateTo } from './relocate.ts'
 
 type P3 = [number, number, number]
 
-/** The landing-dispersion circle, draped on the terrain. */
+/** The 3σ landing ellipse (major axis along the approach track), draped on the terrain. */
 export function EllipseRing({ detail, grids }: { detail: SiteDetail; grids: DemGrid[] }) {
-  const radius = useMissionStore((s) => s.ellipseRadiusM)
+  const ellipse = useLandingEllipse(useMissionStore(selectActiveScenario))
   const aerial = useMissionStore((s) => s.aerial)
   const points = useMemo(() => {
-    if (!radius) return null
+    if (!ellipse) return null
     const pts: P3[] = []
-    for (let az = 0; az <= 360; az += 3) {
-      const p = destination(detail.site.lat, detail.site.lon, az, radius)
+    for (let deg = 0; deg <= 360; deg += 3) {
+      const t = (deg * Math.PI) / 180
+      const along = ellipse.semiMajorM * Math.cos(t)
+      const cross = ellipse.semiMinorM * Math.sin(t)
+      const az = ellipse.orientationDeg + (Math.atan2(cross, along) * 180) / Math.PI
+      const p = destination(detail.site.lat, detail.site.lon, az, Math.hypot(along, cross))
       const h = grids.length ? sampleDemStack(grids, p.lat, p.lon) : NaN
       pts.push(
         latLonToScene(
@@ -36,7 +40,7 @@ export function EllipseRing({ detail, grids }: { detail: SiteDetail; grids: DemG
       )
     }
     return pts
-  }, [detail, grids, radius, aerial])
+  }, [detail, grids, ellipse, aerial])
   if (!points) return null
   return (
     <Line
