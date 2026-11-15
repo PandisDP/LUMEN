@@ -155,6 +155,8 @@ El JSON contiene lo mismo en formato columnar, más las métricas y las ventanas
 
 ## Despliegue
 
+Versión publicada: **<https://pandisdp.github.io/LUMEN/>** (GitHub Pages). El workflow `.github/workflows/pages.yml` publica `main` en cada push y cualquier rama con _Run workflow_; mientras GitHub Actions no esté disponible en la cuenta, el mismo archivo documenta el despliegue manual a la rama `gh-pages`.
+
 `npm run build` genera un sitio estático en `dist/` (incluye los datos, ~40 MB; 9 MB son las imágenes de Moon Trek y LROC) que puede servirse desde cualquier hosting estático. Se recomienda caché larga (`immutable`) para `/assets/*` (nombres con hash) y caché corta para `/data/*` y `/textures/*`.
 
 ## Scripts

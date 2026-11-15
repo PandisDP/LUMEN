@@ -43,3 +43,9 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+# Manual fallback while GitHub Actions is unavailable for the account (billing lock):
+#   npx vite build --base=/LUMEN/ && touch dist/.nojekyll
+#   cd dist && git init -b gh-pages && git add -A && git commit -m deploy \
+#     && git push -f https://github.com/PandisDP/LUMEN.git gh-pages
+# and set Pages to "Deploy from a branch: gh-pages /" in the repository settings.
