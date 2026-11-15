@@ -1,0 +1,167 @@
+{
+ "sites": {
+  "cabeus": {
+   "source": "LROC QuickMap · LRO WAC 100 m (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/cabeus/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    -131700,
+    96360,
+    -111220,
+    116840
+   ]
+  },
+  "connecting-ridge": {
+   "source": "LROC QuickMap · LROC NAC (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/connecting-ridge/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    -40180,
+    -12640,
+    -19700,
+    7840
+   ]
+  },
+  "de-gerlache-rim": {
+   "source": "LROC QuickMap · LROC NAC (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/de-gerlache-rim/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    -47780,
+    4700,
+    -27300,
+    25180
+   ]
+  },
+  "haworth": {
+   "source": "LROC QuickMap · LROC NAC (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/haworth/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    -17000,
+    66820,
+    3480,
+    87300
+   ]
+  },
+  "malapert-massif": {
+   "source": "LROC QuickMap · LROC NAC (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/malapert-massif/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    -5880,
+    111400,
+    14600,
+    131880
+   ]
+  },
+  "mons-mouton": {
+   "source": "LROC QuickMap · LRO WAC 100 m (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/mons-mouton/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    66860,
+    127780,
+    87340,
+    148260
+   ]
+  },
+  "nobile-rim": {
+   "source": "LROC QuickMap · LROC NAC (36 %) + LRO WAC 100 m (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/nobile-rim/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    62560,
+    108120,
+    83040,
+    128600
+   ]
+  },
+  "shackleton-floor": {
+   "source": "LROC QuickMap · LROC NAC (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/shackleton-floor/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    -2560,
+    -16640,
+    17920,
+    3840
+   ]
+  },
+  "shackleton-rim": {
+   "source": "LROC QuickMap · LROC NAC (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/shackleton-rim/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    -21740,
+    -22720,
+    -1260,
+    -2240
+   ]
+  },
+  "change-7": {
+   "source": "LROC QuickMap · LROC NAC (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/change-7/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    19800,
+    -30340,
+    40280,
+    -9860
+   ]
+  },
+  "nobile-rim-2": {
+   "source": "LROC QuickMap · LRO WAC 100 m (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/nobile-rim-2/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    143220,
+    75900,
+    163700,
+    96380
+   ]
+  }
+ },
+ "globe": {
+  "source": "Moon Trek · LRO WAC (NASA/GSFC/ASU)",
+  "path": "data/imagery/trek-global/r{r}c{c}.jpg",
+  "rows": 4,
+  "cols": 8,
+  "tileSize": 256
+ },
+ "cap": {
+  "source": "Moon Trek · LRO WAC South Pole (NASA/GSFC/ASU)",
+  "path": "data/imagery/trek-sp/r{r}c{c}.png",
+  "rows": 4,
+  "cols": 4,
+  "tileSize": 256,
+  "extent": [
+   -547965,
+   -547965,
+   547965,
+   547965
+  ]
+ }
+}
