@@ -28,4 +28,6 @@ export const roverTelemetry = {
   timeMs: NaN,
   /** Finished: at the ice (or stopped for good). */
   done: false,
+  /** Egress down the lander's ramps: 0 = stowed on the lander, 1 = on the ground, driving. */
+  egress: 1,
 }
