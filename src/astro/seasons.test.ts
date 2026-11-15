@@ -14,6 +14,7 @@ function candidate(startMs: number, patch: Partial<DateCandidate> = {}): DateCan
     score: 70,
     maxSunEl: 1,
     meanSunElLit: 0.5,
+    sunFromLandingH: 24,
     ...patch,
   }
 }

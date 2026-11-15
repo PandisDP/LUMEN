@@ -71,6 +71,20 @@ En la pantalla de bienvenida (**¿Quién eres?**) y en la barra superior (**Modo
 | Filtro de hardware, exportación CSV/JSON                                          |         |          |      ✓       |
 | «¿Por qué?» abierto al entrar                                                     |    ✓    |    ✓     |              |
 
+### Paso «Planificar» (modo Planificador)
+
+![Planificar](img/planificar.jpg)
+
+En modo Planificador el proceso empieza un paso antes: **Planificar → Órbita → Superficie → Aterrizaje → Decidir**. En vez de elegir un sitio y probar fechas, se parte de **dónde está el hielo** y el sistema busca **dónde y cuándo aterrizar**.
+
+1. **Qué misión**: el objetivo con hielo (de la lista, por coordenadas o con clic en el mapa), el rango de fechas a analizar (hasta 90 días), la duración en superficie, los días de **luz continua** exigidos tras aterrizar, el rover, su batería mínima y el radio de búsqueda. Las restricciones de hardware, el margen de enlace y la opción DSN son los de siempre y se editan ahí mismo.
+2. **Cuándo**: un **calendario** con la mejor puntuación de cada día (✕ = sin solución, con el motivo) y la **tabla día a día**: punto de aterrizaje, ruta al hielo, puntuación, energía, enlace, noche más larga, luz continua, batería mínima del rover y veredicto. Se ordena por cualquier columna y se exporta a CSV.
+3. **Dónde**: el mapa del objetivo con la sombra permanente, los puntos candidatos y el elegido del día, y las tarjetas de **los 5 mejores días**. **Abrir en Órbita** carga ese punto y esa fecha y continúa el flujo normal; el rover irá a ese hielo. Marca hasta cuatro días para **Enviar a Comparar**.
+
+Cómo decide: alrededor del objetivo se preseleccionan hasta 60 puntos de terreno seguro fuera de la sombra permanente. Para cada día se descartan los que no cumplen (sin Sol al aterrizar, luz continua insuficiente, noche o enlace fuera de los límites, pendiente, sin ruta, o rover que no llega con la batería mínima) y gana el de mayor puntuación de misión. Si ningún punto cumple, el día queda sin solución y se indica qué restricción lo impide.
+
+Límites: optimiza la fase de superficie (no el viaje Tierra–Luna); el objetivo debe estar en una zona con relieve LOLA de 20 m; exigir 15 días de luz continua deja pocos días válidos fuera del verano polar.
+
 ## 4. Vista Órbita
 
 La Luna completa iluminada por el Sol real del instante, con los mosaicos LRO WAC de Moon Trek (NASA/JPL) sobre el globo y sobre el relieve LOLA del casquete polar, la Tierra con su fase (día/noche, nubes) y los sitios marcados:

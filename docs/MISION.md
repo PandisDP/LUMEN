@@ -338,7 +338,22 @@ para cada `(t_L, t_O)`. La interfaz `evaluateMission` no cambia; solo la funció
 
 ---
 
-## 12. Implementación prevista (fuera de esta iteración)
+## 12. Estado de la implementación
+
+**Implementada la fase de superficie** (paso «Planificar», `src/astro/planner.ts`): variables `t_A`
+(día de aterrizaje dentro de un rango) y `p` (punto alrededor del objetivo con hielo), restricciones
+g1 (luz continua), g2 (pendiente), g3 (enlace), g6 (ruta y, además, que el rover llegue con una
+batería mínima) y g8 (cobertura de terreno), y objetivo = puntuación de misión con filtro de
+viabilidad. Salida: mejor punto por día, diagnóstico cuando no hay solución y los 5 mejores días.
+
+**Pendiente**: fecha de lanzamiento, clase de trayectoria, espera en órbita, Δv como objetivo,
+modos de comunicación con relé y el frente de Pareto (hoy se ordena por una sola puntuación).
+
+Con datos reales (hielo junto al borde de Shackleton, marzo de 2027, misión de 14 días): con 15
+días de luz continua exigidos hay solución 3 de 30 días; con 10, 10 de 30; con 5, 14 de 30. En el
+verano polar (noviembre) la exigencia no restringe.
+
+### Plan original de implementación
 
 | Pieza                                                           | Dónde                                                      | Reutiliza                                                                                                                                 |
 | --------------------------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |

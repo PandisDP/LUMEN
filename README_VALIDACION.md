@@ -368,6 +368,18 @@ con evidencia y cuáles no.
 
 ---
 
+## 11. Paso «Planificar» (rama `feature/planificar`)
+
+El modo Planificador gana un paso inicial que invierte la pregunta: dado un punto con hielo y un
+rango de fechas, entrega para cada día el mejor punto de aterrizaje que cumple todas las
+restricciones (incluido que el rover llegue al hielo con batería) y los cinco mejores días. Es la
+fase de superficie de `docs/MISION.md`. Verificación: 1722 tests unitarios, 7 pruebas de extremo
+a extremo (una recorre planificar → abrir en Órbita), y una ejecución real de 30 días en ~7 s.
+No cambia la rúbrica del reto: refuerza los bloques de comparación rápida y de coordinación
+ciencia–ingeniería.
+
+---
+
 ## Anexo: criterio de puntuación
 
 - **70 %**: media de los ítems 1–8 de la matriz (los objetivos que el reto enumera bajo

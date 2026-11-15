@@ -101,3 +101,27 @@ describe('DTE link margin', () => {
     expect(pcts[2].sunlitPct).toBe(pcts[0].sunlitPct)
   })
 })
+
+describe('sweepLandingDates: continuous light from touchdown', () => {
+  it('counts the hours to the first dark sample, 0 when landing in the dark', () => {
+    const sweep = sweepLandingDates(fakeSeries(100, 40), 1, 24)
+    expect(sweep.map((d) => d.sunFromLandingH)).toEqual([40, 16, 0, 0])
+    expect(sweep.map((d) => d.sunAtLanding)).toEqual([true, true, false, false])
+  })
+
+  it('looks past the mission window and stops at the end of the series', () => {
+    // Always lit: every landing date sees light up to the last sample (hour 99).
+    const sweep = sweepLandingDates(fakeSeries(100, 100), 1, 24)
+    expect(sweep.map((d) => d.sunFromLandingH)).toEqual([99, 75, 51, 27])
+  })
+
+  it('restarts after a gap and follows the series step', () => {
+    const s = fakeSeries(96, 96)
+    for (let i = 30; i < 50; i++) s.sunFrac[i] = 0
+    s.stepMs = HOUR_MS / 2
+    const sweep = sweepLandingDates(s, 0.5, 12)
+    // Landings at samples 0, 24, 48 and 72 (every 12 h at a 30 min step); the last is capped.
+    expect(sweep.map((d) => d.sunFromLandingH)).toEqual([15, 3, 0, 11.5])
+    expect(sweep[0].energyPct).toBeCloseTo(100)
+  })
+})

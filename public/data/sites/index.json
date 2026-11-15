@@ -10,6 +10,10 @@
   "slopeCenterDeg": 1.54,
   "slopeP90Deg": 9.78,
   "ice": {
+   "target": {
+    "lat": -89.40444,
+    "lon": -140.07663
+   },
    "straightM": 1360,
    "routeM": 1401,
    "maxSlopeDeg": 15.7,
@@ -29,6 +33,10 @@
   "slopeCenterDeg": 1.43,
   "slopeP90Deg": 11.49,
   "ice": {
+   "target": {
+    "lat": -89.00881,
+    "lon": -95.67076
+   },
    "straightM": 560,
    "routeM": 568,
    "maxSlopeDeg": 10.9,
@@ -48,6 +56,10 @@
   "slopeCenterDeg": 1.7,
   "slopeP90Deg": 11.55,
   "ice": {
+   "target": {
+    "lat": -88.63547,
+    "lon": -68.46343
+   },
    "straightM": 995,
    "routeM": 1079,
    "maxSlopeDeg": 18.1,
@@ -67,6 +79,10 @@
   "slopeCenterDeg": 1.6,
   "slopeP90Deg": 8.2,
   "ice": {
+   "target": {
+    "lat": -86.00984,
+    "lon": 2.00267
+   },
    "straightM": 660,
    "routeM": 735,
    "maxSlopeDeg": 18,
@@ -86,6 +102,10 @@
   "slopeCenterDeg": 2.89,
   "slopeP90Deg": 4.99,
   "ice": {
+   "target": {
+    "lat": -84.8161,
+    "lon": 29.24565
+   },
    "straightM": 803,
    "routeM": 868,
    "maxSlopeDeg": 6.8,
@@ -105,6 +125,10 @@
   "slopeCenterDeg": 9.78,
   "slopeP90Deg": 16.62,
   "ice": {
+   "target": {
+    "lat": -85.4493,
+    "lon": 31.60288
+   },
    "straightM": 888,
    "routeM": 951,
    "maxSlopeDeg": 10.3,
@@ -124,6 +148,10 @@
   "slopeCenterDeg": 2.87,
   "slopeP90Deg": 9.43,
   "ice": {
+   "target": {
+    "lat": -84.2074,
+    "lon": 60.56679
+   },
    "straightM": 444,
    "routeM": 468,
    "maxSlopeDeg": 10.4,
@@ -143,6 +171,10 @@
   "slopeCenterDeg": 4.8,
   "slopeP90Deg": 8.12,
   "ice": {
+   "target": {
+    "lat": -87.44974,
+    "lon": -5.00664
+   },
    "straightM": 0,
    "routeM": 0,
    "maxSlopeDeg": 4.8,
@@ -162,6 +194,10 @@
   "slopeCenterDeg": 1.98,
   "slopeP90Deg": 6.16,
   "ice": {
+   "target": {
+    "lat": -89.66985,
+    "lon": 129.8129
+   },
    "straightM": 0,
    "routeM": 0,
    "maxSlopeDeg": 2,
@@ -181,6 +217,10 @@
   "slopeCenterDeg": 2.54,
   "slopeP90Deg": 3.21,
   "ice": {
+   "target": {
+    "lat": -84.67492,
+    "lon": -48.72835
+   },
    "straightM": 0,
    "routeM": 0,
    "maxSlopeDeg": 2.5,

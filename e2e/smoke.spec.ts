@@ -108,3 +108,29 @@ test('the layout holds on a phone', async ({ page }) => {
   await page.getByRole('button', { name: 'Controles', exact: true }).click()
   await expect(page.getByRole('button', { name: /Mirar al Sol/ })).toBeVisible()
 })
+
+test('the planner finds the best landing per day and opens a pick in Orbit', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('lumen3d.tourSeen', '1')
+    sessionStorage.setItem('lumen3d.explained', '1')
+    localStorage.setItem('lumen3d.audience', 'planner')
+    localStorage.setItem('lumen3d.stage', 'plan')
+    localStorage.setItem(
+      'lumen3d.planner',
+      JSON.stringify({ fromMs: Date.UTC(2027, 2, 1), days: 14, minSunDays: 5 }),
+    )
+  })
+  await page.goto('/?lang=es')
+  await expect(page.getByRole('heading', { name: 'Planificar la misión' })).toBeVisible()
+  await expect(page.locator('button[aria-current="step"]')).toHaveText(/Planificar/)
+  // The first suggested ice target (next to the Shackleton rim) is selected from the list.
+  await page.getByLabel('Objetivos sugeridos').selectOption({ index: 1 })
+  await page.locator('.planner').getByRole('button', { name: 'Planificar', exact: true }).click()
+  const open = page.getByRole('button', { name: /Abrir el .* en Órbita/ }).first()
+  await expect(open).toBeVisible({ timeout: 90_000 })
+  await expect(page.getByText(/días con solución/)).toBeVisible()
+  await open.click()
+  await expect(page.locator('button[aria-current="step"]')).toHaveText(/Órbita/)
+  await expect(page).toHaveURL(/ice=-\d+\.\d+(,|%2C)-?\d+\.\d+/)
+  await expect(page).toHaveURL(/lat=-8\d\.\d+/)
+})

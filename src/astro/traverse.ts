@@ -734,12 +734,31 @@ export interface TraverseJobInput {
   dwellAtIceH?: number
 }
 
-/** Plan + real sky + simulation, as run by the worker. */
-export function computeTraverse(
+/** The date-independent part of a traverse job: the plan and its (lazily ray-marched) sky. */
+export interface PreparedTraverse {
+  plan: TraversePlan
+  sky: TraverseSkyFn
+}
+
+/**
+ * Plans the route and sets up its sky. Neither depends on the departure date or the power
+ * budget, so one prepared traverse can be simulated for many dates (the planner does).
+ */
+export function prepareTraverse(
   grids: readonly DemGrid[],
-  input: TraverseJobInput,
+  input: Pick<
+    TraverseJobInput,
+    | 'lat'
+    | 'lon'
+    | 'path'
+    | 'vehicleId'
+    | 'roverMaxSlopeDeg'
+    | 'linkMarginDeg'
+    | 'requireDsn'
+    | 'stepM'
+  >,
   illum?: IllumGrid,
-): TraverseResult {
+): PreparedTraverse {
   const vehicle = ROVER_VEHICLES[input.vehicleId]
   const landing = { lat: input.lat, lon: input.lon }
   const first = input.path[0]
@@ -757,21 +776,39 @@ export function computeTraverse(
     illum,
   })
   const { linkMarginDeg, requireDsn } = input
+  return { plan, sky: traverseSky(grids, plan, { linkMarginDeg, requireDsn }) }
+}
+
+/** Simulates a prepared traverse for one departure (`input` as given to `prepareTraverse`). */
+export function simulatePrepared(
+  { plan, sky }: PreparedTraverse,
+  input: TraverseJobInput,
+): TraverseResult {
+  const { linkMarginDeg, requireDsn } = input
   const result = simulateTraverse(
     plan,
     {
       startMs: input.startMs,
       profile: input.energy,
-      vehicle,
+      vehicle: ROVER_VEHICLES[input.vehicleId],
       vehicleId: input.vehicleId,
       linkMarginDeg,
       requireDsn,
       dwellAtIceH: input.dwellAtIceH,
     },
-    traverseSky(grids, plan, { linkMarginDeg, requireDsn }),
+    sky,
   )
   // Always the caller's landing point, so a result can be matched to its request.
   result.input.lat = input.lat
   result.input.lon = input.lon
   return result
+}
+
+/** Plan + real sky + simulation, as run by the worker. */
+export function computeTraverse(
+  grids: readonly DemGrid[],
+  input: TraverseJobInput,
+  illum?: IllumGrid,
+): TraverseResult {
+  return simulatePrepared(prepareTraverse(grids, input, illum), input)
 }

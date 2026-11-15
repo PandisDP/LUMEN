@@ -170,3 +170,83 @@ describe('hardware limits and science weight in the URL', () => {
     expect(state().scienceWeight).toBe(1)
   })
 })
+
+describe('ice target of a planner pick in the URL', () => {
+  const t = Date.UTC(2027, 2, 1)
+  const pick = customSiteInfo(-89.4403, -137.4833)
+  const target = { lat: -89.40444, lon: -140.07663 }
+  const rounded = { lat: -89.4044, lon: -140.0766 }
+
+  it("round-trips the active scenario's target as a top-level key", () => {
+    expect(stateToSearch()).not.toContain('ice=')
+    state().addCustomSite(pick)
+    state().updateScenario(state().activeId, { startMs: t, iceTarget: target })
+    const search = stateToSearch()
+    expect(new URLSearchParams(search).get('ice')).toBe('-89.4044,-140.0766')
+
+    state().reset()
+    state().setSites(sites)
+    applyUrl(search)
+    const sc = state().scenarios[0]
+    expect(sc.siteId).toBe(pick.id)
+    expect(sc.iceTarget).toEqual(rounded)
+    // Stable from here on: what is read back is what is written.
+    expect(stateToSearch()).toBe(search)
+  })
+
+  it('drops it with the site and ignores malformed values', () => {
+    state().addCustomSite(pick)
+    state().updateScenario(state().activeId, { iceTarget: target })
+    state().selectSite('cabeus')
+    expect(stateToSearch()).not.toContain('ice=')
+    for (const bad of ['nope', '-89.4', '-89.4,', '95,10', '-89.4,190', '1,2,3', ','])
+      applyUrl(`?site=cabeus&ice=${bad}`)
+    expect(state().scenarios[0].iceTarget).toBeUndefined()
+    applyUrl('?site=cabeus&ice=-84.7,-48.5')
+    expect(state().scenarios[0].iceTarget).toEqual({ lat: -84.7, lon: -48.5 })
+    // A link to another site without a target clears it.
+    applyUrl('?site=haworth')
+    expect(state().scenarios[0].iceTarget).toBeUndefined()
+  })
+
+  it('round-trips a target per scenario in Compare, next to the other overrides', () => {
+    const other = customSiteInfo(-89.4356, -137.5574)
+    state().setSites([...sites, pick, other])
+    state().setScenarios(
+      [
+        { siteId: pick.id, startMs: t, iceTarget: target },
+        { siteId: 'cabeus', startMs: t, missionDays: 20, linkMarginDeg: 3 },
+        { siteId: other.id, startMs: t + 86_400_000, iceTarget: { lat: 12.5, lon: 45.6789 } },
+      ],
+      0,
+    )
+    const search = stateToSearch()
+    const p = new URLSearchParams(search)
+    expect(p.has('ice')).toBe(false)
+    const items = p.get('s')!.split(',')
+    expect(items[0]).toMatch(/~i-89\.4044_-140\.0766$/)
+    expect(items[1]).not.toContain('~i')
+    expect(items[2]).toContain('~i12.5000_45.6789')
+
+    state().reset()
+    state().setSites(sites)
+    applyUrl(search)
+    const sc = state().scenarios
+    expect(sc.map((x) => x.siteId)).toEqual([pick.id, 'cabeus', other.id])
+    expect(sc.map((x) => x.iceTarget)).toEqual([rounded, undefined, { lat: 12.5, lon: 45.6789 }])
+    // The neighbouring tokens still decode: 'i' clashes with none of them.
+    expect(sc[1].missionDays).toBe(20)
+    expect(sc[1].linkMarginDeg).toBe(3)
+    expect(sc[0].missionDays).not.toBe(20)
+    expect(stateToSearch()).toBe(search)
+  })
+
+  it('parses the token on its own and skips a broken one', () => {
+    expect(parseScenarioList('cabeus@2027-03-01T00:00Z~i-84.7_-48.5~d30')).toEqual([
+      { siteId: 'cabeus', startMs: t, iceTarget: { lat: -84.7, lon: -48.5 }, missionDays: 30 },
+    ])
+    expect(parseScenarioList('cabeus@2027-03-01T00:00Z~ixx~l2')).toEqual([
+      { siteId: 'cabeus', startMs: t, linkMarginDeg: 2 },
+    ])
+  })
+})
