@@ -116,6 +116,19 @@
     -1260,
     -2240
    ]
+  },
+  "change-7": {
+   "source": "LROC QuickMap · LROC NAC (NASA/GSFC/ASU)",
+   "path": "data/imagery/nac/change-7/r{r}c{c}.jpg",
+   "rows": 2,
+   "cols": 2,
+   "tileSize": 1024,
+   "extent": [
+    19800,
+    -30340,
+    40280,
+    -9860
+   ]
   }
  },
  "globe": {
