@@ -1,3 +1,4 @@
+import { DAY_MS } from '../astro/constants.ts'
 import {
   type IceAccess,
   type IceSummary,
@@ -16,6 +17,7 @@ import {
   selectActiveScenario,
   useMissionStore,
 } from '../store/useMissionStore.ts'
+import { useRoverStore } from '../store/useRoverStore.ts'
 import { runIceAccess, runOptimize, runTraverse } from '../workers/astroClient.ts'
 import type { DemRef, IllumRef } from '../workers/protocol.ts'
 import { useAsync } from './useAsync.ts'
@@ -170,10 +172,13 @@ export function useIllumGrid(detail: SiteDetail | undefined) {
 const traverseCache = new Map<string, Promise<TraverseResult>>()
 
 /**
- * Rover drive from the scenario's landing point to the nearest permanently shadowed ground,
- * along the ice-access route (worker; only while `enabled`). The scenario's own energy profile
- * is the lander's, so the rover's budget and vehicle come from the preset `energyId`.
- * `departMs` is the mission time at which the rover leaves the lander.
+ * Rover round trip from the scenario's landing point to the nearest permanently shadowed
+ * ground along the ice-access route, the sampling there (`samples` × `sampleH` from the rover
+ * store) and the drive back (worker; only while `enabled`). The scenario's own energy profile
+ * is the lander's, so the rover's budget, vehicle and instrument power come from the preset
+ * `energyId`. `departMs` is the mission time at which the rover leaves the lander; the deadline
+ * to be back is always the end of the surface mission, counted from the landing
+ * (`scenario.startMs + missionDays`), whenever it departs.
  */
 export function useTraverse(
   scenario: Scenario,
@@ -186,6 +191,9 @@ export function useTraverse(
   const { linkMarginDeg, requireDsn } = scenario
   const ice = useIceAccess(detail, rover, scenario.iceTarget ?? null)
   const energy = energyPreset(energyId)?.profile
+  const samples = useRoverStore((s) => s.samples)
+  const sampleH = useRoverStore((s) => s.sampleH)
+  const deadlineMs = scenario.startMs + scenario.missionDays * DAY_MS
   const dems = detail ? demRefs(detail) : []
   const route = ice.data
   // useAsync keeps the previous point's route on screen while loading: wait for the current one.
@@ -199,7 +207,7 @@ export function useTraverse(
     dems.length > 0
   const key =
     enabled && available
-      ? `trv|${detail!.site.lat}:${detail!.site.lon}|${rover}|${departMs}|${energyId}|${linkMarginDeg}|${requireDsn}|${scenario.iceTarget ? `${scenario.iceTarget.lat},${scenario.iceTarget.lon}` : ''}`
+      ? `trv|${detail!.site.lat}:${detail!.site.lon}|${rover}|${departMs}|${energyId}|${linkMarginDeg}|${requireDsn}|${scenario.iceTarget ? `${scenario.iceTarget.lat},${scenario.iceTarget.lon}` : ''}|${samples}x${sampleH}|${deadlineMs}`
       : null
   const r = useAsync<TraverseResult>(key, () => {
     let p = traverseCache.get(key!)
@@ -215,6 +223,9 @@ export function useTraverse(
           roverMaxSlopeDeg: rover,
           linkMarginDeg,
           requireDsn,
+          samples,
+          sampleH,
+          deadlineMs,
         },
         dems,
         illumRef(detail!),
@@ -232,7 +243,10 @@ export function useTraverse(
     i.lat === detail.site.lat &&
     i.lon === detail.site.lon &&
     i.startMs === departMs &&
-    i.vehicleId === energyId
+    i.vehicleId === energyId &&
+    i.samples === samples &&
+    i.sampleH === sampleH &&
+    i.deadlineMs === deadlineMs
   return {
     /** A reachable route exists for this point and rover. */
     available,

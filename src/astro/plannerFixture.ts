@@ -62,6 +62,9 @@ export function fixtureProblem(patch: Partial<PlanProblem> = {}): PlanProblem {
     missionDays: 3,
     minSunDays: 1,
     roverId: 'rover',
+    // A light workload: the micro-rover's 600 Wh cannot power 3 × 2 h of sampling in the shadow.
+    samples: 1,
+    sampleH: 1,
     minRoverSocPct: 20,
     radiusM: 1000,
     hardware: { ...DEFAULT_LIMITS, minDtePct: 0 },

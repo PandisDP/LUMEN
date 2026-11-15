@@ -5,31 +5,54 @@ import { useRoverTraverse } from '../hooks/useRover.ts'
 import { type MsgKey, useT } from '../i18n/index.ts'
 import { useRoverStore } from '../store/useRoverStore.ts'
 import { useMissionStore } from '../store/useMissionStore.ts'
+import { usePlannerStore } from '../store/usePlannerStore.ts'
 import { formatDeg, formatDistance, formatHours, formatPct } from './format.ts'
 import { Busy } from './kit/Busy.tsx'
 import { Notice } from './kit/Notice.tsx'
 import { LevelTag } from './LevelTag.tsx'
 import { type Level, scienceLevel } from './levels.ts'
+import { type RoverOutcome, outcomeLevel, roverOutcome } from './roverView.ts'
 
-/** Whether the selected rover makes it to the ice, and a shortcut to watch the traverse. */
+const CARD_KEY: Record<RoverOutcome, MsgKey> = {
+  ok: 'rover.card.ok',
+  'low-battery': 'rover.card.lowBattery',
+  'no-route': 'rover.card.noRoute',
+  'battery-out': 'rover.card.batteryOut',
+  samples: 'rover.card.samples',
+  'no-return': 'rover.card.noReturn',
+  late: 'rover.card.late',
+}
+
+/**
+ * Whether the selected rover does the whole mission (out to the ice, every sample and back to
+ * the lander in time, above the planner's minimum battery), and a shortcut to watch the trip.
+ */
 function RoverLine() {
   const t = useT()
   const roverId = useRoverStore((s) => s.roverId)
+  const minSocPct = usePlannerStore((s) => s.minRoverSocPct)
   const { data } = useRoverTraverse()
   if (!data) return null
   const s = data.summary
+  const outcome = roverOutcome(s, minSocPct)
   const see = () => {
     useRoverStore.getState().setAutoDeploy('skip-descent')
     useMissionStore.getState().setView('landing')
   }
   return (
     <p className="card__sub">
-      <LevelTag level={!s.reaches ? 'bad' : s.minSocPct < 25 ? 'warn' : 'good'} />{' '}
+      <LevelTag level={outcomeLevel(outcome)} />{' '}
       {t('rover.card', {
         name: t(`rover.vehicle.${roverId}` as MsgKey),
-        verdict: s.reaches
-          ? t('rover.card.ok', { h: formatHours(s.driveH + s.waitH), soc: formatPct(s.minSocPct) })
-          : t('rover.card.fail', { soc: formatPct(s.minSocPct) }),
+        verdict: t(CARD_KEY[outcome], {
+          samples: t(s.samples === 1 ? 'rover.sum.sample' : 'rover.sum.samples', { n: s.samples }),
+          h: formatHours(s.totalH),
+          soc: formatPct(s.minSocPct),
+          min: formatPct(minSocPct),
+          done: s.samplesDone,
+          total: s.samples,
+          late: formatHours(-(s.marginH ?? 0)),
+        }),
       })}{' '}
       <button type="button" className="linklike" onClick={see}>
         {t('rover.card.see')}

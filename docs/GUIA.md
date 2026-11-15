@@ -77,11 +77,23 @@ En la pantalla de bienvenida (**¿Quién eres?**) y en la barra superior (**Modo
 
 En modo Planificador el proceso empieza un paso antes: **Planificar → Órbita → Superficie → Aterrizaje → Decidir**. En vez de elegir un sitio y probar fechas, se parte de **dónde está el hielo** y el sistema busca **dónde y cuándo aterrizar**.
 
-1. **Qué misión**: el objetivo con hielo (de la lista, por coordenadas o con clic en el mapa), el rango de fechas a analizar (hasta 90 días), la duración en superficie, los días de **luz continua** exigidos tras aterrizar, el rover, su batería mínima y el radio de búsqueda. Las restricciones de hardware, el margen de enlace y la opción DSN son los de siempre y se editan ahí mismo.
-2. **Cuándo**: un **calendario** con la mejor puntuación de cada día (✕ = sin solución, con el motivo) y la **tabla día a día**: punto de aterrizaje, ruta al hielo, puntuación, energía, enlace, noche más larga, luz continua, batería mínima del rover y veredicto. Se ordena por cualquier columna y se exporta a CSV.
-3. **Dónde**: el mapa del objetivo con la sombra permanente, los puntos candidatos y el elegido del día, y las tarjetas de **los 5 mejores días**. **Abrir en Órbita** carga ese punto y esa fecha y continúa el flujo normal; el rover irá a ese hielo. Marca hasta cuatro días para **Enviar a Comparar**.
+1. **Qué misión**: el objetivo con hielo (de la lista, por coordenadas o con clic en el mapa), el rango de fechas a analizar (hasta 90 días), la duración en superficie, los días de **luz continua** exigidos tras aterrizar, el rover (por defecto el **utilitario** de 350 kg), el trabajo en el hielo (**Muestras a recoger**, de 1 a 10, por defecto 3, y **Horas por muestra**, de 0,5 a 6, por defecto 2), la batería mínima del rover y el radio de búsqueda. Las restricciones de hardware, el margen de enlace y la opción DSN son los de siempre y se editan ahí mismo.
+2. **Cuándo**: un **calendario** con la mejor puntuación de cada día (✕ = sin solución, con el motivo) y la **tabla día a día**: punto de aterrizaje, **ruta ida y vuelta** (los metros que el rover recorre en total), puntuación, energía, enlace, noche más larga, luz continua, **muestras** recogidas de las pedidas, **regreso** (cuánto dura el viaje completo y el margen que queda hasta el fin de la misión), batería mínima del rover en todo el viaje y veredicto. Se ordena por cualquier columna y se exporta a CSV.
+3. **Dónde**: el mapa del objetivo con la sombra permanente, los puntos candidatos y el elegido del día, y las tarjetas de **los 5 mejores días**, cada una con el resumen del rover («3 muestras · vuelve en 13 h · margen 13 d · batería mín. 47 %»). **Abrir en Órbita** carga ese punto y esa fecha y continúa el flujo normal; el rover irá a ese hielo. Marca hasta cuatro días para **Enviar a Comparar**.
 
-Cómo decide: alrededor del objetivo se preseleccionan hasta 60 puntos de terreno seguro fuera de la sombra permanente. Para cada día se descartan los que no cumplen (sin Sol al aterrizar, luz continua insuficiente, noche o enlace fuera de los límites, pendiente, sin ruta, o rover que no llega con la batería mínima) y gana el de mayor puntuación de misión. Si ningún punto cumple, el día queda sin solución y se indica qué restricción lo impide.
+Cómo decide: alrededor del objetivo se preseleccionan hasta 60 puntos de terreno seguro fuera de la sombra permanente. Para cada día se descartan los que no cumplen (sin Sol al aterrizar, luz continua insuficiente, noche o enlace fuera de los límites, pendiente, sin ruta, o un rover que no completa su viaje) y gana el de mayor puntuación de misión; a igual puntuación, el día con más margen de tiempo al regreso y, después, con más batería. Si ningún punto cumple, el día queda sin solución y se indica qué restricción lo impide.
+
+El viaje del rover es **de ida y vuelta** y es un requisito obligatorio: tiene que llegar al hielo, recoger **todas** las muestras pedidas y estar de vuelta junto al módulo **antes del fin de la misión**, sin bajar nunca de la batería mínima. Cuando falla, el aviso dice en qué punto y propone el arreglo con un botón:
+
+| Motivo                                     | Qué pasó                                                                              | Arreglos que se ofrecen                                                          |
+| ------------------------------------------ | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| No llega al hielo                          | La batería se agota por el camino y no puede recargar                                 | Usar el rover utilitario o reducir el radio para aterrizar más cerca             |
+| No completa las muestras                   | Llega, pero la batería no alcanza para todo el muestreo: en el hielo no hay Sol       | Usar el rover utilitario, recoger menos muestras o reducir el tiempo por muestra |
+| No vuelve                                  | Recoge las muestras, pero no le queda batería para el regreso                         | Usar el rover utilitario, recoger menos muestras o reducir el radio              |
+| Vuelve tarde                               | Regresa después del fin de la misión (por ejemplo, tras muchas paradas para recargar) | Alargar la misión o recoger menos muestras                                       |
+| Vuelve, pero con la batería bajo el mínimo | Completa el viaje a tiempo, pero en algún momento baja de la batería mínima exigida   | Usar el rover utilitario, bajar la batería mínima o recoger menos muestras       |
+
+Con los valores por defecto (3 muestras de 2 h) el **micro-rover de 40 kg no completa el viaje desde ningún sitio**: por eso el rover por defecto es el utilitario. El micro-rover sigue disponible para misiones con menos trabajo (una o dos muestras cortas desde un punto cercano al hielo).
 
 Límites: optimiza la fase de superficie (no el viaje Tierra–Luna); el objetivo debe estar en una zona con relieve LOLA de 20 m; exigir 15 días de luz continua deja pocos días válidos fuera del verano polar.
 
@@ -156,25 +168,50 @@ Además:
 
 - **Vista desde la nave** o **Órbita alrededor** del lander (cámara que gira en torno al módulo).
 - Se muestra la **luz directa en los paneles** (superior y lateral orientado al Sol).
-- **Desplegar rover** inicia el recorrido hasta el hielo (siguiente apartado). **Misión completa**, disponible desde el principio, encadena descenso y recorrido.
+- **Desplegar rover** inicia el viaje de ida y vuelta al hielo (siguiente apartado). **Misión completa**, disponible desde el principio, encadena descenso y recorrido.
 
 ![Módulo en superficie](img/modulo.jpg)
 
 El módulo es un lander tipo CLPS (~4 m de alto) con aislamiento dorado, paneles solares, propulsores RCS, tanques y antena. Se asienta sobre la pendiente real del terreno y su panel principal mira al acimut del perfil energético, así que las luces y sombras que ves son las de la fecha elegida.
 
-### Recorrido del rover hasta el hielo
+### Recorrido del rover: ida al hielo, muestreo y regreso
 
-Si desde el sitio hay ruta transitable hasta una zona de sombra permanente (tarjeta **Acceso a hielo**), el rover la recorre en la escena:
+Si desde el sitio hay ruta transitable hasta una zona de sombra permanente (tarjeta **Acceso a hielo**), el rover hace en la escena el viaje completo: va hasta el hielo, recoge las muestras y vuelve al módulo por el mismo camino.
 
-- **Qué se ve**: el rover baja por las rampas del módulo y sigue la ruta punteada. Son dos vehículos detallados: un micro-rover de cuatro ruedas y un utilitario de seis con suspensión articulada, panel que se orienta al Sol, antena que apunta a la Tierra cuando hay enlace y un taladro que baja al llegar al hielo. Deja huellas y levanta polvo, y alrededor hay rocas y cráteres pequeños. La luz y la sombra son las de la hora de misión, que **avanza con el rover**; al entrar en sombra enciende los faros.
-- **Telemetría**: distancia recorrida y restante, pendiente, velocidad, **batería**, potencia solar y consumo, temperatura, si está al Sol, en sombra o en **sombra permanente**, y si tiene **enlace con la Tierra**. Debajo, el perfil de altura de la ruta con el tramo en sombra permanente en azul.
-- **Resumen**: si llega, en cuánto tiempo, la batería mínima, las horas en sombra y el porcentaje de tiempo con enlace. Si la batería cae bajo el umbral de hibernación, el rover se detiene a recargar; si no puede, no llega.
-- **Controles**: reproducir, reiniciar, velocidad (de 2 min a 1 h de misión por segundo), **Rover** (micro-rover de 40 kg o utilitario de 350 kg, con su perfil energético) y **Cámara** (seguimiento, mástil o cenital). Arrastra para girar alrededor del rover.
+- **Qué se ve**: el rover baja por las rampas del módulo y sigue la ruta punteada. Son dos vehículos detallados: un micro-rover de cuatro ruedas y un utilitario de seis con suspensión articulada, panel que se orienta al Sol y antena que apunta a la Tierra cuando hay enlace. El viaje tiene tres partes:
+  - **Ida**: avanza hasta el hielo dejando huellas y levantando polvo; al entrar en sombra enciende los faros.
+  - **Muestreo**: se detiene sobre el hielo y el **taladro trabaja** durante todo el tiempo de cada muestra. Al terminar la última gira para mirar hacia el módulo.
+  - **Regreso**: vuelve por la misma ruta y deja un **segundo juego de huellas** junto al de ida. El recorrido termina cuando se detiene junto al módulo.
+
+  La luz y la sombra son las de la hora de misión, que **avanza con el rover**.
+
+- **Estado**: una etiqueta dice en cada momento qué hace el rover: **Yendo al hielo**, **Recargando** (parado al Sol hasta recuperar batería), **Muestra 2 de 3**, **Regresando** y **✓ De vuelta en el módulo**. Si el viaje fracasa, la etiqueta lo dice con ▼: **Sin batería**, **No completó las muestras** o **Volvió tarde**. Al lado, un contador marca las muestras ya recogidas (●●○ 2/3 muestras).
+- **Telemetría**: distancia recorrida, lo que **falta** (al hielo durante la ida, al módulo durante el regreso), pendiente, velocidad, **batería**, potencia solar y consumo, temperatura, si está al Sol, en sombra o en **sombra permanente**, y si tiene **enlace con la Tierra**. Debajo, el perfil de altura de la ruta con el tramo en sombra permanente en azul y el punto de giro marcado: el cursor llega hasta el hielo y vuelve.
+- **Resumen**: si todo sale bien, una línea como «3 muestras · vuelve en 13 h 8 min · margen 13 d 10 h · batería mín. 47 %»: las muestras recogidas, lo que dura el viaje completo, el tiempo que sobra hasta el fin de la misión y la batería más baja de todo el viaje. Si falla, un aviso explica el motivo y ofrece el arreglo con un botón: **Usar el rover utilitario**, **Recoger menos muestras** o **Reducir el tiempo por muestra**.
+- **Controles**: reproducir, reiniciar, velocidad (de 2 min a 1 h de misión por segundo), deslizador de progreso (cubre el viaje entero), **Rover** (utilitario de 350 kg, el de por defecto, o micro-rover de 40 kg, cada uno con su perfil energético) **Muestras** y **Por muestra** (cuántas muestras recoge y cuánto trabaja en cada una; son los mismos datos del paso **Planificar** y se recuerdan entre visitas) y **Cámara** (seguimiento, mástil o cenital). Arrastra para girar alrededor del rover. Al cambiar el rover o el trabajo, el recorrido empieza de nuevo.
 - La tarjeta **Acceso a hielo** del panel derecho resume el resultado y enlaza con **Ver el recorrido**, que abre esta vista sin pasar por el descenso. El enlace compartible lleva `rover=1`.
+
+**Por qué puede fallar.** El viaje solo cuenta como logrado si el rover llega, recoge todas las muestras y vuelve antes del fin de la misión:
+
+| Motivo                   | Qué pasó                                                                                               | Qué probar                                                                |
+| ------------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Sin batería              | Se agota en la ida o en el regreso y no hay Sol suficiente para recargar                               | El rover utilitario, un sitio con ruta más corta u otra fecha con más Sol |
+| No completó las muestras | Llegó al hielo, pero la batería bajó al mínimo durante el muestreo y allí no puede recargar            | El rover utilitario, menos muestras o menos horas por muestra             |
+| Volvió tarde             | Llegó al módulo después del fin de la misión, casi siempre por largas paradas de recarga               | Una misión más larga, menos trabajo en el hielo u otra fecha de alunizaje |
+| Batería bajo el mínimo   | Completó el viaje a tiempo, pero en algún momento bajó de la batería mínima exigida (20 % por defecto) | El rover utilitario, menos trabajo en el hielo o una ruta más corta       |
+
+Como referencia, desde el borde de Shackleton (ruta de 1,4 km, alunizaje el 1 de marzo de 2027, misión de 14 días) el rover utilitario recoge 3 muestras de 2 h y vuelve en 13,1 h con una batería mínima del 47 %; el micro-rover llega, pero solo completa una muestra.
 
 El detalle del suelo por debajo de la resolución de LOLA (rocas, cráteres de metros, ondulación) es **ilustrativo**: no entra en las pendientes, la ruta ni la energía. La cámara ajusta la exposición como lo haría una real, porque con el Sol rasante el suelo queda casi sin luz directa.
 
-El modelo es una estimación: velocidad reducida por la pendiente, potencia de tracción por peso y rodadura, horizonte calculado cada ~200 m de ruta. No simula hundimiento ni patinaje.
+**El modelo y sus supuestos.** Es una estimación: velocidad reducida por la pendiente, potencia de tracción por peso y rodadura, horizonte calculado cada ~200 m de ruta. No simula hundimiento ni patinaje. Además:
+
+- **Consumo del instrumento**: mientras toma una muestra, el rover gasta su consumo normal más el del taladro y el análisis: 30 W en el micro-rover y 150 W en el utilitario. Son supuestos razonables, no datos de un instrumento concreto, igual que el tiempo por muestra.
+- **Sin recarga en sombra permanente**: en el hielo no hay Sol, así que el muestreo se paga solo con batería. En la ida y el regreso, si la batería baja demasiado, el rover para al Sol a recargar; durante el muestreo no puede, y el viaje fracasa.
+- **Plazo**: el rover debe estar junto al módulo antes del **fin de la misión** (fecha de alunizaje + duración en superficie).
+- **Regreso por la misma ruta**: se recalculan la energía (las subidas de la ida son bajadas a la vuelta) y la posición del Sol a esa hora.
+- **Lo que no se simula**: la entrega de las muestras al módulo y el despegue de vuelta a la Tierra. El viaje se da por logrado cuando el rover llega junto al módulo dentro del plazo.
+- El frío de la sombra permanente se muestra como dato; lo que limita el viaje es la batería.
 
 ## 7. Sitios y escenarios (panel izquierdo)
 
@@ -303,6 +340,7 @@ El mismo glosario está dentro de la app, al final del panel **¿Por qué?**.
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | Pantalla negra en Superficie               | Es de noche en el sitio (Sol bajo el horizonte). Mueve el tiempo o activa **Pendientes**, que se ve siempre           |
 | No aparecen Pendientes, Elipse ni Reubicar | Coordenadas personalizadas sin terreno LOLA (fuera del polo y lejos de un sitio curado)                               |
+| El rover «No completó las muestras»        | En el hielo no puede recargar. Usa el rover utilitario, o pide menos muestras o menos horas por muestra               |
 | Los números aparecen atenuados un momento  | Se están recalculando; los valores anteriores se muestran hasta tener los nuevos                                      |
 | La escena va lenta                         | Cierra paneles que no uses (las gráficas no se calculan si su panel está minimizado) o reduce el tamaño de la ventana |
 

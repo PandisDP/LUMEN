@@ -4,7 +4,7 @@ import type { PlanDay, PlanResult } from '../astro/plannerTypes.ts'
 import { useLang, useT } from '../i18n/index.ts'
 import { usePlannerStore } from '../store/usePlannerStore.ts'
 import { LEVEL_GLYPH } from './bands.ts'
-import { formatDistance, formatHours, formatPct } from './format.ts'
+import { formatHours, formatPct } from './format.ts'
 import { scoreLevel } from './levels.ts'
 import {
   VIOLATION_KEY,
@@ -14,6 +14,7 @@ import {
   formatPlanMonth,
   formatPlanWeekday,
   rankByDay,
+  samplesKey,
   scoreColor,
   weekdayNames,
 } from './plannerView.ts'
@@ -70,7 +71,8 @@ function DayTip({ ms, day, rank }: { ms: number; day: PlanDay | undefined; rank?
           </span>
           <span>
             {t('plan.tip.rover', {
-              route: formatDistance(b.routeM),
+              samples: t(samplesKey(b.rover.samplesDone), { n: b.rover.samplesDone }),
+              h: formatHours(b.rover.totalH),
               soc: formatPct(b.rover.minSocPct),
             })}
           </span>

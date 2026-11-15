@@ -133,13 +133,14 @@ export const PLAN_DATE_RANGE = { minMs: Date.UTC(2026, 0, 1), maxMs: Date.UTC(20
 /**
  * The problem to solve, from the planner's own inputs plus the mission settings of the active
  * scenario (mission length, hardware limits, link margin, DSN, science weight) and the selected
- * rover. With missing or invalid inputs: no problem, and why.
+ * rover with its work at the ice (samples and hours per sample). With missing or invalid inputs: no problem, and why.
  */
 export function buildProblem():
   { ok: true; problem: PlanProblem } | { ok: false; problem: null; reason: PlanInputIssue } {
   const no = (reason: PlanInputIssue) => ({ ok: false as const, problem: null, reason })
   const p = usePlannerStore.getState()
   const sc = selectActiveScenario(useMissionStore.getState())
+  const rover = useRoverStore.getState()
   const { target } = p
   if (!target || !Number.isFinite(target.lat) || !Number.isFinite(target.lon))
     return no('no-target')
@@ -161,7 +162,9 @@ export function buildProblem():
       days: p.days,
       missionDays: sc.missionDays,
       minSunDays: p.minSunDays,
-      roverId: useRoverStore.getState().roverId,
+      roverId: rover.roverId,
+      samples: rover.samples,
+      sampleH: rover.sampleH,
       minRoverSocPct: p.minRoverSocPct,
       radiusM: p.radiusM,
       hardware: { ...sc.hardwareLimits },

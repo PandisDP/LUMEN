@@ -14,9 +14,11 @@ import {
   VIOLATION_KEY,
   formatPlanWeekday,
   formatSpan,
+  marginLevel,
   planCsv,
   planFileName,
   rankByDay,
+  roundTripM,
   sortDays,
 } from './plannerView.ts'
 
@@ -30,16 +32,19 @@ const TIGHT_KEY: Record<Constraint, MsgKey> = {
 const COLUMNS: { label: MsgKey; short?: MsgKey; key: SortKey; num?: boolean }[] = [
   { label: 'plan.col.date', key: 'date' },
   { label: 'plan.col.score', short: 'plan.th.score', key: 'score', num: true },
+  // The rover's round trip: distance, samples, time back at the lander, lowest battery.
   { label: 'plan.col.route', short: 'plan.th.route', key: 'route', num: true },
+  { label: 'plan.col.samples', short: 'plan.th.samples', key: 'samples', num: true },
+  { label: 'plan.col.return', short: 'plan.th.return', key: 'return', num: true },
+  { label: 'plan.col.battery', short: 'plan.th.battery', key: 'battery', num: true },
   { label: 'plan.col.energy', key: 'energy', num: true },
   { label: 'plan.col.dte', short: 'plan.th.dte', key: 'dte', num: true },
   { label: 'plan.col.night', short: 'plan.th.night', key: 'night', num: true },
   { label: 'plan.col.light', short: 'plan.th.light', key: 'light', num: true },
-  { label: 'plan.col.battery', short: 'plan.th.battery', key: 'battery', num: true },
   { label: 'plan.col.verdict', key: 'verdict' },
 ]
 
-function Row({ day, rank }: { day: PlanDay; rank?: number }) {
+function Row({ day, rank, samples }: { day: PlanDay; rank?: number; samples: number }) {
   const t = useT()
   const lang = useLang()
   const selected = usePlannerStore((s) => s.selectedDayMs === day.dayMs)
@@ -88,14 +93,21 @@ function Row({ day, rank }: { day: PlanDay; rank?: number }) {
           <td className="ptable__num ptable__score">
             <LevelTag level={scoreLevel(b.score)} /> {Math.round(b.score)}
           </td>
-          <td className="ptable__num">{formatDistance(b.routeM)}</td>
+          <td className="ptable__num">{formatDistance(roundTripM(b))}</td>
+          <td className="ptable__num">
+            {b.rover.samplesDone}/{samples}
+          </td>
+          <td className="ptable__num ptable__return">
+            <LevelTag level={marginLevel(b.rover.marginH)} /> {formatSpan(b.rover.totalH)}
+            <span className="ptable__note ptable__sub">
+              {t('plan.table.margin', { t: formatSpan(b.rover.marginH ?? NaN) })}
+            </span>
+          </td>
+          <td className="ptable__num">{formatPct(b.rover.minSocPct)}</td>
           <td className="ptable__num">{formatPct(b.energyPct)}</td>
           <td className="ptable__num">{formatPct(b.dtePct)}</td>
-          <td className="ptable__num">
-            {b.longestDarkH > 0 ? formatSpan(b.longestDarkH) : t('night.none')}
-          </td>
+          <td className="ptable__num">{formatSpan(b.longestDarkH)}</td>
           <td className="ptable__num">{formatSpan(b.sunFromLandingH)}</td>
-          <td className="ptable__num">{formatPct(b.rover.minSocPct)}</td>
           <td className="ptable__verdict">
             <LevelTag level={b.verdict} /> {t(`hw.verdict.${b.verdict}`)}
             {b.tight.length > 0 && (
@@ -106,7 +118,7 @@ function Row({ day, rank }: { day: PlanDay; rank?: number }) {
           </td>
         </>
       ) : (
-        <td colSpan={8} className="ptable__none">
+        <td colSpan={COLUMNS.length - 1} className="ptable__none">
           <span aria-hidden>✕</span> {t('plan.noSolution')}
           {day.mainViolation && (
             <span className="ptable__note">: {t(VIOLATION_KEY[day.mainViolation])}</span>
@@ -192,7 +204,12 @@ export function PlannerTable({ result }: { result: PlanResult }) {
           </thead>
           <tbody>
             {rows.map((d) => (
-              <Row key={d.dayMs} day={d} rank={rank.get(d.dayMs)} />
+              <Row
+                key={d.dayMs}
+                day={d}
+                rank={rank.get(d.dayMs)}
+                samples={result.problem.samples}
+              />
             ))}
           </tbody>
         </table>

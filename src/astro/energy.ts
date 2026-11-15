@@ -31,6 +31,12 @@ export interface EnergyProfile {
   /** Below this state of charge the craft drops to survival mode (%). */
   hibernateBelowPct: number
   initialSocPct: number
+  /**
+   * Rovers only: power of the sampling instrument (drill plus analysis), drawn on top of
+   * `activeW` while the rover works on a sample at the ice (W). Absent = 0. Not part of the
+   * profile's URL form (`encodeProfile`): it comes with the rover preset.
+   */
+  sampleW?: number
 }
 
 /** Cosine factor of the array for a Sun at (az, el), before the visible-disc fraction. */

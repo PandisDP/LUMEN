@@ -1,7 +1,7 @@
 import { DEFAULT_LIMITS, type Verdict } from '../astro/hardware.ts'
 import type { ScenarioMetrics } from '../astro/metrics.ts'
 import { SLOPE_CAUTION_DEG } from '../astro/slope.ts'
-import type { RoverId } from '../astro/traverse.ts'
+import { type RoverId, SAMPLING_DEFAULTS } from '../astro/traverse.ts'
 import type { MsgKey } from '../i18n/index.ts'
 import type { PresetScenario } from './presets.ts'
 import { DEFAULT_ENERGY_ID } from './energyProfiles.ts'
@@ -37,8 +37,21 @@ export interface ChallengeState {
   slopeP90Deg?: number
   /** Rover access to the nearest permanently shadowed ground. */
   ice?: { reachable: boolean; routeM: number | null; insidePsr: boolean }
-  /** Rover traverse to the ice, once simulated. */
-  rover?: { reaches: boolean; minSocPct: number }
+  /**
+   * Rover round trip to the ice, once simulated: drive there, take the samples, drive back.
+   * `minSocPct` is the lowest battery of the whole trip (or of what it managed to do).
+   */
+  rover?: {
+    /** It arrives at the ice. */
+    reaches: boolean
+    /** Samples asked for and samples it finished. */
+    samples: number
+    samplesDone: number
+    /** It is back at the lander, and before the surface mission ends. */
+    returns: boolean
+    onTime: boolean
+    minSocPct: number
+  }
   descent: {
     /** The descent on screen reached the ground. */
     landed: boolean
@@ -61,7 +74,11 @@ export interface ChallengeSetupCtx {
     setOffset: (hours: number) => void
   }
   descent: { setMode: (mode: 'physics' | 'kinematic') => void; setVehicle: (id: string) => void }
-  rover: { setRover: (id: RoverId) => void }
+  rover: {
+    setRover: (id: RoverId) => void
+    setSamples: (samples: number) => void
+    setSampleH: (hours: number) => void
+  }
 }
 
 export interface Goal {
@@ -138,9 +155,15 @@ function begin(
  *    that month (Shackleton rim 125 h: just over), and the rim 0–40 h in January–February.
  *  - landing: the propellant margin depends on the vehicle, not on the site: heavy 18.0 %,
  *    CLPS-class 25.4 %, small 34.7 %. Nobile rim has a p90 slope of 16.6° (limit 15°).
- *  - ice: Chang'e-7 has no route to a PSR within 2 km. From 2027-03-15 the standard rover
- *    reaches the ice with ≥ 30 % from Mons Mouton (74 %), the connecting ridge (51 %) and,
- *    barely, the Shackleton rim; de Gerlache (20 %), Malapert (27 %) and Nobile (28 %) do not.
+ *  - ice (round trip, landing 2027-03-15, 14 days): Chang'e-7 has no route to a PSR within
+ *    2 km. With the starting workload (3 samples × 2 h) the micro-rover never finishes: it
+ *    completes 0–2 samples at every site and cannot recharge in the shadow. The utility rover
+ *    does the whole trip from every candidate with a route; its lowest battery is Mons Mouton
+ *    57 %, Nobile rim 2 54 %, connecting ridge 48 %, Shackleton rim 41 %, Malapert 40 %, Nobile
+ *    rim 40 %, de Gerlache 37 %. The micro-rover also solves it with less work from the closest
+ *    sites: 3 × 1 h from Mons Mouton (45 %), 1 × 2 h from Mons Mouton (61 %) or Nobile rim 2
+ *    (45 %), 1 × 1 h from the connecting ridge (31 %). With too little margin it does not:
+ *    2 × 2 h from Mons Mouton comes back with 28 %, 3 × 1 h from Nobile rim 2 with 28 %.
  */
 export const CHALLENGES: readonly Challenge[] = [
   {
@@ -287,7 +310,10 @@ export const CHALLENGES: readonly Challenge[] = [
         missionDays: L.shortMissionDays,
         view: 'micro',
       })
+      // The trip that cannot be done: the small rover with the full default workload.
       ctx.rover.setRover('rover')
+      ctx.rover.setSamples(SAMPLING_DEFAULTS.samples)
+      ctx.rover.setSampleH(SAMPLING_DEFAULTS.sampleH)
     },
     goals: [
       {
@@ -300,15 +326,26 @@ export const CHALLENGES: readonly Challenge[] = [
           s.ice?.reachable && s.ice.routeM != null ? `${Math.round(s.ice.routeM)} m` : undefined,
       },
       {
+        id: 'samples',
+        labelKey: 'challenge.ice.goal.samples',
+        hintKey: 'challenge.ice.hint.samples',
+        check: (s) => sampled(s),
+        current: (s) =>
+          iceRoute(s) && s.rover ? `${s.rover.samplesDone} / ${s.rover.samples}` : undefined,
+      },
+      {
+        id: 'return',
+        labelKey: 'challenge.ice.goal.return',
+        hintKey: 'challenge.ice.hint.return',
+        check: (s) => roundTrip(s),
+      },
+      {
         id: 'battery',
         labelKey: 'challenge.ice.goal.battery',
         hintKey: 'challenge.ice.hint.battery',
-        check: (s) =>
-          iceRoute(s) &&
-          s.rover !== undefined &&
-          s.rover.reaches &&
-          s.rover.minSocPct >= L.roverSocPct,
-        current: (s) => pct(s.rover?.minSocPct),
+        // Over the whole trip: a rover that stops halfway has not shown its lowest battery yet.
+        check: (s) => roundTrip(s) && s.rover!.minSocPct >= L.roverSocPct,
+        current: (s) => (iceRoute(s) ? pct(s.rover?.minSocPct) : undefined),
       },
     ],
   },
@@ -316,6 +353,17 @@ export const CHALLENGES: readonly Challenge[] = [
 
 function iceRoute(s: ChallengeState) {
   return !!s.ice && s.ice.reachable && !s.ice.insidePsr && (s.ice.routeM ?? 0) > 0
+}
+
+/** The rover drove to the ice and finished every sample it was asked for. */
+function sampled(s: ChallengeState) {
+  const r = s.rover
+  return iceRoute(s) && !!r && r.reaches && r.samples > 0 && r.samplesDone >= r.samples
+}
+
+/** ...and it is back at the lander before the surface mission ends. */
+function roundTrip(s: ChallengeState) {
+  return sampled(s) && s.rover!.returns && s.rover!.onTime
 }
 
 export const findChallenge = (id: string | null | undefined) => CHALLENGES.find((c) => c.id === id)

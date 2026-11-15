@@ -33,7 +33,8 @@ import {
  * and its rover route to the ice do not depend on the date, so they are computed once per
  * candidate (`prepareCandidates`); one hourly series per candidate then covers the whole range
  * of dates (`evaluateRange`), and each day only filters, ranks and drives the rover for its best
- * candidates (`planDay`). The shortlisted days are finally recomputed the way the views do
+ * candidates (`planDay`): out to the ice, the sampling and back before the mission ends (all
+ * required). The shortlisted days are finally recomputed the way the views do
  * (`refinePick`), so a card shows the figures the user finds on opening it.
  *
  * Pure: no DOM, no worker APIs. The heavy per-candidate data stays in `PlanPrepared`, out of
@@ -72,8 +73,13 @@ export const PLAN_STAGES: readonly PlanViolation[] = [
   'night',
   'dte',
   'rover-unreachable',
+  'rover-samples',
+  'rover-no-return',
+  'rover-late',
   'rover-battery',
 ]
+/** The stages decided by the rover's round trip (the tail of PLAN_STAGES). */
+export const PLAN_ROVER_STAGES: readonly PlanViolation[] = PLAN_STAGES.slice(-5)
 
 /** What is kept in memory per plan, aligned with `candidates`. */
 export interface PlanInternals {
@@ -91,7 +97,7 @@ export interface PlanInternals {
   scienceScore: number[]
   /** Route plan and sky per candidate and rover settings (built on first use). */
   traverses: Map<string, PreparedTraverse>
-  /** Traverse summaries per candidate, rover settings and day. */
+  /** Traverse summaries per candidate, rover settings, workload, mission length and day. */
   roverCache: Map<string, TraverseSummary>
 }
 
@@ -325,16 +331,25 @@ function traverseJob(prepared: PlanPrepared, problem: PlanProblem, k: number, da
     roverMaxSlopeDeg: problem.hardware.roverMaxSlopeDeg,
     linkMarginDeg: problem.linkMarginDeg,
     requireDsn: problem.requireDsn,
+    // The instrument's power comes with the rover's profile (`energy.sampleW`).
+    samples: problem.samples,
+    sampleH: problem.sampleH,
+    // Back at the lander before the surface mission ends.
+    deadlineMs: dayMs + problem.missionDays * DAY_MS,
   }
   return job
 }
 
-/** The rover drive of candidate k leaving at `dayMs` (same job as the app's; cached per run). */
+/**
+ * The rover's round trip of candidate k leaving at `dayMs` (same job as the app's; cached per
+ * run). The departure is the landing instant and the deadline the end of the surface mission.
+ */
 function roverSummary(prepared: PlanPrepared, problem: PlanProblem, k: number, dayMs: number) {
   const { internals } = prepared
-  // The plan and its sky depend on the rover and the link settings, not on the date.
+  // The plan and its sky depend on the rover and the link settings, not on the date nor on the
+  // work asked for; the simulated trip depends on all of them and on the deadline.
   const tKey = `${k}:${problem.roverId}:${problem.linkMarginDeg}:${problem.requireDsn}`
-  const key = `${tKey}:${dayMs}`
+  const key = `${tKey}:${problem.samples}:${problem.sampleH}:${problem.missionDays}:${dayMs}`
   let s = internals.roverCache.get(key)
   if (!s) {
     const job = traverseJob(prepared, problem, k, dayMs)
@@ -351,11 +366,26 @@ function roverSummary(prepared: PlanPrepared, problem: PlanProblem, k: number, d
 
 const roverOf = (s: TraverseSummary): PlanPick['rover'] => ({
   reaches: s.reaches,
+  samplesDone: s.samplesDone,
+  returns: s.returns,
   minSocPct: s.minSocPct,
-  travelH: s.driveH + s.waitH,
+  endSocPct: s.endSocPct,
+  travelH: s.outDriveH + s.outWaitH,
+  totalH: s.totalH,
+  marginH: s.marginH,
   hoursInShadow: s.hoursInShadow,
   dtePct: s.dtePct,
 })
+
+/** Why a simulated round trip does not make a day viable, or null when it does. */
+export function roverViolation(s: TraverseSummary, minRoverSocPct: number): PlanViolation | null {
+  if (!s.reaches) return 'rover-unreachable'
+  if (s.samplesDone < s.samples) return 'rover-samples'
+  if (!s.returns) return 'rover-no-return'
+  if (!s.onTime) return 'rover-late'
+  if (s.minSocPct < minRoverSocPct) return 'rover-battery'
+  return null
+}
 
 /** Verdict of a pick: a limit failed after the refinement is reported as tight, not dropped. */
 function verdictOf(problem: PlanProblem, slopeP90Deg: number, longestDarkH: number, dte: number) {
@@ -367,9 +397,12 @@ function verdictOf(problem: PlanProblem, slopeP90Deg: number, longestDarkH: numb
 /**
  * Stages 5–6 for one day: the cheap constraints for every candidate, the survivors ranked by
  * score (ties: shorter route), and the rover driven for the best of them until one passes.
+ * The rover must do it all: reach the ice, take every sample, return before the mission ends
+ * and stay above the minimum battery throughout (`roverViolation`).
  * At most PLAN_ROVER_TRIES traverses per day: after a failure the next try is the best-scored
  * survivor with a shorter route than every one that failed (a longer drive from a worse point
- * is not expected to do better). Survivors never tried are not counted in `rejected`.
+ * is not expected to do better: the round trip only doubles what the distance costs in time and
+ * energy). Survivors never tried are not counted in `rejected`.
  */
 export function planDay(
   prepared: PlanPrepared,
@@ -408,8 +441,9 @@ export function planDay(
     if (c.routeM >= shortestFailedM) continue
     tries++
     const s = roverSummary(prepared, problem, k, dayMs)
-    if (!s.reaches || s.minSocPct < problem.minRoverSocPct) {
-      count(s.reaches ? 'rover-battery' : 'rover-unreachable')
+    const failed = roverViolation(s, problem.minRoverSocPct)
+    if (failed) {
+      count(failed)
       shortestFailedM = c.routeM
       continue
     }
@@ -439,7 +473,7 @@ export function planDay(
   // that rejected most candidates (ties: the later one).
   let mainViolation: PlanViolation | null = null
   if (!best) {
-    const stages = tries > 0 ? PLAN_STAGES.slice(-2) : PLAN_STAGES
+    const stages = tries > 0 ? PLAN_ROVER_STAGES : PLAN_STAGES
     let max = 0
     for (const v of stages) {
       const n = rejected[v] ?? 0
@@ -452,10 +486,16 @@ export function planDay(
   return { dayMs, best, rejected, mainViolation }
 }
 
+/** Negative when `a` ranks first: score, then the larger time margin, then the fuller battery. */
 const better = (a: PlanPick, b: PlanPick) =>
-  b.score - a.score || a.routeM - b.routeM || b.rover.minSocPct - a.rover.minSocPct
+  b.score - a.score ||
+  (b.rover.marginH ?? 0) - (a.rover.marginH ?? 0) ||
+  b.rover.minSocPct - a.rover.minSocPct
 
-/** Stage 7: the days with a solution, best first (score, then shorter route, then battery). */
+/**
+ * Stage 7: the days with a solution, best first: score, then more time to spare at the lander
+ * before the mission ends, then the higher minimum battery.
+ */
 export function rankDays(days: readonly PlanDay[]): number[] {
   return days
     .map((d, i) => ({ d, i }))

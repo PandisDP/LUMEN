@@ -1,7 +1,8 @@
 import { type FormEvent, useState } from 'react'
 import { type HardwareLimits, LIMIT_RANGES } from '../astro/hardware.ts'
 import { PLAN_MAX_DAYS, PLAN_RADII_M } from '../astro/plannerTypes.ts'
-import { ROVER_VEHICLES, type RoverId } from '../astro/traverse.ts'
+import { ROVER_VEHICLES, type RoverId, SAMPLING_LIMITS } from '../astro/traverse.ts'
+import { energyPreset } from '../config/energyProfiles.ts'
 import { type IceTargetOption, iceTargetsOf, tileForPoint } from '../config/iceTargets.ts'
 import { cancelPlan } from '../hooks/usePlanner.ts'
 import { type MsgKey, useLang, useT } from '../i18n/index.ts'
@@ -16,9 +17,11 @@ import {
   clampDays,
   clampFrom,
   formatPlanDate,
+  formatSampleHours,
   fromDateInput,
   problemChanged,
   rangeEndMs,
+  samplesKey,
   toDateInput,
 } from './plannerView.ts'
 
@@ -231,6 +234,9 @@ function Mission({ disabled }: { disabled: boolean }) {
   const t = useT()
   const missionDays = useMissionStore((s) => s.missionDays)
   const roverId = useRoverStore((s) => s.roverId)
+  const samples = useRoverStore((s) => s.samples)
+  const sampleH = useRoverStore((s) => s.sampleH)
+  const sampleW = energyPreset(roverId)?.profile.sampleW ?? 0
   const minSunDays = usePlannerStore((s) => s.minSunDays)
   const minRoverSocPct = usePlannerStore((s) => s.minRoverSocPct)
   const radiusM = usePlannerStore((s) => s.radiusM)
@@ -283,6 +289,48 @@ function Mission({ disabled }: { disabled: boolean }) {
           ))}
         </select>
       </label>
+      <div className="pform__row">
+        <label className="field">
+          <span>{t('plan.mission.samples')}</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={SAMPLING_LIMITS.samples.min}
+            max={SAMPLING_LIMITS.samples.max}
+            step={SAMPLING_LIMITS.samples.step}
+            value={samples}
+            disabled={disabled}
+            aria-describedby="pform-work"
+            onChange={(e) => {
+              if (e.target.value !== '') useRoverStore.getState().setSamples(Number(e.target.value))
+            }}
+          />
+        </label>
+        <label className="field">
+          <span>{t('plan.mission.sampleH')}</span>
+          <input
+            type="number"
+            inputMode="decimal"
+            min={SAMPLING_LIMITS.sampleH.min}
+            max={SAMPLING_LIMITS.sampleH.max}
+            step={SAMPLING_LIMITS.sampleH.step}
+            value={sampleH}
+            disabled={disabled}
+            aria-describedby="pform-work"
+            onChange={(e) => {
+              if (e.target.value !== '') useRoverStore.getState().setSampleH(Number(e.target.value))
+            }}
+          />
+        </label>
+      </div>
+      <p id="pform-work" className="hint pform__work">
+        {t('plan.mission.work', {
+          samples: t(samplesKey(samples), { n: samples }),
+          each: formatSampleHours(sampleH),
+          total: formatSampleHours(samples * sampleH),
+          w: sampleW,
+        })}
+      </p>
       <div className="pform__row">
         <label className="field">
           <span>{t('plan.mission.minSoc')}</span>

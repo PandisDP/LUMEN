@@ -18,8 +18,11 @@ import {
   VIOLATION_KEY,
   formatPlanDate,
   planSummary,
+  roundTripM,
+  samplesKey,
   topDays,
   violationHistogram,
+  violationsByDay,
 } from './plannerView.ts'
 
 /** Failures the engine names; anything else is shown as its raw message. */
@@ -86,9 +89,11 @@ function TopCard({ result, day, rank }: { result: PlanResult; day: PlanDay; rank
       </dl>
       <p className="ptop__rover">
         {t('plan.top.rover', {
-          h: formatHours(b.rover.travelH),
+          samples: t(samplesKey(b.rover.samplesDone), { n: b.rover.samplesDone }),
+          h: formatHours(b.rover.totalH),
+          margin: formatHours(b.rover.marginH ?? NaN),
           soc: formatPct(b.rover.minSocPct),
-          route: formatDistance(b.routeM),
+          route: formatDistance(roundTripM(b)),
         })}
       </p>
       {b.verdict === 'warn' && (
@@ -126,6 +131,9 @@ function NoSolution({ result }: { result: PlanResult }) {
   const bars = violationHistogram(result.days)
   const fixes = usePlanFixActions(result)
   const main = bars[0]
+  // What stops the best point of most days, when it is not what rejects most points.
+  const perDay = bars.find((b) => b.violation === violationsByDay(bars)[0])
+  const unsolved = result.days.filter((d) => !d.best).length
   return (
     <Notice
       tone="warning"
@@ -143,6 +151,15 @@ function NoSolution({ result }: { result: PlanResult }) {
               pct: Math.round(main.share * 100),
             })}
           </p>
+          {perDay && perDay.days > 0 && perDay.violation !== main.violation && (
+            <p>
+              {t('plan.none.days', {
+                n: perDay.days,
+                total: unsolved,
+                why: t(VIOLATION_KEY[perDay.violation]),
+              })}
+            </p>
+          )}
           <ul className="ptop__bars">
             {bars.map((bar) => (
               <li key={bar.violation}>

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { SITE_SEEDS } from '../config/sites.ts'
 import { selectActiveScenario, useMissionStore } from '../store/useMissionStore.ts'
@@ -40,7 +40,10 @@ beforeEach(() => {
   p.setRange(FIXTURE_FROM, 10)
   usePlannerStore.setState({ ...PLAN_DEFAULTS, picked: [] })
   p.setRange(FIXTURE_FROM, 10)
-  useRoverStore.getState().setRover('rover')
+  const r = useRoverStore.getState()
+  r.setRover('csa-rover')
+  r.setSamples(3)
+  r.setSampleH(2)
 })
 
 /** Shows a result the way a finished run leaves it, with the inputs that produced it. */
@@ -119,6 +122,19 @@ describe('Planner: inputs', () => {
       target: { value: '9' },
     })
     expect(usePlannerStore.getState().minSunDays).toBe(9)
+    // The rover's work at the ice: the two fields clamp to their limits and feed one summary.
+    expect(
+      screen.getByText(/Trabajo en el hielo: 3 muestras × 2 h = 6 h, sin Sol/),
+    ).toHaveTextContent('150 W')
+    fireEvent.change(screen.getByLabelText('Muestras a recoger'), { target: { value: '5' } })
+    fireEvent.change(screen.getByLabelText('Horas por muestra'), { target: { value: '1.5' } })
+    expect(useRoverStore.getState()).toMatchObject({ samples: 5, sampleH: 1.5 })
+    expect(screen.getByText(/5 muestras × 1.5 h = 7.5 h/)).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Muestras a recoger'), { target: { value: '40' } })
+    expect(useRoverStore.getState().samples).toBe(10)
+    fireEvent.change(screen.getByLabelText('Muestras a recoger'), { target: { value: '1' } })
+    fireEvent.change(screen.getByLabelText('Rover'), { target: { value: 'rover' } })
+    expect(screen.getByText(/1 muestra × 1.5 h = 1.5 h/)).toHaveTextContent('30 W')
     // The lander limits are edited in place (the hardware filter belongs to the explore stage).
     fireEvent.click(screen.getByRole('button', { name: 'Cambiar límites' }))
     fireEvent.change(screen.getByLabelText('Noche continua máx. (h)'), { target: { value: '60' } })
@@ -179,11 +195,63 @@ describe('Planner: results', () => {
     expect(within(bodyRows()[0] as HTMLElement).getByRole('rowheader')).toHaveTextContent('4 dic')
   })
 
+  it('the table shows the round trip: distance there and back, samples and the return', () => {
+    const result = fixtureResult([88, 'rover-samples', 61])
+    result.days[2].best!.rover = { ...result.days[2].best!.rover, totalH: 330, marginH: 6 }
+    show(result)
+    render(<Planner />)
+    const heads = [...screen.getByRole('table').querySelectorAll('thead th')].map((h) =>
+      h.textContent!.trim(),
+    )
+    expect(heads.slice(1)).toEqual([
+      'Fecha · punto ▲',
+      'Punt.',
+      'Ruta ↔',
+      'Muest.',
+      'Regreso',
+      'Bat.',
+      'Energía',
+      'DTE',
+      'Noche',
+      'Luz',
+      'Veredicto',
+    ])
+    expect(screen.getByRole('button', { name: 'Ruta ida y vuelta' })).toBeInTheDocument()
+    // Fixture: 1120 m one way, 3 of 3 samples, back in 16 h with 320 h to spare.
+    const first = [...bodyRows()[0].querySelectorAll('td')].map((c) => c.textContent)
+    expect(first[2]).toBe('2.2 km')
+    expect(first[3]).toBe('3/3')
+    expect(first[4]).toContain('16 h')
+    expect(first[4]).toContain('margen 13.3 d')
+    expect(bodyRows()[0].querySelector('.ptable__return .lvl')).toHaveAttribute(
+      'data-level',
+      'good',
+    )
+    // Less than a day to spare is flagged, with the glyph and not only the colour.
+    expect(bodyRows()[2].querySelector('.ptable__return .lvl')).toHaveAttribute(
+      'data-level',
+      'warn',
+    )
+    expect(bodyRows()[2].querySelector('.ptable__return')).toHaveTextContent('margen 6 h')
+    // The row without a solution spans every column after the date.
+    const none = bodyRows()[1].querySelector('.ptable__none')!
+    expect(none).toHaveAttribute('colspan', '10')
+    expect(none).toHaveTextContent('la batería no alcanza para todas las muestras')
+    expect(bodyRows()[1].querySelectorAll('td, th')).toHaveLength(3)
+    // Sorting by the return puts the widest margin first.
+    fireEvent.click(screen.getByRole('button', { name: /^Regreso/ }))
+    expect(within(bodyRows()[0] as HTMLElement).getByRole('rowheader')).toHaveTextContent('25 nov')
+    expect(within(bodyRows()[1] as HTMLElement).getByRole('rowheader')).toHaveTextContent('27 nov')
+  })
+
   it('selecting a calendar day highlights its row, and the tooltip gives the figures', () => {
     show()
     render(<Planner />)
     fireEvent.mouseEnter(cells()[2])
     expect(screen.getByRole('tooltip')).toHaveTextContent('Puntuación 88')
+    expect(screen.getByRole('tooltip')).toHaveTextContent(
+      'Rover: 3 muestras · vuelve en 16 h 0 min · batería mín. 64 %',
+    )
     fireEvent.mouseEnter(cells()[4])
     expect(screen.getByRole('tooltip')).toHaveTextContent(
       'Sin solución: luz continua insuficiente tras aterrizar',
@@ -213,6 +281,9 @@ describe('Planner: results', () => {
       '61',
     ])
     expect(within(cards[0]).getByText('27 nov 2026')).toBeInTheDocument()
+    expect(cards[0].querySelector('.ptop__rover')).toHaveTextContent(
+      'Rover: 3 muestras · vuelve en 16 h 0 min · margen 13 d 8 h · batería mín. 64 % · ruta 2.2 km ida y vuelta',
+    )
     const send = screen.getByRole('button', { name: /Enviar a Comparar/ })
     expect(send).toBeDisabled()
     fireEvent.click(within(cards[0]).getByRole('checkbox'))
@@ -255,6 +326,18 @@ describe('Planner: results', () => {
     expect(screen.getAllByText('Calculados con otros datos').length).toBeGreaterThan(0)
     expect(bodyRows()).toHaveLength(10)
   })
+
+  it.each([
+    ['Muestras a recoger', '4'],
+    ['Horas por muestra', '1'],
+  ])('changing «%s» marks the results as out of date', (label, value) => {
+    show()
+    render(<Planner />)
+    expect(screen.queryByText('Calculados con otros datos')).toBeNull()
+    fireEvent.change(screen.getByLabelText(label), { target: { value } })
+    expect(screen.getAllByText('Calculados con otros datos').length).toBeGreaterThan(0)
+    expect(usePlannerStore.getState().status).toBe('done')
+  })
 })
 
 describe('Planner: edge states', () => {
@@ -293,6 +376,63 @@ describe('Planner: edge states', () => {
     expect(after.status).toBe(before.status)
     expect(after.result).toBe(result)
     expect(screen.getAllByText('Calculados con otros datos').length).toBeGreaterThan(0)
+  })
+
+  it('a micro-rover that cannot finish the samples is offered the utility rover and less work', () => {
+    useRoverStore.getState().setRover('rover')
+    const result = fixtureResult(['rover-samples', 'rover-samples', 'rover-no-return'], {
+      roverId: 'rover',
+    })
+    // As in a real run: most candidates fall earlier (in the dark), the best ones at the rover.
+    for (const d of result.days) d.rejected = { ...d.rejected, 'no-sun-at-landing': 200 }
+    show(result)
+    render(<Planner />)
+    const box = screen.getByRole('heading', {
+      name: 'Ningún día cumple todas las restricciones',
+    }).parentElement!
+    expect(box).toHaveTextContent(
+      'el rover llega al hielo, pero la batería no alcanza para todas las muestras: allí no hay Sol para recargar',
+    )
+    expect(box).toHaveTextContent(/La que más descarta: se aterriza a oscuras/)
+    expect(box).toHaveTextContent(
+      'En 2 de 3 días, el mejor punto se descarta porque el rover llega al hielo, pero la batería no alcanza',
+    )
+    expect(box).toHaveTextContent(
+      'el rover recoge las muestras, pero no le queda batería para volver',
+    )
+    expect(box).toHaveTextContent(
+      'Usa el rover utilitario, recoge menos muestras o reduce el tiempo por muestra.',
+    )
+    const buttons = [...box.querySelectorAll('.notice__actions button')].map((b) => b.textContent)
+    expect(buttons).toEqual([
+      'Cambiar al rover utilitario',
+      'Recoger 2 muestras',
+      'Reducir el tiempo por muestra a 1.5 h',
+    ])
+    fireEvent.click(screen.getByRole('button', { name: 'Recoger 2 muestras' }))
+    expect(useRoverStore.getState().samples).toBe(2)
+    expect(screen.getByRole('button', { name: 'Recoger solo 1 muestra' })).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Cambiar al rover utilitario' }))
+    expect(useRoverStore.getState().roverId).toBe('csa-rover')
+    // With the utility rover selected there is no bigger rover to offer.
+    expect(screen.queryByRole('button', { name: 'Cambiar al rover utilitario' })).toBeNull()
+    // Inputs only: the same result stays on screen, marked as out of date.
+    expect(usePlannerStore.getState().result).toBe(result)
+    expect(screen.getAllByText('Calculados con otros datos').length).toBeGreaterThan(0)
+  })
+
+  it('a rover that returns too late is offered a longer mission', () => {
+    show(fixtureResult(['rover-late', 'rover-late']))
+    render(<Planner />)
+    expect(
+      screen.getAllByText(/el rover vuelve después del fin de la misión/).length,
+    ).toBeGreaterThan(0)
+    fireEvent.click(screen.getByRole('button', { name: 'Alargar la misión a 21 días' }))
+    expect(useMissionStore.getState().missionDays).toBe(21)
+    expect(screen.getByRole('button', { name: 'Alargar la misión a 28 días' })).toBeEnabled()
+    // While a plan runs the notice and its buttons give way to the progress.
+    act(() => usePlannerStore.getState().setRun({ status: 'running', progress: 0.5 }))
+    expect(screen.queryByRole('button', { name: 'Recoger 2 muestras' })).toBeNull()
   })
 
   it('while running it shows the progress, Cancel and the days that already arrived', () => {

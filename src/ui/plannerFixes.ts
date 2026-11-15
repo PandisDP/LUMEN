@@ -4,27 +4,52 @@ import {
   type PlanResult,
   type PlanViolation,
 } from '../astro/plannerTypes.ts'
+import { type RoverId, SAMPLING_LIMITS } from '../astro/traverse.ts'
 import { useT } from '../i18n/index.ts'
+import { MISSION_DAYS, useMissionStore } from '../store/useMissionStore.ts'
 import { type PlannerState, usePlannerStore } from '../store/usePlannerStore.ts'
+import { useRoverStore } from '../store/useRoverStore.ts'
 import type { KitAction } from './bands.ts'
 import { formatDistance } from './format.ts'
 import { effectiveFromMs } from './plannerInputs.ts'
-import { violationHistogram } from './plannerView.ts'
+import { formatSampleHours, violationHistogram, violationsByDay } from './plannerView.ts'
 
 /**
  * The fixes offered next to "no day has a solution": one-click changes to the planner's own
- * inputs, ordered by the constraint that rejects most. They only change the inputs; the user
+ * inputs, ordered by what sinks the best point of most days. They only change the inputs; the user
  * still presses "Plan" (the results on screen are marked as computed with other data).
  */
-export type PlanFixId = 'widenRange' | 'lowerSun' | 'widenRadius' | 'narrowRadius' | 'lowerSoc'
+export type PlanFixId =
+  | 'widenRange'
+  | 'lowerSun'
+  | 'widenRadius'
+  | 'narrowRadius'
+  | 'lowerSoc'
+  | 'fewerSamples'
+  | 'shorterSample'
+  | 'switchRover'
+  | 'longerMission'
 
 export interface PlanFix {
   id: PlanFixId
-  /** The value the input would take. */
+  /** The value the input would take (unused by `switchRover`, which has a single outcome). */
   value: number
 }
 
-export type PlanFixInputs = Pick<PlannerState, 'days' | 'minSunDays' | 'minRoverSocPct' | 'radiusM'>
+/** The inputs the fixes read: the planner's own, the rover's workload and the mission length. */
+export type PlanFixInputs = Pick<
+  PlannerState,
+  'days' | 'minSunDays' | 'minRoverSocPct' | 'radiusM'
+> & {
+  roverId: RoverId
+  samples: number
+  sampleH: number
+  missionDays: number
+}
+
+/** The rover offered when the micro-rover cannot do the job. */
+export const FIX_ROVER: RoverId = 'csa-rover'
+export const FIX_MISSION_STEP_DAYS = 7
 
 export const FIX_RANGE_STEP_DAYS = 30
 export const FIX_SUN_STEP_DAYS = 5
@@ -41,7 +66,10 @@ const FIXES_FOR: Record<PlanViolation, readonly PlanFixId[]> = {
   dte: ['widenRange'],
   slope: ['widenRadius'],
   'rover-unreachable': ['narrowRadius'],
-  'rover-battery': ['lowerSoc', 'narrowRadius'],
+  'rover-samples': ['switchRover', 'fewerSamples', 'shorterSample'],
+  'rover-no-return': ['switchRover', 'fewerSamples', 'narrowRadius'],
+  'rover-late': ['longerMission', 'fewerSamples'],
+  'rover-battery': ['switchRover', 'lowerSoc', 'fewerSamples'],
 }
 /** With nothing to go by: the three that open the search most. */
 const DEFAULT_FIXES: readonly PlanFixId[] = ['widenRange', 'lowerSun', 'widenRadius']
@@ -60,6 +88,21 @@ function fixValue(id: PlanFixId, p: PlanFixInputs): number | null {
       return radii.find((r) => r > p.radiusM) ?? null
     case 'narrowRadius':
       return [...radii].reverse().find((r) => r < p.radiusM) ?? null
+    case 'fewerSamples': {
+      const { min, step } = SAMPLING_LIMITS.samples
+      return p.samples > min ? Math.max(min, p.samples - step) : null
+    }
+    case 'shorterSample': {
+      const { min, step } = SAMPLING_LIMITS.sampleH
+      return p.sampleH > min ? Math.max(min, p.sampleH - step) : null
+    }
+    // Only the micro-rover has a bigger rover to switch to.
+    case 'switchRover':
+      return p.roverId === 'rover' ? 0 : null
+    case 'longerMission':
+      return p.missionDays < MISSION_DAYS.max
+        ? Math.min(MISSION_DAYS.max, p.missionDays + FIX_MISSION_STEP_DAYS)
+        : null
   }
 }
 
@@ -95,6 +138,15 @@ export function applyPlanFix(fix: PlanFix): void {
     case 'widenRadius':
     case 'narrowRadius':
       return s.setRadius(fix.value)
+    case 'fewerSamples':
+      return useRoverStore.getState().setSamples(fix.value)
+    case 'shorterSample':
+      return useRoverStore.getState().setSampleH(fix.value)
+    case 'switchRover':
+      return useRoverStore.getState().setRover(FIX_ROVER)
+    // The same setter as the form's "days on the surface" field.
+    case 'longerMission':
+      return useMissionStore.getState().setMissionDays(fix.value)
   }
 }
 
@@ -106,13 +158,40 @@ export function usePlanFixActions(result: PlanResult | null): KitAction[] {
   const minRoverSocPct = usePlannerStore((s) => s.minRoverSocPct)
   const radiusM = usePlannerStore((s) => s.radiusM)
   const running = usePlannerStore((s) => s.status === 'running')
+  const roverId = useRoverStore((s) => s.roverId)
+  const samples = useRoverStore((s) => s.samples)
+  const sampleH = useRoverStore((s) => s.sampleH)
+  const missionDays = useMissionStore((s) => s.missionDays)
   if (!result) return []
-  const violations = violationHistogram(result.days).map((b) => b.violation)
-  return planFixes(violations, { days, minSunDays, minRoverSocPct, radiusM }).map((fix) => ({
-    label:
-      fix.id === 'widenRadius' || fix.id === 'narrowRadius'
-        ? t(`plan.fixbtn.${fix.id}`, { r: formatDistance(fix.value) })
-        : t(`plan.fixbtn.${fix.id}`, { n: fix.value }),
+  const violations = violationsByDay(violationHistogram(result.days))
+  const label = (fix: PlanFix) => {
+    switch (fix.id) {
+      case 'widenRadius':
+      case 'narrowRadius':
+        return t(`plan.fixbtn.${fix.id}`, { r: formatDistance(fix.value) })
+      case 'shorterSample':
+        return t('plan.fixbtn.shorterSample', { h: formatSampleHours(fix.value) })
+      case 'switchRover':
+        return t('plan.fixbtn.switchRover')
+      case 'fewerSamples':
+        return t(fix.value === 1 ? 'plan.fixbtn.fewerSamples.one' : 'plan.fixbtn.fewerSamples', {
+          n: fix.value,
+        })
+      default:
+        return t(`plan.fixbtn.${fix.id}`, { n: fix.value })
+    }
+  }
+  return planFixes(violations, {
+    days,
+    minSunDays,
+    minRoverSocPct,
+    radiusM,
+    roverId,
+    samples,
+    sampleH,
+    missionDays,
+  }).map((fix) => ({
+    label: label(fix),
     disabled: running,
     onClick: () => applyPlanFix(fix),
   }))

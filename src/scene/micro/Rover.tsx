@@ -22,9 +22,10 @@ import {
   wheelLayout,
 } from './roverRig.ts'
 import { EGRESS, egressPose } from './egress.ts'
+import { PARK_GAP_M, poseWindowMs } from './roverPlayback.ts'
 import { roverTelemetry } from './roverTelemetry.ts'
 import { surfaceHalfSize } from './surface.ts'
-import { terrainMeshHeight } from './trackGeometry.ts'
+import { ROVER_TRACKS, returnShiftM, terrainMeshHeight } from './trackGeometry.ts'
 import { terrainSegments } from './nearGroundField.ts'
 import { SCENE_COLORS } from '../sceneColors.ts'
 
@@ -46,6 +47,10 @@ const STEER_GAIN = 8
  * sampled at the rover clock (mission time since departure), the craft is placed on the terrain
  * with its heading and tilt, the telemetry singleton is written and the camera eased behind it.
  * The mission clock follows too (10 Hz), so the Sun, the shadows and the panels show that hour.
+ *
+ * The trip is a round trip: out to the ice, the drill at work for as long as the sampling
+ * lasts, a turn on the spot and back by the same route, a little to the side of its own tracks,
+ * until it parks in front of the ramps it came down.
  */
 export function RoverRig({
   detail,
@@ -107,20 +112,29 @@ export function RoverRig({
   }, [surfaceY, detail, grids, ground])
   const duration = traverseDurationMs(traverse)
   const departMs = traverse.t[0]
-  const route = useMemo(
-    () =>
-      traverse.plan.points.map(
-        (p) => latLonToScene(detail.site, p.lat, p.lon, p.heightM + 0.6) as P3,
-      ),
-    [traverse, detail],
-  )
+  const outLengthM = traverse.plan.outLengthM
+  /** The way out only: the way back runs over it, so the line is drawn once. */
+  const route = useMemo(() => {
+    const { points, turnIndex } = traverse.plan
+    return (turnIndex < 0 ? points : points.slice(0, turnIndex + 1)).map(
+      (p) => latLonToScene(detail.site, p.lat, p.lon, p.heightM + 0.6) as P3,
+    )
+  }, [traverse, detail])
+  /** The ice: where the rover turns around. */
   const goal = route[route.length - 1]
 
-  /** Traverse time at which the rover is where the ramps end: the drive starts there. */
-  const driveStartMs = useMemo(() => {
-    const i = traverse.distM.findIndex((d) => d >= EGRESS.groundR)
-    return i > 0 ? traverse.t[i] - traverse.t[0] : 0
-  }, [traverse])
+  /**
+   * Clock span in which the rover is drawn where the model has it: the drive starts where the
+   * ramps end and, on the way back, stops short of them (the model's route ends on the lander).
+   */
+  const pose = useMemo(
+    () => poseWindowMs(traverse, EGRESS.groundR, EGRESS.groundR + spec.lengthM / 2 + PARK_GAP_M),
+    [traverse, spec],
+  )
+  const driveStartMs = pose.fromMs
+  /** Heading on arrival at the ice: the rover samples facing that way. */
+  const iceHeadingDeg = traverse.plan.points[Math.max(0, traverse.plan.turnIndex)]?.headingDeg ?? 0
+  const track = ROVER_TRACKS[roverId]
   const egressHeadingDeg = traverse.plan.points[0]?.headingDeg ?? 0
   /** Real seconds into the roll down the ramps. */
   const egressS = useRef(0)
@@ -212,11 +226,30 @@ export function RoverRig({
     } else if (store.playing)
       clock.current = Math.min(duration, clock.current + dt * store.speed * 1000)
     const egressP = egress ? Math.min(1, egressS.current / EGRESS.durationS) : 1
-    const s = sampleTraverse(traverse, departMs + clock.current)
+    const now = sampleTraverse(traverse, departMs + clock.current)
     const g = rover.current
-    if (!s || !g) return
+    if (!now || !g) return
+    // Where it is drawn: held at the foot of the ramps at both ends of the trip.
+    const poseMs = Math.min(pose.toMs, Math.max(pose.fromMs, clock.current))
+    const held = !egress && poseMs !== clock.current
+    const at = held ? sampleTraverse(traverse, departMs + poseMs) : now
+    if (!at) return
+    const ended = clock.current >= duration
+    // The readings are the model's; position, heading and motion are those of the drawn rover.
+    const s = held
+      ? { ...now, lat: at.lat, lon: at.lon, heightM: at.heightM, headingDeg: at.headingDeg }
+      : now
+    const driving = now.driving && !held && !ended
+    const speedMs = driving ? now.speedMs : 0
 
-    const p = latLonToScene(detail.site, s.lat, s.lon, s.heightM)
+    const on = latLonToScene(detail.site, s.lat, s.lon, s.heightM)
+    // On the way back it keeps to the right of its outbound tracks, as its own tracks do.
+    const shift = returnShiftM(track, at.distM - outLengthM)
+    const p = [
+      on[0] + Math.cos(s.headingDeg * DEG) * shift,
+      on[1],
+      on[2] + Math.sin(s.headingDeg * DEG) * shift,
+    ]
     tmp.pos.set(p[0], surface(p[0], p[2]), p[2])
     // Lay the chassis on the local slope (over its own footprint), then turn it to its heading.
     const d = spec.lengthM * 0.6
@@ -252,16 +285,16 @@ export function RoverRig({
     }
     // Path curvature from the change of heading over the distance driven (not across a seek).
     const tr = turn.current
-    const stepM = s.distM - tr.distM
+    const stepM = at.distM - tr.distM
     if (Math.abs(stepM) > 1e-4 && Math.abs(stepM) < 40)
       tr.target = turnPerM(tr.headingDeg, s.headingDeg, stepM)
     else if (!(Math.abs(stepM) < 40)) tr.target = 0
     tr.headingDeg = s.headingDeg
-    tr.distM = s.distM
-    tr.perM = approach(tr.perM, s.driving ? tr.target : 0, dt, 0.35)
+    tr.distM = at.distM
+    tr.perM = approach(tr.perM, driving ? tr.target : 0, dt, 0.35)
     if (store.playing) {
       const rolling = egress && egressP > EGRESS.deployShare ? 0.5 : 0
-      const v = egress ? rolling : Math.min(s.speedMs * store.speed, MAX_VISUAL_SPEED_MS)
+      const v = egress ? rolling : Math.min(speedMs * store.speed, MAX_VISUAL_SPEED_MS)
       spin.current = (spin.current + (v * dt) / spec.wheelR) % (Math.PI * 2)
     }
     const dark = s.sunFrac < 0.05
@@ -274,8 +307,11 @@ export function RoverRig({
     f.earthElDeg = earthElDeg ?? null
     f.link = s.earthFrac >= 0.5
     f.dark = dark
-    f.driving = s.driving && store.playing
-    f.drilling = clock.current >= duration
+    f.driving = driving && store.playing
+    // The drill works for as long as the sampling does (not while recharging, nor once it ends).
+    // It lifts it to turn around, which the model does over the last step of the sampling.
+    const turned = Math.abs(((now.headingDeg - iceHeadingDeg + 540) % 360) - 180) > 1
+    f.drilling = now.phase === 'sample' && !ended && !turned
     model.current?.update(f, dt)
 
     const tm = roverTelemetry
@@ -284,7 +320,13 @@ export function RoverRig({
     tm.z = tmp.pos.z
     tm.distM = s.distM
     tm.lengthM = traverse.plan.lengthM
-    tm.speedMs = s.speedMs
+    tm.outLengthM = outLengthM
+    tm.poseDistM = at.distM
+    tm.phase = s.phase
+    tm.leg = s.leg
+    tm.sampleIndex = s.sampleIndex
+    tm.samplesDone = s.samplesDone
+    tm.speedMs = speedMs
     tm.slopeDeg = s.slopeDeg
     tm.gradeDeg = s.gradeDeg
     tm.headingDeg = s.headingDeg
@@ -295,9 +337,9 @@ export function RoverRig({
     tm.earthFrac = s.earthFrac
     tm.tempK = s.tempK
     tm.inPsr = s.inPsr
-    tm.driving = s.driving
+    tm.driving = driving
     tm.timeMs = departMs + clock.current
-    tm.done = clock.current >= duration
+    tm.done = ended
     tm.egress = egressP
 
     // Camera.
@@ -374,7 +416,7 @@ export function RoverRig({
       )}
       {goal && (
         <Html position={goal} center className="label label--ice" style={{ pointerEvents: 'none' }}>
-          ❄ {t('rover.goal', { d: formatDistance(traverse.plan.lengthM) })}
+          ❄ {t('rover.goal', { d: formatDistance(outLengthM) })}
         </Html>
       )}
     </>
