@@ -22,7 +22,8 @@
     "validate:illum": "node scripts/data/validate-illum.ts",
     "data:ephem": "node scripts/data/build-ephem.ts",
     "data:derived": "node scripts/data/build-derived.ts",
-    "data:imagery": "node scripts/data/build-imagery.ts"
+    "data:imagery": "node scripts/data/build-imagery.ts",
+    "test:e2e": "npm run build && playwright test"
   },
   "dependencies": {
     "@react-three/drei": "10.7.9",
@@ -35,6 +36,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "^1.65.1",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "@types/node": "^24.19.2",
