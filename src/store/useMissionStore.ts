@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { DAY_MS } from '../astro/constants.ts'
+import { DAY_MS, SYNODIC_MONTH_DAYS } from '../astro/constants.ts'
 import type { EnergyProfile } from '../astro/energy.ts'
 import { DEFAULT_LIMITS, type HardwareLimits, sanitizeLimits } from '../astro/hardware.ts'
 import { DEFAULT_ENERGY_ID, energyPreset } from '../config/energyProfiles.ts'
@@ -195,6 +195,8 @@ export interface MissionState extends ScenarioParams {
   setExplainOpen: (open: boolean) => void
   togglePanels: () => void
   togglePlay: () => void
+  /** Rewinds and plays one synodic day (29.5 d) from the landing: the full light/dark cycle. */
+  playLunarDay: () => void
   setSpeed: (speed: number) => void
   setShowMask: (show: boolean) => void
   setShowPaths: (show: boolean) => void
@@ -394,6 +396,11 @@ export const useMissionStore = create<MissionState>()((set, get) => {
         const atEnd = s.offsetH >= maxMissionDays(s) * 24
         return { playing: !s.playing, offsetH: !s.playing && atEnd ? 0 : s.offsetH }
       }),
+    playLunarDay: () => {
+      const days = Math.ceil(SYNODIC_MONTH_DAYS)
+      if (get().missionDays < days) updateActive({ missionDays: days })
+      set({ offsetH: 0, speed: 24, playing: true })
+    },
     setSpeed: (speed) => {
       if ((PLAY_SPEEDS as readonly number[]).includes(speed)) set({ speed })
     },

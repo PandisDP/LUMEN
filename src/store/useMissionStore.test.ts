@@ -143,3 +143,22 @@ describe('presets', () => {
     expect(state().setScenarios([{ siteId: 'nope', startMs: t }])).toBe(false)
   })
 })
+
+describe('lunar day playback', () => {
+  it('rewinds, stretches a short mission to one synodic day and plays', () => {
+    const s = useMissionStore.getState()
+    s.reset()
+    s.setMissionDays(14)
+    s.setOffset(100)
+    s.playLunarDay()
+    const after = useMissionStore.getState()
+    expect(after.missionDays).toBe(30)
+    expect(after.offsetH).toBe(0)
+    expect(after.playing).toBe(true)
+    expect(after.speed).toBe(24)
+    // A longer mission is left as it is.
+    after.setMissionDays(45)
+    after.playLunarDay()
+    expect(useMissionStore.getState().missionDays).toBe(45)
+  })
+})

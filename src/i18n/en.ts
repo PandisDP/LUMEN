@@ -120,6 +120,9 @@ export const en: Record<keyof typeof es, string> = {
   'time.duration': 'Duration (days)',
   'time.play': '▶ Play',
   'time.pause': '❚❚ Pause',
+  'time.lunarDay': '☾ Lunar day',
+  'time.lunarDayTitle':
+    'Plays one full lunar day (29.5 Earth days) from the landing: the whole cycle of light and shadow, and the swing of the Earth.',
   'time.speed': 'Speed',
   'time.jumpSunTitle': 'Jump to the next sunrise or sunset',
   'time.jumpEarthTitle': 'Jump to the next Earthrise or Earthset',

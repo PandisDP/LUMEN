@@ -15,6 +15,7 @@ import { HelpButton } from './HelpButton.tsx'
 import { CompassTape } from './CompassTape.tsx'
 import { formatDistance, formatLatLon } from './format.ts'
 import { isPolar } from './locator.ts'
+import { Countdown } from './MetricsPanel.tsx'
 import { MoonLocator } from './MoonLocator.tsx'
 import {
   IconEarth,
@@ -203,6 +204,30 @@ export function ViewHud() {
           {more ? t('hud.less') : t('hud.more')}
         </button>
       </div>
+      {instant && (
+        <div className="viewhud__countdowns">
+          <span data-on={instant.sunUp}>
+            ☀{' '}
+            <Countdown
+              on={instant.sunUp}
+              nextMs={instant.sun.nextChangeMs}
+              now={instant.timeMs}
+              onKey="ev.sunset"
+              offKey="ev.sunrise"
+            />
+          </span>
+          <span data-on={instant.earthUp}>
+            ⊕{' '}
+            <Countdown
+              on={instant.earthUp}
+              nextMs={instant.earth.nextChangeMs}
+              now={instant.timeMs}
+              onKey="ev.earthset"
+              offKey="ev.earthrise"
+            />
+          </span>
+        </div>
+      )}
       <div className="viewhud__buttons">
         <button
           type="button"

@@ -2771,3 +2771,28 @@ body.picking .stage canvas {
     overflow: auto;
   }
 }
+
+/* Time left before sunset / Earthset, always in view over the surface scene. */
+.viewhud__countdowns {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.viewhud__countdowns > span {
+  padding: 3px 10px;
+  background: rgb(0 1 10 / 0.78);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+.viewhud__countdowns > span[data-on='true'] {
+  color: var(--text);
+}
+
+.viewhud__countdowns .countdown {
+  margin: 0;
+}

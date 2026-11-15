@@ -32,7 +32,7 @@ function obstruction(t: T, detail: SiteDetail | undefined, az: number): string |
   return d > 0 ? t('metrics.obstruction', { km: d < 10 ? d.toFixed(1) : Math.round(d) }) : null
 }
 
-function Countdown({
+export function Countdown({
   on,
   nextMs,
   now,

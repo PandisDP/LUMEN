@@ -31,6 +31,7 @@ export function TimeControls() {
     setSpeed,
     setLinkMargin,
     setRequireDsn,
+    playLunarDay,
   } = useMissionStore.getState()
   const t = useT()
   const showLinkMargin = useShow('linkMargin')
@@ -95,6 +96,14 @@ export function TimeControls() {
             aria-pressed={playing}
           >
             {playing ? t('time.pause') : t('time.play')}
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={playLunarDay}
+            title={t('time.lunarDayTitle')}
+          >
+            {t('time.lunarDay')}
           </button>
           <label className="field field--inline">
             <span className="sr-only">{t('time.speed')}</span>

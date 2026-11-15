@@ -119,6 +119,9 @@ export const es = {
   'time.duration': 'Duración (días)',
   'time.play': '▶ Reproducir',
   'time.pause': '❚❚ Pausa',
+  'time.lunarDay': '☾ Día lunar',
+  'time.lunarDayTitle':
+    'Reproduce un día lunar completo (29,5 días terrestres) desde el alunizaje: el ciclo entero de luz y sombra, y la oscilación de la Tierra.',
   'time.speed': 'Velocidad',
   'time.jumpSunTitle': 'Saltar al siguiente amanecer u ocaso',
   'time.jumpEarthTitle': 'Saltar a la siguiente salida o puesta de la Tierra',
