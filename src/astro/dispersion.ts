@@ -169,7 +169,7 @@ export function computeDispersion(
   grids: readonly DemGrid[],
   input: DispersionInput,
 ): DispersionResult {
-  const stepMs = (input.stepMinutes ?? 30) * 60_000
+  const stepMs = (input.stepMinutes ?? (input.missionDays > 180 ? 60 : 30)) * 60_000
   const count = Math.ceil((input.missionDays * DAY_MS) / stepMs) + 1
   const eph = cachedEphemeris(input.startMs, stepMs, count)
   const toMs = input.startMs + input.missionDays * DAY_MS + 1

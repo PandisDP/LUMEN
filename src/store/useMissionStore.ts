@@ -47,9 +47,11 @@ export type BottomPanel = 'timeline' | 'horizon' | 'dates' | 'seasons' | 'map'
 export const MAX_SCENARIOS = 4
 export const SCENARIO_COLORS = ['#ffc94d', '#4da6ff', '#ff6b9a', '#7ee081'] as const
 export const SCENARIO_LABELS = ['A', 'B', 'C', 'D'] as const
-export const MISSION_DAYS = { min: 1, max: 60, default: 14 } as const
+/** Up to a year on the surface (longer windows are sampled more coarsely: scenarioStepMinutes). */
+export const MISSION_DAYS = { min: 1, max: 365, default: 14 } as const
 /** Playback speeds, in simulated hours per real second. */
-export const PLAY_SPEEDS = [1, 6, 24, 72] as const
+/** Mission hours per real second (168 = a week, 720 = a month per second, for long missions). */
+export const PLAY_SPEEDS = [1, 6, 24, 72, 168, 720] as const
 export const FOV = { min: 2, max: 75, default: 60 } as const
 /** Minimum Earth elevation over the terrain for a DTE link (antenna multipath margin), deg. */
 export const LINK_MARGIN = { min: 0, max: 10, default: 3 } as const

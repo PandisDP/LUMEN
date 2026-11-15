@@ -41,8 +41,17 @@ export function cachedEphemeris(startMs: number, stepMs: number, count: number) 
   return eph
 }
 
+/**
+ * Sampling step for a mission of `missionDays`: 10 min up to two months, then coarser, so a
+ * year-long window costs about the same (~8 700 samples) as a 60-day one. The Sun and the Earth
+ * move < 0.6° per hour seen from the Moon, so events are still timed to a few minutes after the
+ * interpolation of windows.ts.
+ */
+export const scenarioStepMinutes = (missionDays: number) =>
+  missionDays <= 60 ? 10 : missionDays <= 180 ? 30 : 60
+
 export function computeScenario(input: ScenarioInput): ScenarioResult {
-  const stepMs = (input.stepMinutes ?? 10) * 60_000
+  const stepMs = (input.stepMinutes ?? scenarioStepMinutes(input.missionDays)) * 60_000
   const count = Math.ceil((input.missionDays * DAY_MS) / stepMs) + 1
   const series = evaluateSite(
     cachedEphemeris(input.startMs, stepMs, count),

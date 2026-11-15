@@ -174,3 +174,16 @@ describe('landing ellipse settings', () => {
     expect(useMissionStore.getState().ellipseAspect).toBe(3)
   })
 })
+
+describe('mission length', () => {
+  it('allows up to a year and clamps beyond it', () => {
+    const s = useMissionStore.getState()
+    s.reset()
+    s.setMissionDays(365)
+    expect(useMissionStore.getState().missionDays).toBe(365)
+    s.setMissionDays(900)
+    expect(useMissionStore.getState().missionDays).toBe(365)
+    s.setSpeed(720)
+    expect(useMissionStore.getState().speed).toBe(720)
+  })
+})

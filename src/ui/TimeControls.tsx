@@ -110,7 +110,7 @@ export function TimeControls() {
             <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
               {PLAY_SPEEDS.map((s) => (
                 <option key={s} value={s}>
-                  {s} h/s
+                  {s >= 168 ? `${s / 24} d/s` : `${s} h/s`}
                 </option>
               ))}
             </select>
